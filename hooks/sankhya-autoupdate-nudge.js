@@ -2,48 +2,84 @@
 // Hook SessionStart: lembra o dev de ligar o autoUpdate do marketplace sankhya.
 // NAO escreve nada na config do usuario (read-only). So avisa.
 // Para de avisar sozinho quando o dev liga o autoUpdate. Nudge no maximo 1x/24h.
-// Nunca bloqueia: qualquer erro -> exit 0.
+//
+// Saida VISIVEL ao usuario: JSON { hookSpecificOutput: { hookEventName: "SessionStart",
+//   additionalContext: "..." } } no stdout (exit 0). Esse e o canal que o Claude Code
+//   renderiza no inicio da sessao (mesmo formato usado por outros plugins). systemMessage
+//   NAO e exibido em SessionStart.
+// Descoberta do config dir (settings.json): nao depende de CLAUDE_CONFIG_DIR (nao garantida
+//   em hook). Deriva do transcript_path do stdin + fallbacks ~/.claude-snk e ~/.claude.
+// Nunca bloqueia: qualquer erro -> exit 0 sem saida.
 
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
 
-const REPO = "sankhya-skills-team/sankhya-plugin"; // marcador da nossa marketplace
 const JANELA_MS = 24 * 60 * 60 * 1000; // 1 nudge por dia no maximo
+const REPO_MARCADOR = "sankhya-plugin"; // identifica nossa marketplace no settings
 
-function consumirStdin() {
+function lerStdinJson() {
   try {
-    fs.readFileSync(0, "utf8");
+    return JSON.parse(fs.readFileSync(0, "utf8"));
   } catch {
-    /* ignora */
+    return {};
   }
 }
 
-// Diretorio de config do Claude Code: respeita CLAUDE_CONFIG_DIR, senao ~/.claude.
-function dirConfig() {
-  return process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), ".claude");
-}
-
-// Le settings.json e procura a marketplace cujo source.repo casa com REPO.
-// Retorna: true (autoUpdate ligado), false (desligado), null (nao achou/erro).
-function autoUpdateLigado() {
-  try {
-    const p = path.join(dirConfig(), "settings.json");
-    const j = JSON.parse(fs.readFileSync(p, "utf8"));
-    const mkts = j.extraKnownMarketplaces || {};
-    for (const cfg of Object.values(mkts)) {
-      const repo = cfg?.source?.repo || "";
-      if (repo.toLowerCase().includes("sankhya-plugin")) {
-        return cfg.autoUpdate === true;
-      }
+// Sobe a partir de "inicio" ate achar um dir que contenha settings.json. Retorna o dir ou null.
+function subirAteSettings(inicio) {
+  let dir = inicio;
+  while (dir) {
+    try {
+      if (fs.existsSync(path.join(dir, "settings.json"))) return dir;
+    } catch {
+      /* ignora */
     }
-    return null; // marketplace nao encontrada nesse settings
-  } catch {
-    return null;
+    const pai = path.dirname(dir);
+    if (pai === dir) break;
+    dir = pai;
   }
+  return null;
 }
 
-// Marcador de "ja avisei recentemente" em diretorio persistente do plugin.
+// Lista de candidatos a diretorio de config, em ordem de prioridade.
+function dirsConfig(stdin) {
+  const cands = [];
+  // 1. derivado do transcript_path (<configdir>/projects/<...>/<id>.jsonl)
+  const tp = stdin && stdin.transcript_path;
+  if (tp) {
+    const d = subirAteSettings(path.dirname(tp));
+    if (d) cands.push(d);
+  }
+  // 2. env (quando existir)
+  if (process.env.CLAUDE_CONFIG_DIR) cands.push(process.env.CLAUDE_CONFIG_DIR);
+  // 3. fallbacks conhecidos
+  cands.push(path.join(os.homedir(), ".claude-snk"));
+  cands.push(path.join(os.homedir(), ".claude"));
+  return [...new Set(cands)];
+}
+
+// Procura a marketplace sankhya nos settings dos candidatos.
+// Retorna: true (autoUpdate on), false (off), null (nao achou em lugar nenhum).
+function autoUpdateLigado(stdin) {
+  for (const dir of dirsConfig(stdin)) {
+    try {
+      const j = JSON.parse(fs.readFileSync(path.join(dir, "settings.json"), "utf8"));
+      const mkts = j.extraKnownMarketplaces || {};
+      for (const cfg of Object.values(mkts)) {
+        const repo = (cfg && cfg.source && cfg.source.repo) || "";
+        if (repo.toLowerCase().includes(REPO_MARCADOR)) {
+          return cfg.autoUpdate === true;
+        }
+      }
+    } catch {
+      /* tenta o proximo candidato */
+    }
+  }
+  return null;
+}
+
+// Marcador de "ja avisei recentemente" no diretorio persistente do plugin.
 function caminhoMarcador() {
   const base = process.env.CLAUDE_PLUGIN_DATA || os.tmpdir();
   return path.join(base, ".sankhya-autoupdate-nudge");
@@ -69,28 +105,33 @@ function marcarAviso() {
 }
 
 function main() {
-  consumirStdin();
+  const stdin = lerStdinJson();
 
-  const estado = autoUpdateLigado();
+  const estado = autoUpdateLigado(stdin);
   if (estado === true) return; // ja ligado: silencio (auto-resolvido)
-  if (estado === null) return; // nao deu pra determinar: nao incomoda
+  if (estado === null) return; // marketplace nao encontrada: nao incomoda
   if (avisouRecente()) return; // ja avisou nas ultimas 24h
 
   marcarAviso();
-  process.stdout.write(
-    [
-      "",
-      "[plugin sankhya] auto-update DESLIGADO para este marketplace.",
-      "Para o plugin atualizar sozinho (skills/agents/hook), ligue:",
-      "  /plugin  ->  Marketplaces  ->  sankhya  ->  Enable auto-update",
-      "Ou no settings.json:",
-      '  "extraKnownMarketplaces": { "sankhya": { "source": { "source": "github", "repo": "' +
-        REPO +
-        '" }, "autoUpdate": true } }',
-      "(este aviso some quando ligar; no maximo 1x/dia)",
-      "",
-    ].join("\n")
-  );
+  const msg = [
+    "[plugin sankhya] auto-update DESLIGADO para este marketplace.",
+    "Para o plugin atualizar sozinho (skills/agents/hook), ligue em:",
+    "  /plugin  ->  Marketplaces  ->  sankhya  ->  Enable auto-update",
+    "(este aviso some quando ligar; no maximo 1x/dia)",
+  ].join("\n");
+
+  // Formato identico ao claude-mem (comprovado renderizando no terminal):
+  //   systemMessage      -> bloco VISIVEL ao usuario no terminal
+  //   additionalContext  -> contexto pro modelo
+  // Requer matcher no SessionStart do plugin.json (sem matcher nada e ecoado).
+  const saida = JSON.stringify({
+    hookSpecificOutput: {
+      hookEventName: "SessionStart",
+      additionalContext: msg,
+    },
+    systemMessage: msg,
+  });
+  process.stdout.write(saida);
 }
 
 try {
