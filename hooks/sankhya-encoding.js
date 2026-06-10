@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // Hook PostToolUse: converte arquivos relacionados ao Sankhya para ISO-8859-1.
-// Gate hibrido (basta UM ser verdadeiro):
-//   1. Pasta:    ancestral com "datadictionary" ou "dbscripts" (projeto Addon Studio).
-//   2. Conteudo: o arquivo contem marcadores de codigo Sankhya (imports, anotacoes, APIs).
+// Gate por tipo de arquivo:
+//   .xml:      SO converte se estiver dentro de pasta "datadictionary".
+//   .java/.kt: gate hibrido (basta UM) -> pasta ancestral "datadictionary"/"dbscripts"
+//              (projeto Addon Studio) OU conteudo com marcadores de codigo Sankhya.
 // Padrao definido na skill sankhya-addon (instructions/encoding-instructions.md).
 // Nunca bloqueia o fluxo: qualquer erro -> exit 0.
 
@@ -18,8 +19,6 @@ const MARCADORES = ["datadictionary", "dbscripts"];
 // .java/.kt: import/package sankhya, anotacoes do Addon Studio, APIs core.
 const RE_CODIGO_SANKHYA =
   /(?:\b(?:import|package)\s+[\w.]*sankhya)|@(?:ActionButton|Listener|Job|BusinessRule|DynamicForm|ServiceDefinition|Crud)\b|\b(?:JapeFactory|JapeSession|JapeWrapper|JapeWrapperFactory|DynamicVO|EntityFacade|MGEModelException|JdbcWrapper|NativeSql|DwfUtils|FluidCreateVO|AcaoRotinaJava|EventoProgramavelJava|RegraNegocioJava)\b/i;
-// .xml: namespaces/tags/referencias tipicas de XML Sankhya.
-const RE_XML_SANKHYA = /sankhya|datadictionary|MGEModelException|com\.sankhya|<\s*dwf/i;
 
 // Transliteracao de chars FORA do Latin-1 (> U+00FF) para equivalente ASCII.
 // Pontuacao tipografica de copy-paste (Word/web). Evita virar "?" e perder sentido.
@@ -66,12 +65,23 @@ function ehProjetoSankhya(inicio) {
   }
 }
 
+// XML so converte se estiver DENTRO de uma pasta "datadictionary".
+// Sobe a arvore a partir de "inicio" e confere o nome de cada ancestral.
+function estaDentroDeDatadictionary(inicio) {
+  let dir = inicio;
+  while (true) {
+    if (path.basename(dir).toLowerCase() === "datadictionary") return true;
+    const pai = path.dirname(dir);
+    if (pai === dir) return false; // chegou na raiz do filesystem
+    dir = pai;
+  }
+}
+
 // Gate 2: o conteudo do arquivo tem marcadores Sankhya? Olha so os primeiros
 // 64KB (suficiente p/ imports/anotacoes; barato em arquivo grande).
 function temConteudoSankhya(conteudo, ext) {
   const amostra = conteudo.length > 65536 ? conteudo.slice(0, 65536) : conteudo;
-  if (ext === ".xml") return RE_XML_SANKHYA.test(amostra);
-  return RE_CODIGO_SANKHYA.test(amostra); // .java / .kt
+  return RE_CODIGO_SANKHYA.test(amostra); // .java / .kt (XML usa gate de pasta)
 }
 
 // Decodifica buffer como UTF-8 estrito. Retorna null se nao for UTF-8 valido
@@ -142,12 +152,18 @@ function main() {
   let conteudo = decodificarUtf8Estrito(buffer);
   if (conteudo === null) return; // ja em ISO-8859-1 (ou binario): nao converte
 
-  // Gate hibrido: pasta Sankhya OU conteudo Sankhya.
-  if (
-    !ehProjetoSankhya(path.dirname(arquivo)) &&
-    !temConteudoSankhya(conteudo, ext)
-  ) {
-    return;
+  // XML: gate estrito. So converte se estiver dentro de pasta "datadictionary".
+  // Fora dela, XML nunca vira ISO-8859-1 (ignora pasta dbscripts e conteudo).
+  if (ext === ".xml") {
+    if (!estaDentroDeDatadictionary(path.dirname(arquivo))) return;
+  } else {
+    // .java/.kt: gate hibrido (pasta Sankhya OU conteudo Sankhya).
+    if (
+      !ehProjetoSankhya(path.dirname(arquivo)) &&
+      !temConteudoSankhya(conteudo, ext)
+    ) {
+      return;
+    }
   }
 
   // XML: garante encoding ISO-8859-1 na declaracao.
