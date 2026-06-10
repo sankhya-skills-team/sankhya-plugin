@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Hook PostToolUse: converte arquivos relacionados ao Sankhya para ISO-8859-1.
 // Gate por tipo de arquivo:
-//   .xml:      SO converte se estiver dentro de pasta "datadictionary".
+//   .xml:      SO converte se estiver dentro de pasta de artefato Sankhya
+//              (datadictionary/dbscripts/dbquerys/dashboards).
 //   .java/.kt: gate hibrido (basta UM) -> pasta ancestral "datadictionary"/"dbscripts"
 //              (projeto Addon Studio) OU conteudo com marcadores de codigo Sankhya.
 // Padrao definido na skill sankhya-addon (instructions/encoding-instructions.md).
@@ -14,6 +15,15 @@ const path = require("path");
 const EXTENSOES = new Set([".java", ".xml", ".kt"]);
 // Pastas que marcam a raiz de um projeto Addon Studio.
 const MARCADORES = ["datadictionary", "dbscripts"];
+// Pastas onde XML e SEMPRE artefato Sankhya em Latin-1. Se algum ancestral
+// bater, o XML e convertido. Cobre os artefatos reais sem pegar pom.xml (raiz)
+// nem .idea/*.xml (config de IDE).
+const PASTAS_XML_SANKHYA = new Set([
+  "datadictionary",
+  "dbscripts",
+  "dbquerys",
+  "dashboards",
+]);
 
 // Marcadores de CONTEUDO Sankhya (gate 2), por tipo de arquivo.
 // .java/.kt: import/package sankhya, anotacoes do Addon Studio, APIs core.
@@ -65,12 +75,13 @@ function ehProjetoSankhya(inicio) {
   }
 }
 
-// XML so converte se estiver DENTRO de uma pasta "datadictionary".
-// Sobe a arvore a partir de "inicio" e confere o nome de cada ancestral.
-function estaDentroDeDatadictionary(inicio) {
+// XML so converte se estiver DENTRO de uma das pastas de artefato Sankhya
+// (PASTAS_XML_SANKHYA). Sobe a arvore a partir de "inicio" e confere o nome
+// de cada ancestral.
+function xmlSankhyaPorPasta(inicio) {
   let dir = inicio;
   while (true) {
-    if (path.basename(dir).toLowerCase() === "datadictionary") return true;
+    if (PASTAS_XML_SANKHYA.has(path.basename(dir).toLowerCase())) return true;
     const pai = path.dirname(dir);
     if (pai === dir) return false; // chegou na raiz do filesystem
     dir = pai;
@@ -152,10 +163,10 @@ function main() {
   let conteudo = decodificarUtf8Estrito(buffer);
   if (conteudo === null) return; // ja em ISO-8859-1 (ou binario): nao converte
 
-  // XML: gate estrito. So converte se estiver dentro de pasta "datadictionary".
-  // Fora dela, XML nunca vira ISO-8859-1 (ignora pasta dbscripts e conteudo).
+  // XML: gate por pasta. So converte se algum ancestral for pasta de artefato
+  // Sankhya (PASTAS_XML_SANKHYA). Fora delas, XML fica UTF-8 (pom.xml, .idea/*).
   if (ext === ".xml") {
-    if (!estaDentroDeDatadictionary(path.dirname(arquivo))) return;
+    if (!xmlSankhyaPorPasta(path.dirname(arquivo))) return;
   } else {
     // .java/.kt: gate hibrido (pasta Sankhya OU conteudo Sankhya).
     if (
