@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-// Hook PostToolUse: converte arquivos de projeto Addon Studio Sankhya para ISO-8859-1.
-// Gate: so age se o arquivo estiver dentro de um projeto Sankhya (ancestral com
-//       pasta "datadictionary" ou "dbscripts"). Fora disso, sai silencioso.
+// Hook PostToolUse: converte arquivos relacionados ao Sankhya para ISO-8859-1.
+// Gate hibrido (basta UM ser verdadeiro):
+//   1. Pasta:    ancestral com "datadictionary" ou "dbscripts" (projeto Addon Studio).
+//   2. Conteudo: o arquivo contem marcadores de codigo Sankhya (imports, anotacoes, APIs).
 // Padrao definido na skill sankhya-addon (instructions/encoding-instructions.md).
 // Nunca bloqueia o fluxo: qualquer erro -> exit 0.
 
@@ -13,6 +14,29 @@ const EXTENSOES = new Set([".java", ".xml", ".kt"]);
 // Pastas que marcam a raiz de um projeto Addon Studio.
 const MARCADORES = ["datadictionary", "dbscripts"];
 
+// Marcadores de CONTEUDO Sankhya (gate 2), por tipo de arquivo.
+// .java/.kt: import/package sankhya, anotacoes do Addon Studio, APIs core.
+const RE_CODIGO_SANKHYA =
+  /(?:\b(?:import|package)\s+[\w.]*sankhya)|@(?:ActionButton|Listener|Job|BusinessRule|DynamicForm|ServiceDefinition|Crud)\b|\b(?:JapeFactory|JapeSession|JapeWrapper|JapeWrapperFactory|DynamicVO|EntityFacade|MGEModelException|JdbcWrapper|NativeSql|DwfUtils|FluidCreateVO|AcaoRotinaJava|EventoProgramavelJava|RegraNegocioJava)\b/i;
+// .xml: namespaces/tags/referencias tipicas de XML Sankhya.
+const RE_XML_SANKHYA = /sankhya|datadictionary|MGEModelException|com\.sankhya|<\s*dwf/i;
+
+// Transliteracao de chars FORA do Latin-1 (> U+00FF) para equivalente ASCII.
+// Pontuacao tipografica de copy-paste (Word/web). Evita virar "?" e perder sentido.
+const TRANSLITERACAO = {
+  0x2010: "-", 0x2011: "-", 0x2012: "-", 0x2013: "-", 0x2014: "--", 0x2015: "--", // tracos
+  0x2018: "'", 0x2019: "'", 0x201a: "'", 0x201b: "'", // aspas simples curvas
+  0x201c: '"', 0x201d: '"', 0x201e: '"', 0x201f: '"', // aspas duplas curvas
+  0x2032: "'", 0x2033: '"', // prime
+  0x2026: "...", // reticencias
+  0x2022: "*", 0x00b7: "*", // bullet
+  0x2190: "<-", 0x2192: "->", 0x2194: "<->", // setas
+  0x21d0: "<=", 0x21d2: "=>", // setas duplas
+  0x2212: "-", // sinal de menos
+  0x20ac: "EUR", 0x2122: "(TM)", 0x2120: "(SM)", // simbolos
+  0x2009: " ", 0x200a: " ", 0x2007: " ", 0x2008: " ", 0x202f: " ", // espacos finos
+};
+
 function lerStdin() {
   try {
     return fs.readFileSync(0, "utf8");
@@ -22,7 +46,7 @@ function lerStdin() {
 }
 
 // Sobe a arvore a partir de "inicio" procurando um ancestral que contenha
-// uma pasta marcadora. Retorna true se for projeto Sankhya.
+// uma pasta marcadora. Retorna true se for projeto Sankhya (gate 1).
 function ehProjetoSankhya(inicio) {
   let dir = inicio;
   while (true) {
@@ -42,6 +66,14 @@ function ehProjetoSankhya(inicio) {
   }
 }
 
+// Gate 2: o conteudo do arquivo tem marcadores Sankhya? Olha so os primeiros
+// 64KB (suficiente p/ imports/anotacoes; barato em arquivo grande).
+function temConteudoSankhya(conteudo, ext) {
+  const amostra = conteudo.length > 65536 ? conteudo.slice(0, 65536) : conteudo;
+  if (ext === ".xml") return RE_XML_SANKHYA.test(amostra);
+  return RE_CODIGO_SANKHYA.test(amostra); // .java / .kt
+}
+
 // Decodifica buffer como UTF-8 estrito. Retorna null se nao for UTF-8 valido
 // (provavelmente ja esta em ISO-8859-1 -> nao mexer).
 function decodificarUtf8Estrito(buffer) {
@@ -50,6 +82,31 @@ function decodificarUtf8Estrito(buffer) {
   } catch {
     return null;
   }
+}
+
+// UTF-8 -> ISO-8859-1, sem escape unicode:
+//   cp <= 0xFF        -> 1 byte Latin-1 direto (acentos pt-br sao lossless aqui).
+//   cp na tabela      -> transliteracao ASCII (ex: "—" -> "--").
+//   resto (> 0xFF)    -> "?" e registra o char perdido para avisar.
+function paraLatin1(conteudo) {
+  const bytes = [];
+  const perdidos = new Set();
+  let transliterados = 0;
+  for (const ch of conteudo) {
+    const cp = ch.codePointAt(0);
+    if (cp <= 0xff) {
+      bytes.push(cp);
+    } else if (TRANSLITERACAO[cp] !== undefined) {
+      for (let i = 0; i < TRANSLITERACAO[cp].length; i++) {
+        bytes.push(TRANSLITERACAO[cp].charCodeAt(i));
+      }
+      transliterados++;
+    } else {
+      bytes.push(0x3f); // '?'
+      perdidos.add("U+" + cp.toString(16).toUpperCase().padStart(4, "0"));
+    }
+  }
+  return { buffer: Buffer.from(bytes), perdidos, transliterados };
 }
 
 function main() {
@@ -80,11 +137,18 @@ function main() {
   }
 
   if (!fs.existsSync(arquivo)) return;
-  if (!ehProjetoSankhya(path.dirname(arquivo))) return; // gate Sankhya
 
   const buffer = fs.readFileSync(arquivo);
   let conteudo = decodificarUtf8Estrito(buffer);
   if (conteudo === null) return; // ja em ISO-8859-1 (ou binario): nao converte
+
+  // Gate hibrido: pasta Sankhya OU conteudo Sankhya.
+  if (
+    !ehProjetoSankhya(path.dirname(arquivo)) &&
+    !temConteudoSankhya(conteudo, ext)
+  ) {
+    return;
+  }
 
   // XML: garante encoding ISO-8859-1 na declaracao.
   if (ext === ".xml") {
@@ -101,21 +165,21 @@ function main() {
     }
   }
 
-  // UTF-8 -> ISO-8859-1: cada code point < 256 vira 1 byte Latin-1.
-  // Acentos pt-br (U+00C0..U+00FF) cabem; chars fora da faixa viram "?".
-  const saida = Buffer.from(
-    Array.from(conteudo, (c) => {
-      const cp = c.codePointAt(0);
-      return cp <= 0xff ? cp : 0x3f; // 0x3f = '?'
-    })
-  );
+  const { buffer: saida, perdidos, transliterados } = paraLatin1(conteudo);
 
   // So grava se mudou de fato (idempotente).
   if (!buffer.equals(saida)) {
     fs.writeFileSync(arquivo, saida);
-    process.stderr.write(
-      `[sankhya-encoding] ${path.basename(arquivo)} convertido para ISO-8859-1.\n`
-    );
+    const nome = path.basename(arquivo);
+    let msg = `[sankhya-encoding] ${nome} convertido para ISO-8859-1`;
+    if (transliterados > 0) msg += ` (${transliterados} char(s) transliterado(s))`;
+    process.stderr.write(msg + ".\n");
+    if (perdidos.size > 0) {
+      process.stderr.write(
+        `[sankhya-encoding] AVISO: ${nome} tem char(s) sem equivalente Latin-1, ` +
+          `substituido(s) por "?": ${[...perdidos].join(", ")}.\n`
+      );
+    }
   }
 }
 
