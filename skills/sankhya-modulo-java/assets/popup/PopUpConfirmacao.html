@@ -1,0 +1,22 @@
+<sk-vbox gap="16" style="padding: 16px">
+    <div style="text-align: center">
+        <sk-icon font-icon="warning" style="font-size: 48px; color: #f39c12"></sk-icon>
+        <h3 style="margin-top: 16px">{{mensagem}}</h3>
+        <p style="color: #666">{{detalhe}}</p>
+    </div>
+
+    <div sk-display="flex" style="justify-content: center; gap: 16px">
+        <button class="btn" ng-click="confirmar()" brand>
+            <sk-hbox gap="8" style="align-items: center">
+                <sk-icon font-icon="check"></sk-icon>
+                <span>Confirmar</span>
+            </sk-hbox>
+        </button>
+        <button class="btn" ng-click="$dismiss()" danger>
+            <sk-hbox gap="8" style="align-items: center">
+                <sk-icon font-icon="times"></sk-icon>
+                <span>Cancelar</span>
+            </sk-hbox>
+        </button>
+    </div>
+</sk-vbox>

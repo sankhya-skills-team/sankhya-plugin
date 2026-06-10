@@ -1,0 +1,23 @@
+{
+  "skill_name": "sankhya-addon",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Preciso criar um botão de ação na tela de pedidos que calcula o total com desconto de cada item selecionado e grava o resultado no campo VLRDESCONTO da tabela TGFITE. O desconto é de 10% sobre o VLRUNIT multiplicado pela QTDNEG.",
+      "expected_output": "Action Button enxuta que delega para um service, com repository para acesso à TGFITE, DTO para request/resultado, enum ou constante para o percentual, sem lógica de negócio na action, com estrutura de pacotes correta e explicação em português.",
+      "files": []
+    },
+    {
+      "id": 1,
+      "prompt": "Tenho esse Listener que ficou gigante, com toda a lógica dentro do afterInsert. Preciso refatorar:\n\n```java\npublic class PedidoListener extends PersistenceEventAdapter {\n\n    @Override\n    public void afterInsert(PersistenceEvent event) throws Exception {\n        DynamicVO vo = (DynamicVO) event.getVo();\n        BigDecimal nunota = vo.asBigDecimal(\"NUNOTA\");\n        String tipoNeg = vo.asString(\"TIPONEG\");\n\n        if (\"V\".equals(tipoNeg)) {\n            DynamicVO[] itens = (DynamicVO[]) JapeFactory.dao(\"ItemNota\")\n                .findByProperties(new String[]{\"NUNOTA\"}, new Object[]{nunota});\n            BigDecimal totalDesconto = BigDecimal.ZERO;\n            for (DynamicVO item : itens) {\n                BigDecimal vlrUnit = item.asBigDecimal(\"VLRUNIT\");\n                BigDecimal qtd = item.asBigDecimal(\"QTDNEG\");\n                BigDecimal desconto = vlrUnit.multiply(qtd).multiply(new BigDecimal(\"0.10\"));\n                totalDesconto = totalDesconto.add(desconto);\n                JapeFactory.dao(\"ItemNota\").prepareToUpdateByPK(item.asBigDecimal(\"ID\"))\n                    .set(\"VLRDESCONTO\", desconto).update();\n            }\n            JapeFactory.dao(\"Nota\").prepareToUpdateByPK(nunota)\n                .set(\"VLRTOTALDESCONTO\", totalDesconto).update();\n        }\n    }\n}\n```",
+      "expected_output": "Refatoração que extrai lógica para service de aplicação, service de domínio para cálculo, repository para acesso a dados, sem SQL em loop, usando enum para o tipo de negociação, mantendo o Listener enxuto. Explicação em português do que foi feito e por quê.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Preciso de um Job agendado que rode toda madrugada (às 2h da manhã) e consolide as vendas do dia anterior, somando VLRTOT por CODPARC e gravando o resultado na tabela TSIADDON_RESUMO com os campos CODPARC, DTREF e VLRTOTAL.",
+      "expected_output": "Job com agendamento configurado, service de consolidação, repository para leitura das vendas e gravação no TSIADDON_RESUMO, sem SQL em loop, com tratamento de erros separado, script SQL para criação da tabela, e explicação em português.",
+      "files": []
+    }
+  ]
+}

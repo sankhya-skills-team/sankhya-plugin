@@ -1,0 +1,24 @@
+{
+  "name": "sankhya",
+  "version": "1.0.0",
+  "description": "Skills, agents e hook de encoding para desenvolvimento no ERP Sankhya: Addon Studio, Modulo Java, Relatorios Jasper e BI/Dashboards.",
+  "author": {
+    "name": "Sankhya Skills Team",
+    "url": "https://github.com/sankhya-skills-team"
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/sankhya-encoding.js\"",
+            "timeout": 10,
+            "statusMessage": "Validando encoding Sankhya (ISO-8859-1)..."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "sankhya",
+  "owner": {
+    "name": "Sankhya Skills Team",
+    "url": "https://github.com/sankhya-skills-team"
+  },
+  "plugins": [
+    {
+      "name": "sankhya",
+      "source": "./",
+      "description": "Skills, agents e hook de encoding para desenvolvimento no ERP Sankhya.",
+      "category": "development"
+    }
+  ]
+}

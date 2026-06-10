@@ -1,0 +1,595 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="orcamento_capa" language="groovy" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="347"/>
+	<property name="ireport.definition"/>
+	<style name="estilo_status" mode="Transparent" forecolor="#000000" backcolor="#FFFFFF" fontSize="14" isItalic="false" isUnderline="false">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$F{STATUS}.intValue() <= 5]]></conditionExpression>
+			<style forecolor="#FF0000" fontSize="14" isItalic="false" isUnderline="false"/>
+		</conditionalStyle>
+	</style>
+	<parameter name="PK_ID" class="java.math.BigDecimal" isForPrompting="false">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["C:\\Users\\SANKHYA\\Documents\\Hidraulica Brasil\\Orçamento - Novo\\"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PDIR_MODELO" class="java.lang.String" isForPrompting="false"/>
+	<queryString>
+		<![CDATA[SELECT
+/*DADOS DA EMPRESA*/
+EMP.RAZAOSOCIAL AS RAZAOSOCIAL_EMP,
+Tim_Formataendereco(EEND.TIPO, EEND.NOMEEND, EMP.NUMEND, EMP.COMPLEMENTO, EBAI.NOMEBAI, NULL, NULL) AS ENDERECO_EMP,
+ECID.NOMECID ||' - '|| EUF.UF AS CIDADE_EMP,
+EMP.CEP AS CEP_EMP,
+TIM_FORMATATELEFONE(EMP.TELEFONE) AS TELEFONE_EMP,
+FORMATAR_CPF_CNPJ(EMP.CGC) AS CNPJ_EMP,
+EMP.INSCESTAD AS INSCESTAD_EMP,
+EMP.INSCMUN AS INSCMUN_EMP,
+EMP.EMAIL AS EMAIL_EMP,
+/*DADOS DO CLIENTE*/
+OS.NUNOTA,
+CAB.DTNEG,
+PAR.RAZAOSOCIAL AS  RAZAOSOCIAL_PAR,
+Tim_Formataendereco(END.TIPO, END.NOMEEND, PAR.NUMEND, PAR.COMPLEMENTO, BAI.NOMEBAI, NULL, NULL) AS ENDERECO_PAR,
+CID.NOMECID ||' - '|| UF.UF AS CIDADE_PAR,
+PAR.CEP AS CEP_PAR,
+FORMATAR_CPF_CNPJ(PAR.CGC_CPF) CNPJ_PAR,
+PAR.INSCESTADNAUF AS INSCESTAD_PAR,
+PAR.INSCMUN AS INSCMUN_PAR,
+VEN.APELIDO AS VENDEDOR,
+TPV.DESCRTIPVENDA,
+NVL(CTT.TELEFONE, PAR.TELEFONE) AS TELEFONE_PAR,
+NVL(CTT.CELULAR, PAR.FAX) AS CELULAR_PAR,
+CTT.NOMECONTATO AS CONTATO_PAR,
+NVL(CTT.EMAIL, PAR.EMAIL) AS EMAIL_PAR,
+/*DADOS DA OS*/
+ROWNUM,
+OS.ID,
+OS.NUOS,
+OS.DESCRNOTA,
+OS.STATUS,
+OS.REVISAO,
+OS.OBSERVACAO
+FROM AD_CONTROLEOS OS
+LEFT JOIN TGFPRO PRO ON PRO.CODPROD = OS.CODITEM
+LEFT JOIN TGFPAR PAR ON PAR.CODPARC = OS.CODPARC
+LEFT JOIN TSIEND END ON END.CODEND = PAR.CODEND
+LEFT JOIN TSIBAI BAI ON BAI.CODBAI = PAR.CODBAI
+LEFT JOIN TSICID CID ON CID.CODCID = PAR.CODCID
+LEFT JOIN TSIUFS UF ON UF.CODUF = CID.UF
+LEFT JOIN TGFVEN VEN ON VEN.CODVEND = OS.VENDEDOR
+LEFT JOIN TSIEMP EMP ON EMP.CODEMP = OS.CODEMP
+LEFT JOIN TSIEND EEND ON EEND.CODEND = EMP.CODEND
+LEFT JOIN TSIBAI EBAI ON EBAI.CODBAI = EMP.CODBAI
+LEFT JOIN TSICID ECID ON ECID.CODCID = EMP.CODCID
+LEFT JOIN TSIUFS EUF ON EUF.CODUF = ECID.UF
+LEFT JOIN TGFCAB CAB ON CAB.NUNOTA = OS.NUNOTA
+LEFT JOIN TGFTPV TPV ON TPV.CODTIPVENDA = OS.CODTIPVENDA AND TPV.DHALTER = (SELECT MAX(B.DHALTER) FROM TGFTPV B WHERE B.CODTIPVENDA = TPV.CODTIPVENDA AND B.DHALTER <= SYSDATE)
+LEFT JOIN TGFCTT CTT ON CTT.CODCONTATO = CAB.CODCONTATO AND CTT.CODPARC = CAB.CODPARC
+WHERE OS.ID = (SELECT C2.ID
+                FROM AD_CONTROLEOS C1
+                INNER JOIN AD_CONTROLEOS C2 ON C2.NUOS = C1.NUOS
+                AND C2.REVISAO = (SELECT MAX(C3.REVISAO) FROM AD_CONTROLEOS C3 WHERE C3.NUOS = C1.NUOS)
+                WHERE C1.ID = $P{PK_ID})
+ORDER BY OS.NUOS ASC]]>
+	</queryString>
+	<field name="RAZAOSOCIAL_EMP" class="java.lang.String"/>
+	<field name="ENDERECO_EMP" class="java.lang.String"/>
+	<field name="CIDADE_EMP" class="java.lang.String"/>
+	<field name="CEP_EMP" class="java.lang.String"/>
+	<field name="TELEFONE_EMP" class="java.lang.String"/>
+	<field name="CNPJ_EMP" class="java.lang.String"/>
+	<field name="INSCESTAD_EMP" class="java.lang.String"/>
+	<field name="INSCMUN_EMP" class="java.lang.String"/>
+	<field name="EMAIL_EMP" class="java.lang.String"/>
+	<field name="NUNOTA" class="java.math.BigDecimal"/>
+	<field name="DTNEG" class="java.sql.Timestamp"/>
+	<field name="RAZAOSOCIAL_PAR" class="java.lang.String"/>
+	<field name="ENDERECO_PAR" class="java.lang.String"/>
+	<field name="CIDADE_PAR" class="java.lang.String"/>
+	<field name="CEP_PAR" class="java.lang.String"/>
+	<field name="CNPJ_PAR" class="java.lang.String"/>
+	<field name="INSCESTAD_PAR" class="java.lang.String"/>
+	<field name="INSCMUN_PAR" class="java.lang.String"/>
+	<field name="VENDEDOR" class="java.lang.String"/>
+	<field name="DESCRTIPVENDA" class="java.lang.String"/>
+	<field name="TELEFONE_PAR" class="java.lang.String"/>
+	<field name="CELULAR_PAR" class="java.lang.String"/>
+	<field name="CONTATO_PAR" class="java.lang.String"/>
+	<field name="EMAIL_PAR" class="java.lang.String"/>
+	<field name="ROWNUM" class="java.math.BigDecimal"/>
+	<field name="ID" class="java.math.BigDecimal"/>
+	<field name="NUOS" class="java.lang.String"/>
+	<field name="DESCRNOTA" class="java.lang.String"/>
+	<field name="STATUS" class="java.math.BigDecimal"/>
+	<field name="REVISAO" class="java.math.BigDecimal"/>
+	<field name="OBSERVACAO" class="java.lang.String"/>
+	<variable name="TOTOS" class="java.math.BigDecimal" resetType="Group" resetGroup="OS" calculation="Sum"/>
+	<variable name="TOTORC" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$V{TOTOS}]]></variableExpression>
+	</variable>
+	<variable name="TOT_LIQUIDO" class="java.math.BigDecimal" resetType="Group" resetGroup="OS" calculation="Sum"/>
+	<variable name="TOTAL_ACUMULADO" class="java.math.BigDecimal" calculation="Sum"/>
+	<variable name="TOTAL_DESC_SERV" class="java.math.BigDecimal" calculation="Sum"/>
+	<variable name="TOTAL_DESC_PECAS" class="java.math.BigDecimal" calculation="Sum"/>
+	<group name="OS">
+		<groupExpression><![CDATA[$F{NUOS}]]></groupExpression>
+		<groupHeader>
+			<band height="16">
+				<staticText>
+					<reportElement mode="Opaque" x="576" y="0" width="39" height="16" backcolor="#CCCCCC"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement verticalAlignment="Middle">
+						<font isBold="true"/>
+					</textElement>
+					<text><![CDATA[Nº OS:]]></text>
+				</staticText>
+				<textField isBlankWhenNull="true">
+					<reportElement mode="Opaque" x="615" y="0" width="118" height="16" backcolor="#CCCCCC"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+						<rightPen lineWidth="0.0"/>
+					</box>
+					<textElement verticalAlignment="Middle">
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{NUOS}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement mode="Opaque" x="0" y="0" width="576" height="16" backcolor="#CCCCCC"/>
+					<box leftPadding="3" rightPadding="3">
+						<topPen lineWidth="0.5"/>
+						<leftPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement verticalAlignment="Middle">
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{DESCRNOTA}]]></textFieldExpression>
+				</textField>
+				<textField isBlankWhenNull="true">
+					<reportElement mode="Opaque" x="772" y="0" width="30" height="16" backcolor="#CCCCCC"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+						<rightPen lineWidth="0.5"/>
+					</box>
+					<textElement verticalAlignment="Middle">
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{REVISAO}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement mode="Opaque" x="732" y="0" width="40" height="16" backcolor="#CCCCCC"/>
+					<box>
+						<topPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+					</box>
+					<textElement verticalAlignment="Middle">
+						<font isBold="true"/>
+					</textElement>
+					<text><![CDATA[Rev.:]]></text>
+				</staticText>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="95">
+				<textField>
+					<reportElement mode="Opaque" x="0" y="74" width="692" height="16" backcolor="#CCCCCC"/>
+					<box leftPadding="2" rightPadding="2">
+						<topPen lineWidth="0.5"/>
+						<leftPen lineWidth="0.5"/>
+						<bottomPen lineWidth="0.5"/>
+						<rightPen lineWidth="0.0"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA["TOTAL OS Nº " + $F{NUOS}]]></textFieldExpression>
+				</textField>
+				<textField pattern="¤ #,##0.00" isBlankWhenNull="true">
+					<reportElement mode="Opaque" x="692" y="74" width="110" height="16" backcolor="#CCCCCC"/>
+					<box leftPadding="2" rightPadding="2">
+						<topPen lineWidth="0.5"/>
+						<leftPen lineWidth="0.0"/>
+						<bottomPen lineWidth="0.5"/>
+						<rightPen lineWidth="0.5"/>
+					</box>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{TOT_LIQUIDO}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement x="0" y="16" width="802" height="58"/>
+					<textElement markup="html">
+						<font size="8"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{OBSERVACAO}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement mode="Transparent" x="0" y="1" width="164" height="15" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" lineSpacing="Single" markup="none">
+						<font fontName="SansSerif" size="9" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					</textElement>
+					<text><![CDATA[Observação da OS:]]></text>
+				</staticText>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="444">
+			<textField>
+				<reportElement style="estilo_status" x="0" y="86" width="802" height="32"/>
+				<box>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($F{STATUS} != null && $F{STATUS}.intValue() <= 5)
+? "SIMULAÇÃO, SEM VALOR COMERCIAL!"
+: "ORÇAMENTO"]]></textFieldExpression>
+			</textField>
+			<image hAlign="Center" vAlign="Middle">
+				<reportElement x="0" y="0" width="802" height="86"/>
+				<box>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<imageExpression class="java.lang.String"><![CDATA[$P{PDIR_MODELO}+"logo.png"]]></imageExpression>
+			</image>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="180" width="802" height="16"/>
+				<box leftPadding="3"/>
+				<textElement verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Razão Social: " + ($F{RAZAOSOCIAL_EMP} == null ? "" : $F{RAZAOSOCIAL_EMP})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="196" width="802" height="16"/>
+				<box leftPadding="3"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Endereço: " + ($F{ENDERECO_EMP} == null ? "" : $F{ENDERECO_EMP})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="212" width="403" height="16"/>
+				<box leftPadding="3"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Cidade: " + ($F{CIDADE_EMP} == null ? "" : $F{CIDADE_EMP})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="228" width="403" height="16"/>
+				<box leftPadding="3"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["CEP: " + ($F{CEP_EMP} == null ? "" : $F{CEP_EMP})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="403" y="212" width="399" height="16"/>
+				<box leftPadding="3"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Telefone: " + ($F{TELEFONE_EMP} == null ? "" : $F{TELEFONE_EMP})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="244" width="403" height="16"/>
+				<box leftPadding="3"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["CNPJ: " + ($F{CNPJ_EMP} == null ? "" : $F{CNPJ_EMP})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="403" y="228" width="399" height="16"/>
+				<box leftPadding="3"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Email: " + ($F{EMAIL_EMP} == null ? "" : $F{EMAIL_EMP})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="403" y="244" width="399" height="16"/>
+				<box leftPadding="3"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Inscrição Estadual: " + ($F{INSCESTAD_EMP} == null ? "" : $F{INSCESTAD_EMP})]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="268" width="802" height="20" backcolor="#CCCCCC"/>
+				<box leftPadding="0">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[CLIENTE]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="152" width="802" height="20" backcolor="#CCCCCC"/>
+				<box leftPadding="0">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[EMPRESA]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="296" width="802" height="16"/>
+				<textElement verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Razão Social: " + ($F{RAZAOSOCIAL_PAR} == null ? "" : $F{RAZAOSOCIAL_PAR})]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="403" y="118" width="214" height="16"/>
+				<box>
+					<bottomPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Nº: " + ($F{NUNOTA} != null ? $F{NUNOTA}.toString() : "0")]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="118" width="403" height="16"/>
+				<box leftPadding="3">
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Vendedor: " + ($F{VENDEDOR} == null || $F{VENDEDOR} == "<SEM VENDEDOR>" ? "" : $F{VENDEDOR})]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true">
+				<reportElement x="617" y="118" width="185" height="16"/>
+				<box rightPadding="3">
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Data: " + ($F{DTNEG} == null ? "" : new java.text.SimpleDateFormat("dd/MM/yyyy").format($F{DTNEG}))]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="312" width="802" height="16"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Endereço: " + ($F{ENDERECO_PAR} == null ? "" : $F{ENDERECO_PAR})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="328" width="403" height="16"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Cidade: " + ($F{CIDADE_PAR} == null ? "" : $F{CIDADE_PAR})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="344" width="403" height="16"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["CEP: " + ($F{CEP_PAR} == null ? "" : $F{CEP_PAR})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="360" width="403" height="16"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["CNPJ/CPF: " + ($F{CNPJ_PAR} == null ? "" : $F{CNPJ_PAR})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="376" width="403" height="16"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Inscrição Estadual: " + ($F{INSCESTAD_PAR} == null ? "" : $F{INSCESTAD_PAR})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="403" y="328" width="399" height="16"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Telefone: " + ($F{TELEFONE_PAR} == null ? "" : $F{TELEFONE_PAR})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="403" y="344" width="399" height="16"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Celular: " + ($F{CELULAR_PAR} == null ? "" : $F{CELULAR_PAR})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="403" y="360" width="399" height="16"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Nome: " + ($F{CONTATO_PAR} == null ? "" : $F{CONTATO_PAR})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="403" y="376" width="399" height="16"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["E-mail: " + ($F{EMAIL_PAR} == null ? "" : $F{EMAIL_PAR})]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="392" width="802" height="16"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression class="java.lang.String"><![CDATA["Condição Pagamento: " + ($F{DESCRTIPVENDA} == null ? "" : $F{DESCRTIPVENDA})]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="416" width="802" height="20" backcolor="#CCCCCC"/>
+				<box leftPadding="0">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ITENS / OS]]></text>
+			</staticText>
+		</band>
+	</title>
+	<detail>
+		<band height="31" splitType="Stretch">
+			<subreport>
+				<reportElement key="Itens" x="0" y="8" width="802" height="23"/>
+				<subreportParameter name="ID">
+					<subreportParameterExpression><![CDATA[$F{ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<returnValue subreportVariable="VLRTOT_1" toVariable="TOTOS" calculation="Sum"/>
+				<returnValue subreportVariable="VLRTOTLIQ" toVariable="TOT_LIQUIDO" calculation="Sum"/>
+				<returnValue subreportVariable="VLRTOT_1" toVariable="TOTAL_ACUMULADO" calculation="Sum"/>
+				<returnValue subreportVariable="VLRTOTDESC" toVariable="TOTAL_DESC_SERV" calculation="Sum"/>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "Itens.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="35">
+			<subreport>
+				<reportElement key="Itens_mat" x="0" y="8" width="802" height="23"/>
+				<subreportParameter name="ID">
+					<subreportParameterExpression><![CDATA[$F{ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<returnValue subreportVariable="VLRTOTAL_1" toVariable="TOTOS" calculation="Sum"/>
+				<returnValue subreportVariable="VLRTOTLIQ" toVariable="TOT_LIQUIDO" calculation="Sum"/>
+				<returnValue subreportVariable="VLRTOTAL_1" toVariable="TOTAL_ACUMULADO" calculation="Sum"/>
+				<returnValue subreportVariable="VLRTOTDESC" toVariable="TOTAL_DESC_PECAS" calculation="Sum"/>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "Itens_mat.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="16" splitType="Stretch">
+			<textField pattern="dd/MM/yyyy HH:mm">
+				<reportElement x="0" y="0" width="194" height="16"/>
+				<box leftPadding="10"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="692" y="0" width="80" height="16"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Pagína "+$V{PAGE_NUMBER}+" de"]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="772" y="0" width="30" height="16"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="68" splitType="Stretch">
+			<textField pattern="¤ #,##0.00" isBlankWhenNull="true">
+				<reportElement mode="Opaque" x="692" y="4" width="110" height="16" backcolor="#CCCCCC"/>
+				<box leftPadding="2" rightPadding="2">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{TOTAL_ACUMULADO}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement mode="Opaque" x="0" y="4" width="692" height="16" backcolor="#CCCCCC"/>
+				<box leftPadding="2" rightPadding="2">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["TOTAL DO ORÇAMENTO"]]></textFieldExpression>
+			</textField>
+			<textField pattern="¤ #,##0.00" isBlankWhenNull="true">
+				<reportElement mode="Opaque" x="692" y="20" width="110" height="16" backcolor="#CCCCCC"/>
+				<box leftPadding="2" rightPadding="2">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{TOTAL_DESC_SERV}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement mode="Opaque" x="0" y="20" width="692" height="16" backcolor="#CCCCCC"/>
+				<box leftPadding="2" rightPadding="2">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["TOTAL DESC. SERVIÇO(S)"]]></textFieldExpression>
+			</textField>
+			<textField pattern="¤ #,##0.00" isBlankWhenNull="true">
+				<reportElement mode="Opaque" x="692" y="36" width="110" height="16" backcolor="#CCCCCC"/>
+				<box leftPadding="2" rightPadding="2">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{TOTAL_DESC_PECAS}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement mode="Opaque" x="0" y="36" width="692" height="16" backcolor="#CCCCCC"/>
+				<box leftPadding="2" rightPadding="2">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["TOTAL DESC. PEÇA(S)"]]></textFieldExpression>
+			</textField>
+			<textField pattern="¤ #,##0.00" isBlankWhenNull="true">
+				<reportElement mode="Opaque" x="692" y="52" width="110" height="16" backcolor="#CCCCCC"/>
+				<box leftPadding="2" rightPadding="2">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{TOT_LIQUIDO}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement mode="Opaque" x="0" y="52" width="692" height="16" backcolor="#CCCCCC"/>
+				<box leftPadding="2" rightPadding="2">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["TOTAL DO ORÇAMENTO C/ DESC."]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+</jasperReport>

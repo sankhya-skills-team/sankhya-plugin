@@ -1,0 +1,29 @@
+<sk-dataset
+    id="dsDetalhes"
+    entity-name="SUBSTITUIR_COM_ENTIDADE"
+    sk-dataset-created="onDatasetCreated(dataset)"
+    sk-standalone>
+    <sk-field pattern="CAMPO1,CAMPO2,CAMPO3,CAMPO4"></sk-field>
+</sk-dataset>
+
+<sk-vbox gap="8" style="padding: 8px">
+    <label style="font-weight: bold; font-size: 14px">
+        Detalhes — Registro: {{codRegistro}}
+    </label>
+
+    <sk-vbox flex style="height: 300px">
+        <sk-datagrid
+            sk-dataset="dsDetalhes"
+            sk-allow-multiple-selection="false"
+            sk-editable="false">
+            <sk-datagrid-custom-column sk-field-name="CAMPO1" width="100"/>
+            <sk-datagrid-custom-column sk-field-name="CAMPO2" width="250"/>
+            <sk-datagrid-custom-column sk-field-name="CAMPO3" width="100"/>
+            <sk-datagrid-custom-column sk-field-name="CAMPO4" width="100"/>
+        </sk-datagrid>
+    </sk-vbox>
+
+    <div sk-display="flex" style="justify-content: flex-end">
+        <button class="btn" ng-click="$dismiss()">Fechar</button>
+    </div>
+</sk-vbox>

@@ -1,0 +1,10 @@
+# Lixo de IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Nunca versionar credenciais
+*.env
+.env
+!.env.example
