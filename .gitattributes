@@ -1,0 +1,19 @@
+# Normaliza line endings no repo: LF sempre (multi-OS Windows/Linux/macOS).
+# Garante que hooks node rodem igual nos 3 SO e que o diff nao polua por CRLF.
+* text=auto eol=lf
+
+# Codigo/config/docs: LF explicito.
+*.js   text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.xml  text eol=lf
+*.jrxml text eol=lf
+*.sh   text eol=lf
+
+# Binarios: nunca normalizar (se vierem a existir).
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.pdf  binary
+*.skill binary

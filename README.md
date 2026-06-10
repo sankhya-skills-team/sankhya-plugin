@@ -28,7 +28,18 @@ padrão de encoding do Addon Studio. Só age dentro de projeto Sankhya (ancestra
 /plugin install sankhya@sankhya
 ```
 
-Requer `node` no PATH (para os hooks).
+### Pré-requisito (todos os SO)
+
+Os hooks são **Node.js puro** — funcionam igual em **Windows, Linux e macOS**.
+Exige apenas `node` no `PATH`:
+
+| SO | Instalar node |
+|---|---|
+| Windows | `winget install OpenJS.NodeJS` ou instalador oficial |
+| Linux | gerenciador da distro (`apt/dnf/pacman`) ou `nvm` |
+| macOS | `brew install node` ou `nvm` |
+
+Verificar: `node --version`. Sem dependência de shell, caminho absoluto ou script `.ps1/.sh`.
 
 ## Atualização
 
