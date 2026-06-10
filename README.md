@@ -10,16 +10,19 @@ Plugin do Claude Code com skills, agents e hook para desenvolvimento no **ERP Sa
 | `sankhya-addon` | Addon Studio: `@ActionButton`, `@Listener`, `@Job`, `DynamicVO`, `JapeFactory`, SDK Sankhya. |
 | `sankhya-modulo-java` | Módulo Java: `EventoProgramavelJava`, `AcaoRotinaJava`, `RegraNegocioJava`, helpers dstech. |
 | `sankhya-relatorio` | Relatórios JasperReports / iReport / `.jrxml`, impressão Sankhya. |
-| `sankhya-bi` | Dashboards e componentes de BI no Sankhya OM (Construtor de Componentes). |
 
 ### Agents (`agents/`)
 Suíte de code review para projetos Java Sankhya. `code-review-orchestrator` coordena os demais:
 `arch-reviewer`, `clean-code`, `security-scanner`, `perf-analyzer`, `doc-checker`.
 
-### Hook (`hooks/sankhya-encoding.js`)
-`PostToolUse` (Write/Edit/MultiEdit). Converte `.java/.xml/.kt` para **ISO-8859-1** —
-padrão de encoding do Addon Studio. Só age dentro de projeto Sankhya (ancestral com pasta
-`datadictionary` ou `dbscripts`). Idempotente; nunca bloqueia o fluxo.
+### Hooks (`hooks/`)
+
+| Hook | Evento | O que faz |
+|---|---|---|
+| `sankhya-encoding.js` | `PostToolUse` (Write/Edit/MultiEdit) | Converte `.java/.xml/.kt` para **ISO-8859-1** (encoding do Addon Studio) + transliteração ASCII de acentos. Gate híbrido por conteúdo: só age dentro de projeto Sankhya (ancestral com `datadictionary`/`dbscripts`) ou arquivo com marcadores Sankhya. Idempotente; nunca bloqueia o fluxo. |
+| `sankhya-autoupdate-nudge.js` | `SessionStart` (startup/clear/compact) | Lembra 1×/dia para ligar o auto-update do marketplace, se estiver desligado. Só leitura — nunca edita config. |
+
+Ambos são **Node.js puro** (multi-OS) e exigem só `node` no `PATH`.
 
 ## Instalação
 
