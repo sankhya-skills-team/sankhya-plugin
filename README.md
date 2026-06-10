@@ -28,13 +28,42 @@ padrão de encoding do Addon Studio. Só age dentro de projeto Sankhya (ancestra
 /plugin install sankhya@sankhya
 ```
 
-Requer `node` no PATH (para o hook).
+Requer `node` no PATH (para os hooks).
 
 ## Atualização
 
+Manual:
 ```
-/plugin update sankhya
+/plugin marketplace update sankhya   # recarrega catálogo
+/plugin update sankhya@sankhya       # baixa + aplica
+/reload-plugins                      # ativa sem reiniciar
 ```
+
+### Auto-update (recomendado)
+
+Por padrão o auto-update vem **desligado** em marketplace não-oficial. Com ele ligado,
+o Claude Code baixa a versão nova ao iniciar; basta `/reload-plugins`.
+
+Ligar pela UI:
+```
+/plugin  ->  Marketplaces  ->  sankhya  ->  Enable auto-update
+```
+
+Ou no seu `settings.json`:
+```json
+{
+  "extraKnownMarketplaces": {
+    "sankhya": {
+      "source": { "source": "github", "repo": "sankhya-skills-team/sankhya-plugin" },
+      "autoUpdate": true
+    }
+  }
+}
+```
+
+> O plugin lembra **1×/dia** no início da sessão se o auto-update estiver desligado
+> (hook `sankhya-autoupdate-nudge.js`, só leitura — nunca edita sua config). O aviso
+> some sozinho quando você liga.
 
 ## Como adicionar conteúdo ao plugin
 
