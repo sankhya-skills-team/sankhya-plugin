@@ -19,7 +19,7 @@ Suíte de code review para projetos Java Sankhya. `code-review-orchestrator` coo
 
 | Hook | Evento | O que faz |
 |---|---|---|
-| `sankhya-encoding.js` | `PostToolUse` (Write/Edit/MultiEdit) | Converte `.java/.xml/.kt` para **ISO-8859-1** (encoding do Addon Studio) + transliteração ASCII de acentos. Gate híbrido por conteúdo: só age dentro de projeto Sankhya (ancestral com `datadictionary`/`dbscripts`) ou arquivo com marcadores Sankhya. Idempotente; nunca bloqueia o fluxo. |
+| `sankhya-encoding.js` | `PreToolUse` (Read) · `PostToolUse` (Write/Edit/MultiEdit) · `Stop`/`SessionEnd` | Encoding **bidirecional** ISO-8859-1 ⇄ UTF-8 para `.java/.xml/.kt`. **Antes do Read** (`--pre`): arquivo Latin-1 é exposto como UTF-8 (lossless) para a leitura não corromper acentos. **Após Write/Edit**: converte de volta para **ISO-8859-1** + transliteração ASCII; se detectar `U+FFFD` (leitura corrompida), **aborta** e instrui recuperação em vez de gravar `?`. **No Stop/SessionEnd** (`--flush`): arquivos lidos mas não editados voltam a ISO-8859-1. Gate híbrido: pasta de artefato Sankhya (`datadictionary`/`dbscripts`/`dbquerys`/`dashboards`) ou marcadores Sankhya no conteúdo. Idempotente; nunca bloqueia o fluxo. |
 | `sankhya-autoupdate-nudge.js` | `SessionStart` (startup/clear/compact) | Lembra 1×/dia para ligar o auto-update do marketplace, se estiver desligado. Só leitura — nunca edita config. |
 
 Ambos são **Node.js puro** (multi-OS) e exigem só `node` no `PATH`.
