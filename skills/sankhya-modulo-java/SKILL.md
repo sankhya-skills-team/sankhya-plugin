@@ -12,6 +12,9 @@ description: |
   "tela personalizada", "metadados sankhya", "importar módulo", "criar evento",
   "criar trigger", "registrar botão ação", "construtor de telas",
   "JAR sankhya", "deploy módulo java", "módulo complementar sankhya".
+  Também acionar para segurança (SQL injection em NativeSql, audit trail, deserialização
+  insegura, PCI/PDV, certificado SEFAZ, upload de anexo) e compatibilidade SQL
+  Oracle/SQL Server (type mapping, funções proibidas como NVL/DECODE/SYSDATE).
 ---
 
 # Módulos Java Sankhya OM

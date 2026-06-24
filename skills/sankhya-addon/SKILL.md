@@ -10,6 +10,10 @@ description: |
   Também acionar quando o usuário pedir ajuda com estrutura de pacotes Java para ERP,
   integração com sistemas Sankhya, ou mencionar termos como "addon", "plugin Sankhya",
   "portal Sankhya", "SDK Sankhya" ou "Sankhya W".
+  Também acionar para controle de acesso e permissões especiais (MGEAuthorizationManager,
+  hasAccess, menu.xml <acesso>, SnkApplication), segurança (SQL injection em NativeSql,
+  audit trail, PCI/PDV, certificado SEFAZ, upload de anexo) e compatibilidade SQL
+  Oracle/SQL Server (type mapping, funções proibidas como NVL/DECODE/SYSDATE).
 ---
 
 # Especialista em Desenvolvimento de Addons Sankhya
