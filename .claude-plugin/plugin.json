@@ -1,7 +1,7 @@
 {
   "name": "sankhya",
-  "version": "1.4.2",
-  "description": "Skills, agents e hook de encoding para desenvolvimento no ERP Sankhya: Addon Studio, Modulo Java, Relatorios Jasper e BI/Dashboards.",
+  "version": "1.5.0",
+  "description": "Skills, agents e hook de encoding para desenvolvimento no ERP Sankhya: Addon Studio, Modulo Java, Relatorios Jasper, Geração Doc. Entrega em HTML e Geração Commit.",
   "author": {
     "name": "Sankhya Skills Team",
     "url": "https://github.com/sankhya-skills-team"
