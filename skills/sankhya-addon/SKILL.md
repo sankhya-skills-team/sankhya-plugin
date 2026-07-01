@@ -1,6 +1,5 @@
 ---
 name: sankhya-addon
-github-repo: sankhya-addon
 description: |
   Especialista em desenvolvimento de addons para o ERP Sankhya utilizando Addon Studio.
   Use esta skill SEMPRE que o usuário mencionar Sankhya, Addon Studio, Action Button,

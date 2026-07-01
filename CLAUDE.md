@@ -18,4 +18,4 @@ Instruções do projeto para agentes que trabalham neste repositório.
 ## Frontmatter de skill (SKILL.md)
 
 - Usar **apenas** `name` e `description` (campos que o Claude Code lê).
-- **Não** incluir `version` na skill — versão é única em `plugin.json`. Version na skill é decorativo, ninguém lê, e confunde com o version que dispara distribuição.
+- **Não** incluir campos que o Claude Code ignora (`version`, `github-repo`, etc.). Versão é única em `plugin.json`; campos extras são decorativos, ninguém lê, e confundem.

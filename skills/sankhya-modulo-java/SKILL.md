@@ -1,6 +1,5 @@
 ---
 name: sankhya-modulo-java
-github-repo: sankhya-modulo-java
 description: |
   Esta skill deve ser utilizada quando o usuário mencionar módulo Java Sankhya,
   EventoProgramavelJava, AcaoRotinaJava, RegraNegocioJava, ScheduledAction, JapeFactory,

@@ -1,6 +1,5 @@
 ---
 name: sankhya-relatorio
-github-repo: sankhya-relatorio
 description: |
   Usar quando o usuário mencionar relatório, impressão, JasperReports, iReport, jrxml, jasper,
   sub-relatório, subreport, layout de impressão, ou qualquer necessidade de gerar documentos
