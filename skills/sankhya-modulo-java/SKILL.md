@@ -1,6 +1,5 @@
 ---
 name: sankhya-modulo-java
-version: 1.0.2
 github-repo: sankhya-modulo-java
 description: |
   Esta skill deve ser utilizada quando o usuário mencionar módulo Java Sankhya,

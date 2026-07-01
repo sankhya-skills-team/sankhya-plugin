@@ -1,6 +1,5 @@
 ---
 name: sankhya-addon
-version: 1.0.1
 github-repo: sankhya-addon
 description: |
   Especialista em desenvolvimento de addons para o ERP Sankhya utilizando Addon Studio.
