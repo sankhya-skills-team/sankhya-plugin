@@ -503,6 +503,7 @@ Carregar quando necessário para aprofundar tópicos específicos:
 | Action Button (@ActionButton, formulários, ContextoAcao) | `references/action-button.md` |
 | Regras de Negócio (@BusinessRule, ContextoRegra, liberação de limites) | `references/business-rules.md` |
 | Listeners (@Listener, PersistenceEventAdapter, eventos CRUD) | `references/listeners.md` |
+| CRUD Service Listener legado (DatasetCRUDListenerAdapter, CRUDServiceListenerAdapter, dataset de tela) | `references/crud-service-listener.md` |
 | Camada de Serviço (@Service, transações, request/response) | `references/service.md` |
 | Jobs Agendados (@Job, CRON, IJob) | `references/job.md` |
 | Boas práticas completas (logging, transações, segurança, performance) | `references/boas-praticas.md` |

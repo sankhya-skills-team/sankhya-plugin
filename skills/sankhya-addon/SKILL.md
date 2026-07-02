@@ -95,6 +95,7 @@ Identificar o artefato correto e **ler o arquivo de referência antes de impleme
 |---|---|---|
 | **Action Button** | Ação manual iniciada pelo usuário em uma tela | `references/action-button.md` |
 | **Listener** | Reage a eventos de persistência: INSERT, UPDATE, DELETE | `references/listeners.md` |
+| **CRUD Service Listener** | Legado (`DatasetCRUDListenerAdapter`): intercepta CRUD da grade/tela DWF; enxerga campos transientes do dataset | `references/crud-service-listener.md` |
 | **Callback** | Reage a eventos de negócio de documentos comerciais (confirmação, faturamento) — incluindo notas de entrada | `references/callback.md` |
 | **Business Rule** | Validação vinculada à confirmação/faturamento de notas de saída com interação no barramento de regras | `references/business-rules.md` |
 | **Service** | Endpoint externo, integração ou reutilização entre artefatos | `references/service.md` |
