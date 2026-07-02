@@ -6,7 +6,6 @@ description: >
   no padrão Conventional Commits com emojis. Usar quando o usuário disser
   "fazer commit", "gerar commit", "commit", "mensagem de commit", "/commit"
   ou qualquer variação de criação de mensagem de commit.
-version: 1.0.0
 ---
 
 # Skill: Commit Git
@@ -74,6 +73,34 @@ Se o diff estiver vazio (nada staged), informar:
 Nenhuma mudança staged. Operação encerrada.
 ```
 E parar.
+
+#### Verificação de arquivos staged vazios (status `AM`)
+
+Após obter o diff, executar:
+```bash
+git status --short
+```
+
+Identificar arquivos com status `AM` (primeira coluna `A`, segunda coluna `M`).
+Esses arquivos foram adicionados ao stage quando estavam **vazios** — o conteúdo
+real está no working tree e **não será incluído no commit**.
+
+Se houver arquivos `AM`, alertar:
+
+```
+⚠️  ATENÇÃO: Os arquivos abaixo estão staged VAZIOS (status AM).
+O conteúdo real existe no disco mas não está no stage.
+Se commitar agora, esses arquivos irão para o repositório vazios.
+
+  [lista dos arquivos AM]
+
+Deseja re-adicionar esses arquivos ao stage com o conteúdo atual?
+  1 - Sim, re-adicionar todos
+  2 - Não, commitar assim mesmo (arquivos ficarão vazios no repo)
+```
+
+- `1` → executar `git add <arquivo>` para cada arquivo `AM`, depois repetir `git diff --cached`
+- `2` → prosseguir normalmente
 
 ### Etapa 4 — Analisar o diff
 
