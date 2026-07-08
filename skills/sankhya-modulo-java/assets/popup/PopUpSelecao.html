@@ -1,0 +1,30 @@
+<sk-dataset
+    entity-name="SUBSTITUIR_COM_ENTIDADE"
+    sk-dataset-created="onDatasetCreated(dataset)">
+    <sk-field pattern="CAMPO1,CAMPO2,CAMPO3"></sk-field>
+</sk-dataset>
+
+<sk-vbox gap="8" style="padding: 8px">
+    <sk-vbox flex style="height: 280px">
+        <sk-datagrid
+            sk-dataset="dataset"
+            sk-allow-multiple-selection="false"
+            sk-editable="false"
+            sk-on-dbl-click="selecionar()"
+            sk-order-columms="orderColumns">
+            <sk-datagrid-custom-column sk-field-name="CAMPO1" width="100"/>
+            <sk-datagrid-custom-column sk-field-name="CAMPO2" width="300"/>
+            <sk-datagrid-custom-column sk-field-name="CAMPO3" width="100"/>
+        </sk-datagrid>
+    </sk-vbox>
+
+    <div sk-display="flex" style="justify-content: center; gap: 16px">
+        <button class="btn" ng-click="selecionar()" brand>
+            <sk-hbox gap="8" style="align-items: center">
+                <sk-icon font-icon="check"></sk-icon>
+                <span>Selecionar</span>
+            </sk-hbox>
+        </button>
+        <button class="btn" ng-click="$dismiss()" danger>Cancelar</button>
+    </div>
+</sk-vbox>
