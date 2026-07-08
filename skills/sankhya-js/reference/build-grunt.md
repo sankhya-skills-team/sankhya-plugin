@@ -118,7 +118,6 @@ Nao hardcode cores nem medidas no CSS/LESS — use as **variaveis LESS do tema**
 ## 6. Babel e templates
 
 - O **Babel** transpila para compatibilidade (inclui `async-to-generator`), mas o codigo-fonte e **AngularJS 1.x** — nao dependa de runtime de browser moderno.
-- Build com **Grunt 0.4.5 + Babel 7** (ver `gotchas.md`).
 - Templates HTML viram entradas de `$templateCache` via `grunt-html2js`. Referencie por:
 
 ```javascript
