@@ -1,0 +1,26 @@
+_type: skill
+id: sankhya-padroes-seguranca
+version: 1.0.0
+category: context
+domain: sankhyaeip
+scope: domain
+description: "Padrões de segurança específicos da plataforma Sankhya EIP: bypass de contexto de tenant/usuário inter-módulo via Dynamic Proxy, SQL injection em NativeSql sem bind, desserialização insegura em EntityFacade, SEFAZ (cert A1/A3, chain validation), PDV/PCI (mascaramento de PAN, CVV não persistido), audit trail obrigatório para operações críticas."
+
+metadata:
+  name: sankhya-padroes-seguranca
+  paths: "**/src/**/*.java, **/*Service*.java, **/*Facade*.java, **/*Controller*.java, **/webservices/**"
+  see_also:
+    - sankhya-jape
+
+files:
+  main: SKILL.md
+  reference:
+    - reference/sefaz-integration.md
+
+targets:
+  claude_cli:
+    output_path: .claude/skills/{id}/
+    include_in_index: true
+  copilot:
+    output_path: .github/instructions/{id}.instructions.md
+    format: flat
