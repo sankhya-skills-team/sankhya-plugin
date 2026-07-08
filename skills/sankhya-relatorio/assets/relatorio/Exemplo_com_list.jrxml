@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Modelo01-ABRAPA" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="NoDataSection" columnWidth="454" leftMargin="85" rightMargin="56" topMargin="20" bottomMargin="0" isSummaryWithPageHeaderAndFooter="true">
+	<property name="ireport.zoom" value="1.1000000000000005"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="632"/>
+	<property name="ireport.definition"/>
+	<subDataset name="dataset1">
+		<parameter name="PK_SEQUENCIA" class="java.math.BigDecimal">
+			<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+		</parameter>
+		<queryString>
+			<![CDATA[SELECT
+    usu.NOMEUSUCPLT AS ASSINATURAS,
+nvl(usu.ad_funcao,' ') as ad_funcao
+FROM AD_ASSINANOTAS ass
+INNER JOIN TSIUSU usu ON usu.CODUSU = ass.USUARIO
+WHERE ass.SEQUENCIA = $P{PK_SEQUENCIA}
+ORDER BY ass.USUARIO]]>
+		</queryString>
+		<field name="ASSINATURAS" class="java.lang.String"/>
+		<field name="AD_FUNCAO" class="java.lang.String"/>
+	</subDataset>
+	<parameter name="PK_SEQUENCIA" class="java.math.BigDecimal" isForPrompting="false">
+		<parameterDescription><![CDATA[Nro Carta:]]></parameterDescription>
+	</parameter>
+	<queryString>
+		<![CDATA[select
+sequencia,
+to_char(titulo) as titulo,
+nvl(mostratitulo,'N') as mostratitulo,
+to_char(REFERENCIA) as REFERENCIA,
+to_char(corpo) as primtexto,
+to_char(trunc(sysdate),'YYYY') as ano,
+TO_CHAR(DTCRIA, 'DD "de" fmMonth "de" YYYY', 'NLS_DATE_LANGUAGE=PORTUGUESE') AS data_formatada,
+img01,
+img02,
+img03,
+img04,
+img05,
+img06,
+img07,
+img08,
+img09,
+img10,
+(select IMGCAB from AD_IMGNOTAEXPL where id = 1) as logo,
+(select IMGCAB from AD_IMGNOTAEXPL where id = 2) as rodape
+
+from AD_NOTASEXP
+where SEQUENCIA = $P{PK_SEQUENCIA}]]>
+	</queryString>
+	<field name="SEQUENCIA" class="java.math.BigDecimal"/>
+	<field name="TITULO" class="java.lang.String"/>
+	<field name="MOSTRATITULO" class="java.lang.String"/>
+	<field name="REFERENCIA" class="java.lang.String"/>
+	<field name="PRIMTEXTO" class="java.lang.String"/>
+	<field name="ANO" class="java.lang.String"/>
+	<field name="DATA_FORMATADA" class="java.lang.String"/>
+	<field name="IMG01" class="java.io.InputStream"/>
+	<field name="IMG02" class="java.io.InputStream"/>
+	<field name="IMG03" class="java.io.InputStream"/>
+	<field name="IMG04" class="java.io.InputStream"/>
+	<field name="IMG05" class="java.io.InputStream"/>
+	<field name="IMG06" class="java.io.InputStream"/>
+	<field name="IMG07" class="java.io.InputStream"/>
+	<field name="IMG08" class="java.io.InputStream"/>
+	<field name="IMG09" class="java.io.InputStream"/>
+	<field name="IMG10" class="java.io.InputStream"/>
+	<field name="LOGO" class="java.io.InputStream"/>
+	<field name="RODAPE" class="oracle.jdbc.OracleBlob"/>
+	<variable name="V_RODAPE" class="oracle.jdbc.OracleBlob">
+		<variableExpression><![CDATA[$F{RODAPE}]]></variableExpression>
+	</variable>
+	<title>
+		<band height="134" splitType="Stretch">
+			<image scaleImage="FillFrame" onErrorType="Blank">
+				<reportElement x="55" y="-7" width="325" height="120"/>
+				<imageExpression class="java.io.InputStream"><![CDATA[$F{LOGO}]]></imageExpression>
+			</image>
+		</band>
+	</title>
+	<detail>
+		<band height="214" splitType="Prevent">
+			<textField>
+				<reportElement x="0" y="0" width="454" height="36" forecolor="#000000"/>
+				<textElement lineSpacing="1_1_2">
+					<font fontName="Times New Roman" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Nota Explicativa_"+$F{SEQUENCIA}.toString()+"/"+$F{ANO}+""+($F{MOSTRATITULO}.equalsIgnoreCase( "S" )? "_"+$F{TITULO}:"")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="238" y="68" width="216" height="36"/>
+				<textElement textAlignment="Right" lineSpacing="1_1_2">
+					<font fontName="Times New Roman" size="11"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Brasília, "+$F{DATA_FORMATADA}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="0" y="177" width="454" height="37"/>
+				<textElement textAlignment="Justified" lineSpacing="1_1_2" markup="html">
+					<font fontName="Times New Roman" size="11"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{PRIMTEXTO}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="3" y="127" width="451" height="20"/>
+				<textElement textAlignment="Justified" lineSpacing="1_1_2" markup="html">
+					<font fontName="Times New Roman" size="11"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{REFERENCIA}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="103" splitType="Prevent">
+			<printWhenExpression><![CDATA[$F{IMG01} != null]]></printWhenExpression>
+			<image scaleImage="FillFrame" onErrorType="Blank">
+				<reportElement positionType="Float" x="3" y="6" width="122" height="96"/>
+				<imageExpression class="java.io.InputStream"><![CDATA[$F{IMG01}]]></imageExpression>
+			</image>
+		</band>
+		<band height="96" splitType="Prevent">
+			<printWhenExpression><![CDATA[$F{IMG02} != null]]></printWhenExpression>
+			<image scaleImage="FillFrame" onErrorType="Blank">
+				<reportElement positionType="Float" x="4" y="0" width="122" height="96"/>
+				<imageExpression class="java.io.InputStream"><![CDATA[$F{IMG02}]]></imageExpression>
+			</image>
+		</band>
+		<band height="96" splitType="Prevent">
+			<printWhenExpression><![CDATA[$F{IMG03} != null]]></printWhenExpression>
+			<image scaleImage="FillFrame" onErrorType="Blank">
+				<reportElement positionType="Float" x="4" y="0" width="122" height="96"/>
+				<imageExpression class="java.io.InputStream"><![CDATA[$F{IMG03}]]></imageExpression>
+			</image>
+		</band>
+		<band height="100" splitType="Prevent">
+			<printWhenExpression><![CDATA[$F{IMG04} != null]]></printWhenExpression>
+			<image scaleImage="FillFrame" onErrorType="Blank">
+				<reportElement positionType="Float" x="4" y="4" width="122" height="96"/>
+				<imageExpression class="java.io.InputStream"><![CDATA[$F{IMG04}]]></imageExpression>
+			</image>
+		</band>
+		<band height="96" splitType="Prevent">
+			<printWhenExpression><![CDATA[$F{IMG05} != null]]></printWhenExpression>
+			<image scaleImage="FillFrame" onErrorType="Blank">
+				<reportElement positionType="Float" x="3" y="0" width="122" height="96"/>
+				<imageExpression class="java.io.InputStream"><![CDATA[$F{IMG05}]]></imageExpression>
+			</image>
+		</band>
+		<band height="96" splitType="Prevent">
+			<printWhenExpression><![CDATA[$F{IMG06} != null]]></printWhenExpression>
+			<image scaleImage="FillFrame" onErrorType="Blank">
+				<reportElement positionType="Float" x="4" y="0" width="122" height="96"/>
+				<imageExpression class="java.io.InputStream"><![CDATA[$F{IMG06}]]></imageExpression>
+			</image>
+		</band>
+		<band height="100" splitType="Prevent">
+			<printWhenExpression><![CDATA[$F{IMG07} != null]]></printWhenExpression>
+			<image scaleImage="FillFrame" onErrorType="Blank">
+				<reportElement positionType="Float" x="4" y="0" width="122" height="96"/>
+				<imageExpression class="java.io.InputStream"><![CDATA[$F{IMG07}]]></imageExpression>
+			</image>
+		</band>
+		<band height="100" splitType="Prevent">
+			<printWhenExpression><![CDATA[$F{IMG08} != null]]></printWhenExpression>
+			<image scaleImage="FillFrame" onErrorType="Blank">
+				<reportElement positionType="Float" x="4" y="0" width="122" height="96"/>
+				<imageExpression class="java.io.InputStream"><![CDATA[$F{IMG08}]]></imageExpression>
+			</image>
+		</band>
+		<band height="100" splitType="Prevent">
+			<printWhenExpression><![CDATA[$F{IMG09} != null]]></printWhenExpression>
+			<image scaleImage="FillFrame" onErrorType="Blank">
+				<reportElement positionType="Float" x="3" y="4" width="122" height="96"/>
+				<imageExpression class="java.io.InputStream"><![CDATA[$F{IMG09}]]></imageExpression>
+			</image>
+		</band>
+		<band height="101" splitType="Prevent">
+			<printWhenExpression><![CDATA[$F{IMG10} != null]]></printWhenExpression>
+			<image scaleImage="FillFrame" onErrorType="Blank">
+				<reportElement positionType="Float" x="4" y="1" width="122" height="96"/>
+				<imageExpression class="java.io.InputStream"><![CDATA[$F{IMG10}]]></imageExpression>
+			</image>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="55">
+			<image scaleImage="FillFrame" hAlign="Center" onErrorType="Blank">
+				<reportElement x="-85" y="0" width="595" height="55"/>
+				<imageExpression class="java.io.InputStream"><![CDATA[$F{RODAPE} == null ? null : ((java.sql.Blob)$F{RODAPE}).getBinaryStream()]]></imageExpression>
+			</image>
+		</band>
+	</pageFooter>
+	<lastPageFooter>
+		<band height="136" splitType="Stretch">
+			<componentElement>
+				<reportElement positionType="Float" x="0" y="5" width="454" height="60"/>
+				<jr:list xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" printOrder="Horizontal">
+					<datasetRun subDataset="dataset1">
+						<datasetParameter name="PK_SEQUENCIA">
+							<datasetParameterExpression><![CDATA[$F{SEQUENCIA}]]></datasetParameterExpression>
+						</datasetParameter>
+						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					</datasetRun>
+					<jr:listContents height="38" width="227">
+						<textField isStretchWithOverflow="true">
+							<reportElement x="0" y="0" width="220" height="38"/>
+							<textElement>
+								<font fontName="Times New Roman" size="11"/>
+							</textElement>
+							<textFieldExpression class="java.lang.String"><![CDATA[$F{ASSINATURAS}+"\n"+$F{AD_FUNCAO}+"\nAssociação Brasileira dos Produtores de Algodão"]]></textFieldExpression>
+						</textField>
+					</jr:listContents>
+				</jr:list>
+			</componentElement>
+			<image scaleImage="FillFrame" hAlign="Center" onErrorType="Blank" evaluationTime="Report">
+				<reportElement positionType="Float" x="-85" y="65" width="595" height="55"/>
+				<imageExpression class="java.io.InputStream"><![CDATA[$V{V_RODAPE} == null ? null : ((java.sql.Blob)$V{V_RODAPE}).getBinaryStream()]]></imageExpression>
+			</image>
+		</band>
+	</lastPageFooter>
+</jasperReport>

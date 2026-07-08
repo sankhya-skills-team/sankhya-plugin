@@ -1,0 +1,1385 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="FolhaPagamento" pageWidth="21600" pageHeight="10000" orientation="Landscape" columnWidth="21560" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="0.42409761837248483"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="ireport.definition"/>
+	<style name="Crosstab Data Text" hAlign="Center"/>
+	<parameter name="P_CODEMP" class="java.math.BigDecimal">
+		<property name="nomeTabela" value="TSIEMP"/>
+		<parameterDescription><![CDATA[Empresa]]></parameterDescription>
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="P_CODDEP" class="java.math.BigDecimal">
+		<property name="nomeTabela" value="TFPDEP"/>
+		<parameterDescription><![CDATA[Departamento]]></parameterDescription>
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="P_CODFUNC" class="java.math.BigDecimal">
+		<property name="nomeTabela" value="TFPFUN"/>
+		<parameterDescription><![CDATA[Funcionário]]></parameterDescription>
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="P_TIPFOLHA" class="java.lang.String">
+		<parameterDescription><![CDATA[Tipo de Folha]]></parameterDescription>
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="P_REFERENCIA" class="java.sql.Timestamp">
+		<parameterDescription><![CDATA[Referência]]></parameterDescription>
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT
+    EMP.CODEMP,
+    EMP.RAZAOSOCIAL,
+    EMP.CGC,
+
+    FOL.REFERENCIA,
+    BAS.DTPAGAMENTO,
+
+    FOL.CODFUNC,
+    FUN.NOMEFUNC,
+    FUN.CPF,
+    FUN.CODSIND,
+
+    CAR.DESCRCARGO,
+
+    FUN.CODDEP,
+    DEP.DESCRDEP,
+
+    FUN.DTADM,
+    FUN.DTDEM,
+
+    F_DESCROPC('TFPFUN','SITUACAO',FUN.SITUACAO) AS SITUACAO,
+
+    FUN.CAUSAAFAST,
+    (SELECT AFA1.DESCRAFAST
+       FROM TFPAFA AFA1
+      WHERE AFA1.CODAFAST = FUN.CAUSAAFAST
+        AND TIPTAB = 'C') AS DESCRAFAST,
+
+    FUN.AFASTFGTS,
+    (SELECT AFA2.DESCRAFAST
+       FROM TFPAFA AFA2
+      WHERE AFA2.CODAFAST = FUN.AFASTFGTS
+        AND TIPTAB = 'F') AS MOTFGTS,
+
+    FUN.AFASTRAIS,
+    (SELECT AFA3.DESCRAFAST
+       FROM TFPAFA AFA3
+      WHERE AFA3.CODAFAST = FUN.AFASTRAIS
+        AND TIPTAB = 'R') AS MOTRAIS,
+
+    CASE FOL.TIPFOLHA
+        WHEN 'A' THEN 'Adiantamento'
+        WHEN 'N' THEN 'Mensal'
+        WHEN 'R' THEN 'Rescisão'
+        WHEN 'F' THEN 'Férias'
+        WHEN 'D' THEN '13º Salário'
+        WHEN 'C' THEN 'Rescisão Complementar'
+        WHEN 'L' THEN 'Resilição'
+        WHEN 'O' THEN 'Folha Complementar'
+        WHEN 'P' THEN 'Pensionista'
+        WHEN 'U' THEN 'PLR'
+        ELSE FOL.TIPFOLHA
+    END AS TIPFOLHA,
+
+    EVE.CODEVENTO,
+    EVE.DESCREVENTO,
+
+    BAS.SALBRUTO,
+    BAS.SALLIQ,
+    (BAS.SALBRUTO - BAS.SALLIQ) AS TOTALDESCONTOS,
+    BAS.SALBASE,
+
+    CASE
+        WHEN EVE.TIPEVENTO = -1 THEN 2
+        WHEN EVE.TIPEVENTO = 0  THEN 3
+        ELSE EVE.TIPEVENTO
+    END AS TIPEVENTO,
+
+    EVE.BASELIQUIDO,
+
+    /* SOMA DOS VALORES DO EVENTO */
+    SUM(FOL.VLREVENTO) AS VLREVENTO,
+
+    (SELECT PAR.CODPARC
+       FROM TGFPAR PAR
+      WHERE PAR.CODPARC = DEP.CODPARC) AS PARCEIRO_DEP,
+
+    (SELECT CUS.CODCENCUS
+       FROM TSICUS CUS
+      WHERE CUS.CODCENCUS = DEP.CODCENCUS) AS CENTRO_RESULTADO,
+
+    (SELECT CUS.DESCRCENCUS
+       FROM TSICUS CUS
+      WHERE CUS.CODCENCUS = DEP.CODCENCUS) AS DESCRCENCUS
+
+FROM TFPFOL FOL
+
+INNER JOIN TFPFUN FUN
+        ON FUN.CODEMP  = FOL.CODEMP
+       AND FUN.CODFUNC = FOL.CODFUNC
+
+INNER JOIN TFPEVE EVE
+        ON EVE.CODEVENTO   = FOL.CODEVENTO
+       AND EVE.TIPEVENTO   = FOL.TIPEVENTO
+       AND EVE.IMPHOLLERIT = 'S'
+
+INNER JOIN TSIEMP EMP
+        ON EMP.CODEMP = FOL.CODEMP
+
+INNER JOIN TFPBAS BAS
+        ON BAS.CODEMP     = FOL.CODEMP
+       AND BAS.CODFUNC    = FOL.CODFUNC
+       AND BAS.TIPFOLHA   = FOL.TIPFOLHA
+       AND BAS.REFERENCIA = FOL.REFERENCIA
+
+LEFT JOIN TFPHFU FU
+       ON FU.CODEMP     = FUN.CODEMP
+      AND FU.CODFUNC    = FUN.CODFUNC
+      AND FU.REFERENCIA = FOL.REFERENCIA
+
+LEFT JOIN TFPCAR CAR
+       ON CAR.CODCARGO = COALESCE(FU.CODCARGO, FUN.CODCARGO)
+
+INNER JOIN TFPDEP DEP
+        ON DEP.CODDEP = COALESCE(FU.CODDEP, FUN.CODDEP)
+
+WHERE FOL.CODEMP     = $P{P_CODEMP}
+  AND FOL.REFERENCIA = $P{P_REFERENCIA}
+  AND FOL.TIPFOLHA   = $P{P_TIPFOLHA}
+  AND ($P{P_CODDEP}  IS NULL OR FUN.CODDEP  = $P{P_CODDEP})
+  AND ($P{P_CODFUNC} IS NULL OR FOL.CODFUNC = $P{P_CODFUNC})
+
+GROUP BY
+    EMP.CODEMP,
+    EMP.RAZAOSOCIAL,
+    EMP.CGC,
+    FOL.REFERENCIA,
+    BAS.DTPAGAMENTO,
+    FOL.CODFUNC,
+    FUN.NOMEFUNC,
+    FUN.CPF,
+    FUN.CODSIND,
+    CAR.DESCRCARGO,
+    FUN.CODDEP,
+    DEP.DESCRDEP,
+    FUN.DTADM,
+    FUN.DTDEM,
+    FUN.SITUACAO,
+    FUN.CAUSAAFAST,
+    FUN.AFASTFGTS,
+    FUN.AFASTRAIS,
+    FOL.TIPFOLHA,
+    EVE.CODEVENTO,
+    EVE.DESCREVENTO,
+    BAS.SALBRUTO,
+    BAS.SALLIQ,
+    BAS.SALBASE,
+    EVE.TIPEVENTO,
+    EVE.BASELIQUIDO,
+    DEP.CODPARC,
+    DEP.CODCENCUS
+
+ORDER BY
+    EMP.CODEMP,
+    TIPFOLHA,
+    FOL.CODFUNC,
+    TIPEVENTO,
+    EVE.CODEVENTO]]>
+	</queryString>
+	<field name="CODEMP" class="java.math.BigDecimal"/>
+	<field name="RAZAOSOCIAL" class="java.lang.String"/>
+	<field name="CGC" class="java.lang.String"/>
+	<field name="REFERENCIA" class="java.sql.Timestamp"/>
+	<field name="DTPAGAMENTO" class="java.sql.Timestamp"/>
+	<field name="CODFUNC" class="java.math.BigDecimal"/>
+	<field name="NOMEFUNC" class="java.lang.String"/>
+	<field name="CPF" class="java.lang.String"/>
+	<field name="CODSIND" class="java.math.BigDecimal"/>
+	<field name="DESCRCARGO" class="java.lang.String"/>
+	<field name="CODDEP" class="java.math.BigDecimal"/>
+	<field name="DESCRDEP" class="java.lang.String"/>
+	<field name="DTADM" class="java.sql.Timestamp"/>
+	<field name="DTDEM" class="java.sql.Timestamp"/>
+	<field name="SITUACAO" class="java.lang.String"/>
+	<field name="CAUSAAFAST" class="java.math.BigDecimal"/>
+	<field name="DESCRAFAST" class="java.lang.String"/>
+	<field name="AFASTFGTS" class="java.lang.String"/>
+	<field name="MOTFGTS" class="java.lang.String"/>
+	<field name="AFASTRAIS" class="java.math.BigDecimal"/>
+	<field name="MOTRAIS" class="java.lang.String"/>
+	<field name="TIPFOLHA" class="java.lang.String"/>
+	<field name="CODEVENTO" class="java.math.BigDecimal"/>
+	<field name="DESCREVENTO" class="java.lang.String"/>
+	<field name="SALBRUTO" class="java.lang.Double"/>
+	<field name="SALLIQ" class="java.lang.Double"/>
+	<field name="TOTALDESCONTOS" class="java.math.BigDecimal"/>
+	<field name="SALBASE" class="java.lang.Double"/>
+	<field name="TIPEVENTO" class="java.math.BigDecimal"/>
+	<field name="BASELIQUIDO" class="java.lang.String"/>
+	<field name="VLREVENTO" class="java.math.BigDecimal"/>
+	<field name="PARCEIRO_DEP" class="java.math.BigDecimal"/>
+	<field name="CENTRO_RESULTADO" class="java.math.BigDecimal"/>
+	<field name="DESCRCENCUS" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band splitType="Stretch"/>
+	</title>
+	<pageHeader>
+		<band splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band splitType="Stretch"/>
+	</columnHeader>
+	<detail>
+		<band splitType="Stretch"/>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band splitType="Stretch"/>
+	</pageFooter>
+	<summary>
+		<band height="9015" splitType="Stretch">
+			<crosstab isRepeatColumnHeaders="false" isRepeatRowHeaders="false" columnBreakOffset="0" ignoreWidth="true">
+				<reportElement x="0" y="0" width="14960" height="9000"/>
+				<crosstabHeaderCell>
+					<cellContents>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="0" y="0" width="100" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[FOLHA]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" stretchType="RelativeToTallestObject" mode="Opaque" x="100" y="0" width="63" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[CÓDIGO]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="522" y="0" width="100" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[REFERÊNCIA]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="622" y="0" width="150" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[EMPRESA]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="872" y="0" width="179" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[DEPARTAMENTO]]></text>
+						</staticText>
+						<staticText>
+							<reportElement mode="Opaque" x="1051" y="0" width="250" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement textAlignment="Center" verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[CARGO]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="1801" y="0" width="100" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[DATA PAGAMENTO]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="1601" y="0" width="100" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[DEMISSÃO]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="1501" y="0" width="100" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[SALÁRIO BASE]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="1401" y="0" width="100" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[ADMISSÃO]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="1301" y="0" width="100" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[SITUAÇÃO]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="1701" y="0" width="100" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[MOTIVO]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="1901" y="0" width="100" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[TOTAL PROVENTOS]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="2001" y="0" width="100" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[TOTAL DESCONTOS]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="2201" y="0" width="100" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[Motivo FGTS]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="2301" y="0" width="100" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[Motivo RAIS]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="2501" y="0" width="100" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[Centro Resultado]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="2401" y="0" width="100" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[Parceiro]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="2101" y="0" width="100" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[LÍQUIDO]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="163" y="0" width="259" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[NOME FUNCIONÁRIO]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="2701" y="0" width="100" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[Sindicato]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="772" y="0" width="100" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[Cód. Depto]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="2601" y="0" width="100" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[Decr. Centro de Result]]></text>
+						</staticText>
+						<staticText>
+							<reportElement style="Crosstab Data Text" mode="Opaque" x="422" y="0" width="100" height="20" backcolor="#CCCCCC"/>
+							<box>
+								<topPen lineWidth="0.5"/>
+								<leftPen lineWidth="0.5"/>
+								<bottomPen lineWidth="0.5"/>
+								<rightPen lineWidth="0.5"/>
+							</box>
+							<textElement verticalAlignment="Middle">
+								<font size="8" isBold="true"/>
+							</textElement>
+							<text><![CDATA[CPF]]></text>
+						</staticText>
+					</cellContents>
+				</crosstabHeaderCell>
+				<rowGroup name="TipoFolha" width="100">
+					<bucket>
+						<bucketExpression class="java.lang.String"><![CDATA[$F{TIPFOLHA}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField>
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="100" height="15"/>
+								<box>
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.lang.String"><![CDATA[$V{TipoFolha}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="CODFUNC" width="63" totalPosition="End">
+					<bucket>
+						<bucketExpression class="java.math.BigDecimal"><![CDATA[$F{CODFUNC}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents backcolor="#F0F8FF" mode="Opaque">
+							<box>
+								<pen lineWidth="0.5" lineStyle="Solid" lineColor="#000000"/>
+							</box>
+							<textField>
+								<reportElement style="Crosstab Data Text" mode="Opaque" x="0" y="0" width="63" height="15"/>
+								<box leftPadding="0" rightPadding="2"/>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{CODFUNC}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents backcolor="#FFFFFF" mode="Opaque">
+							<box>
+								<pen lineWidth="0.5" lineStyle="Solid" lineColor="#000000"/>
+							</box>
+						</cellContents>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="NomeFuncionario" width="259">
+					<bucket>
+						<bucketExpression class="java.lang.String"><![CDATA[$F{NOMEFUNC}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField>
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="259" height="15"/>
+								<box leftPadding="2">
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement textAlignment="Left" verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.lang.String"><![CDATA[$V{NomeFuncionario}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="CPF" width="100">
+					<bucket>
+						<bucketExpression class="java.lang.String"><![CDATA[$F{CPF}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField>
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="100" height="15"/>
+								<box>
+									<pen lineWidth="0.5"/>
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement>
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.lang.String"><![CDATA[$V{CPF}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="Referência" width="100">
+					<bucket>
+						<bucketExpression class="java.util.Date"><![CDATA[$F{REFERENCIA}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField pattern="dd/MM/yyyy">
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="100" height="15"/>
+								<box>
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.util.Date"><![CDATA[$V{Referência}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="Empresa" width="150">
+					<bucket>
+						<bucketExpression class="java.lang.String"><![CDATA[$F{RAZAOSOCIAL}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField>
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="150" height="15"/>
+								<box>
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.lang.String"><![CDATA[$V{Empresa}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="Cod Depto" width="100">
+					<bucket>
+						<bucketExpression class="java.math.BigDecimal"><![CDATA[$F{CODDEP}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField>
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="100" height="15"/>
+								<box>
+									<pen lineWidth="0.5"/>
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement>
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{Cod Depto}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="Departamento" width="179">
+					<bucket>
+						<bucketExpression class="java.lang.String"><![CDATA[$F{DESCRDEP}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField>
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="179" height="15"/>
+								<box>
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.lang.String"><![CDATA[$V{Departamento}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="Cargo" width="250">
+					<bucket>
+						<bucketExpression class="java.lang.String"><![CDATA[$F{DESCRCARGO}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField>
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="250" height="15"/>
+								<box>
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.lang.String"><![CDATA[$V{Cargo}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="Situação" width="100">
+					<bucket>
+						<bucketExpression class="java.lang.String"><![CDATA[$F{SITUACAO}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField isBlankWhenNull="true">
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="100" height="15"/>
+								<box>
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.lang.String"><![CDATA[$V{Situação}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="Admissão" width="100">
+					<bucket>
+						<bucketExpression class="java.util.Date"><![CDATA[$F{DTADM}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField pattern="dd/MM/yyyy" isBlankWhenNull="true">
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="100" height="15"/>
+								<box>
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.util.Date"><![CDATA[$V{Admissão}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="Salário" width="100">
+					<bucket>
+						<bucketExpression class="java.lang.Double"><![CDATA[$F{SALBASE}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField pattern="#,##0.00" isBlankWhenNull="true">
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="100" height="15"/>
+								<box>
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.lang.Double"><![CDATA[$V{Salário}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="Demissão" width="100">
+					<bucket>
+						<bucketExpression class="java.util.Date"><![CDATA[$F{DTDEM}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField pattern="dd/MM/yyyy" isBlankWhenNull="true">
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="100" height="15"/>
+								<box>
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.util.Date"><![CDATA[$V{Demissão}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="Motivos" width="100">
+					<bucket>
+						<bucketExpression class="java.lang.String"><![CDATA[$F{DESCRAFAST}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField isBlankWhenNull="true">
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="100" height="15"/>
+								<box>
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.lang.String"><![CDATA[$V{Motivos}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="Pagamento" width="100">
+					<bucket>
+						<bucketExpression class="java.util.Date"><![CDATA[$F{DTPAGAMENTO}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField pattern="dd/MM/yyyy" isBlankWhenNull="true">
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="100" height="15"/>
+								<box>
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.util.Date"><![CDATA[$V{Pagamento}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="Total Proventos" width="100">
+					<bucket>
+						<bucketExpression class="java.lang.Double"><![CDATA[$F{SALBRUTO}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField pattern="#,##0.00" isBlankWhenNull="true">
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="100" height="15"/>
+								<box rightPadding="2">
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.lang.Double"><![CDATA[$V{Total Proventos}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="Total Descontos" width="100">
+					<bucket>
+						<bucketExpression class="java.math.BigDecimal"><![CDATA[$F{TOTALDESCONTOS}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField pattern="#,##0.00" isBlankWhenNull="true">
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="100" height="15"/>
+								<box rightPadding="2">
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{Total Descontos}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="Valor Líquido" width="100">
+					<bucket>
+						<bucketExpression class="java.lang.Double"><![CDATA[$F{SALLIQ}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField pattern="#,##0.00" isBlankWhenNull="true">
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="100" height="15"/>
+								<box rightPadding="2">
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.lang.Double"><![CDATA[$V{Valor Líquido}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="Motivo FGTS" width="100">
+					<bucket>
+						<bucketExpression class="java.lang.String"><![CDATA[$F{MOTFGTS}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField>
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="100" height="15"/>
+								<box rightPadding="2">
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.lang.String"><![CDATA[$V{Motivo FGTS}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="Motivo RAIS" width="100">
+					<bucket>
+						<bucketExpression class="java.lang.String"><![CDATA[$F{MOTRAIS}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField>
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="100" height="15"/>
+								<box rightPadding="2">
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.lang.String"><![CDATA[$V{Motivo RAIS}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="Parceiro DEP" width="100">
+					<bucket>
+						<bucketExpression class="java.math.BigDecimal"><![CDATA[$F{PARCEIRO_DEP}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField>
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="100" height="15"/>
+								<box rightPadding="2">
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{Parceiro DEP}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="Centro de Resultado" width="100">
+					<bucket>
+						<bucketExpression class="java.math.BigDecimal"><![CDATA[$F{CENTRO_RESULTADO}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField>
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="100" height="15"/>
+								<box rightPadding="2">
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{Centro de Resultado}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="Descr Cen Cus" width="100">
+					<bucket>
+						<bucketExpression class="java.lang.String"><![CDATA[$F{DESCRCENCUS}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField>
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="100" height="15"/>
+								<box>
+									<pen lineWidth="0.5"/>
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement>
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.lang.String"><![CDATA[$V{Descr Cen Cus}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<rowGroup name="Sindicato" width="100">
+					<bucket>
+						<bucketExpression class="java.math.BigDecimal"><![CDATA[$F{CODSIND}]]></bucketExpression>
+					</bucket>
+					<crosstabRowHeader>
+						<cellContents>
+							<textField>
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="100" height="15"/>
+								<box>
+									<pen lineWidth="0.5"/>
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement>
+									<font size="8"/>
+								</textElement>
+								<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{Sindicato}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabRowHeader>
+					<crosstabTotalRowHeader>
+						<cellContents/>
+					</crosstabTotalRowHeader>
+				</rowGroup>
+				<columnGroup name="CODEVENTO" height="21" totalPosition="End">
+					<bucket>
+						<bucketExpression class="java.lang.String"><![CDATA[$F{CODEVENTO}.toString() + " - " + $F{DESCREVENTO}]]></bucketExpression>
+					</bucket>
+					<crosstabColumnHeader>
+						<cellContents backcolor="#CCCCCC" mode="Opaque">
+							<box>
+								<pen lineWidth="0.5" lineStyle="Solid" lineColor="#000000"/>
+							</box>
+							<textField>
+								<reportElement style="Crosstab Data Text" x="0" y="0" width="97" height="20"/>
+								<box>
+									<topPen lineWidth="0.5"/>
+									<leftPen lineWidth="0.5"/>
+									<bottomPen lineWidth="0.5"/>
+									<rightPen lineWidth="0.5"/>
+								</box>
+								<textElement verticalAlignment="Middle">
+									<font size="7" isBold="true"/>
+								</textElement>
+								<textFieldExpression class="java.lang.String"><![CDATA[$V{CODEVENTO}]]></textFieldExpression>
+							</textField>
+						</cellContents>
+					</crosstabColumnHeader>
+					<crosstabTotalColumnHeader>
+						<cellContents backcolor="#FFFFFF" mode="Opaque">
+							<box>
+								<pen lineWidth="0.5" lineStyle="Solid" lineColor="#000000"/>
+							</box>
+						</cellContents>
+					</crosstabTotalColumnHeader>
+				</columnGroup>
+				<measure name="VLREVENTOMeasure" class="java.math.BigDecimal">
+					<measureExpression><![CDATA[$F{VLREVENTO}]]></measureExpression>
+				</measure>
+				<crosstabCell width="97" height="15">
+					<cellContents>
+						<box>
+							<pen lineWidth="0.5" lineStyle="Solid" lineColor="#000000"/>
+						</box>
+						<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+							<reportElement style="Crosstab Data Text" x="0" y="0" width="97" height="15"/>
+							<box rightPadding="2"/>
+							<textElement textAlignment="Right" verticalAlignment="Middle">
+								<font size="8"/>
+							</textElement>
+							<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{VLREVENTOMeasure}]]></textFieldExpression>
+						</textField>
+					</cellContents>
+				</crosstabCell>
+				<crosstabCell width="97" height="1" rowTotalGroup="CODFUNC">
+					<cellContents backcolor="#FFFFFF" mode="Opaque">
+						<box>
+							<pen lineWidth="0.5" lineStyle="Solid" lineColor="#000000"/>
+						</box>
+					</cellContents>
+				</crosstabCell>
+				<crosstabCell width="0" height="15" columnTotalGroup="CODEVENTO">
+					<cellContents backcolor="#FFFFFF" mode="Opaque">
+						<box>
+							<pen lineWidth="0.5" lineStyle="Solid" lineColor="#000000"/>
+						</box>
+					</cellContents>
+				</crosstabCell>
+				<crosstabCell width="0" height="1" rowTotalGroup="CODFUNC" columnTotalGroup="CODEVENTO">
+					<cellContents backcolor="#FFFFFF" mode="Opaque">
+						<box>
+							<pen lineWidth="0.5" lineStyle="Solid" lineColor="#000000"/>
+						</box>
+					</cellContents>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Referência">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Referência" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Empresa">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Empresa" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Departamento">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Departamento" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Cargo">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Cargo" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Situação">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Situação" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Admissão">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Admissão" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Salário">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Salário" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Demissão">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Demissão" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Motivos">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Motivos" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="TipoFolha">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="TipoFolha" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Pagamento">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Pagamento" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Total Proventos">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Total Proventos" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Total Descontos">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Total Descontos" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Valor Líquido">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Valor Líquido" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="NomeFuncionario">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="NomeFuncionario" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Motivo FGTS">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Motivo FGTS" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Motivo RAIS">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Motivo RAIS" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Parceiro DEP">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Parceiro DEP" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Centro de Resultado">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Centro de Resultado" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Sindicato">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Sindicato" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Cod Depto">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Cod Depto" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Descr Cen Cus">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="Descr Cen Cus" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="CPF">
+					<cellContents/>
+				</crosstabCell>
+				<crosstabCell rowTotalGroup="CPF" columnTotalGroup="CODEVENTO">
+					<cellContents/>
+				</crosstabCell>
+			</crosstab>
+		</band>
+	</summary>
+</jasperReport>
