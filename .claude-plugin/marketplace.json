@@ -9,7 +9,7 @@
     {
       "name": "sankhya",
       "source": "./",
-      "description": "Skills, agents e hook de encoding para desenvolvimento no ERP Sankhya.",
+      "description": "13 skills, agents de desenvolvimento e code review, e hook de encoding para o ERP Sankhya OM (Addon Studio, Módulo Java, JAPE, BI, relatórios, frontend, segurança, escopo/estimativa).",
       "category": "development"
     }
   ]
