@@ -1,6 +1,6 @@
 # sankhya-js — Bootstrap de tela HTML5 e versionamento do snk.js
 
-Como uma tela HTML5 do produto nasce: do template raiz e dos controllers Angular ao bootstrap manual do app e ao bundle `snk.js` versionado pela compilacao. Cobre o lancador server-side, o `release.snk`, o registro dinamico de modulo apos o bootstrap e o pareamento de branch entre `sankhya-js` e `sankhyaw`.
+Como uma tela HTML5 nasce: template raiz, controllers Angular, bootstrap manual do app e bundle `snk.js` versionado pela compilacao. Cobre o lancador server-side, o `release.snk`, o registro dinamico de modulo apos o bootstrap e o pareamento de branch entre `sankhya-js` e `sankhyaw`.
 
 ## Anatomia de uma tela HTML5
 
@@ -15,7 +15,7 @@ O bundle `snk.js` (framework `sankhya-js` compilado) e carregado pela shell ante
 
 ## Bootstrap MANUAL
 
-A tela e carregada de forma assincrona pela shell. AngularJS **nao** permite `ng-app` declarativo apos carga assincrona, por isso o app da tela e iniciado por bootstrap manual.
+A shell carrega a tela de forma assincrona. AngularJS **nao** permite `ng-app` declarativo apos carga assincrona — por isso o bootstrap do app e manual.
 
 O lancador server-side (`DWF/src/br/com/sankhya/dwf/controller/servlet/XHtml5LauncherTemplate.html`) injeta o `snk.js` versionado e da o bootstrap manual do app Angular da tela:
 
@@ -65,7 +65,7 @@ SNK_MS_VERSION=5.9.15
 SNK_DEV_VERSION=5.9.15
 ```
 
-O **canal** (GA / RC / MS / DEV) e decidido pela branch/versao do `sankhyaw` e seleciona a chave `SNK_*_VERSION` correspondente. Essa versao e a que entra no `?v=` do `<script src="/mge/scripts/snk.js?v=...">` da tela compilada.
+O **canal** (GA / RC / MS / DEV) e decidido pela branch/versao do `sankhyaw` e seleciona a chave `SNK_*_VERSION` correspondente, que entra no `?v=` do `<script src="/mge/scripts/snk.js?v=...">` da tela compilada.
 
 | Canal | Chave | Origem |
 |---|---|---|
