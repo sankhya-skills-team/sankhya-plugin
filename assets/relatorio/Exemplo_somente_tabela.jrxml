@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Relatorio_Policia_Federal" language="groovy" pageWidth="2551" pageHeight="595" orientation="Landscape" columnWidth="2511" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.3310000000000024"/>
+	<property name="ireport.x" value="1872"/>
+	<property name="ireport.y" value="0"/>
+	<style name="table">
+		<box>
+			<pen lineWidth="1.0" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_TH" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_CH" mode="Opaque" backcolor="#FFF2F2">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_TD" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<subDataset name="Table Dataset 1">
+		<parameter name="P_DTINI" class="java.sql.Timestamp">
+			<parameterDescription><![CDATA[Data Inicial:]]></parameterDescription>
+		</parameter>
+		<parameter name="P_DTFIN" class="java.sql.Timestamp">
+			<parameterDescription><![CDATA[Data Final:]]></parameterDescription>
+		</parameter>
+		<queryString>
+			<![CDATA[/*Query Relatório PF Larifo*/
+with empresa as (
+select
+emp.codemp,
+emp.razaosocial as razaosocialemp,
+emp.nomefantasia as nomefantasiaemp,
+emp.cgc,
+emp.inscestad,
+emp.telefone as telefoneemp,
+upper(endr.tipo||' '||endr.nomeend||', '||emp.numend||', '||cid.nomecid||' '||bai.nomebai) as enderecoemp,
+uf.uf,
+emp.email,
+emp.cep,
+cid.nomecid
+
+from tsiemp emp
+inner join tsiend endr on endr.codend = emp.codend
+inner join tsibai bai on bai.codbai = emp.codbai
+inner join tsicid cid on cid.codcid = emp.codcid
+inner join tsiufs uf on uf.coduf = cid.uf
+),
+parceiro as (
+select
+par.codparc,
+par.razaosocial,
+par.cgc_cpf,
+cid.nomecid||'/'||uf.uf as cidadeuf
+
+from tgfpar par
+left join tsicid cid on cid.codcid = par.codcid
+inner join tsiufs uf on cid.uf = uf.coduf
+)
+select
+emp.razaosocialemp,
+emp.cgc,
+emp.enderecoemp,
+reme.razaosocial as remetente,
+reme.cgc_cpf as cgcreme,
+dest.razaosocial as destinatario,
+dest.cgc_cpf as cgcdest,
+nite.descrprod,
+nvl(pro.ad_prodcas,' ') as ad_prodcas,
+nvl(pro.ncm,' ') as ad_prodcodpf,
+nite.codvol,
+nite.qtdneg,
+vei.placa,
+mot.razaosocial,
+reme.cidadeuf as origem,
+dest.cidadeuf as destino,
+to_char(ord.dhsaida,'DD/MM/YYYY HH24:mm') as dhsaida,
+to_char(ord.dhprevcgd,'DD/MM/YYYY HH24:mm') as dhprevcgd,
+ord.dtinclusao,
+mdfe.descprod
+
+from tgford ord
+inner join tmsnotas notas on notas.nuordem = ord.nuordem
+left join parceiro reme on reme.codparc = notas.codparcrem
+left join parceiro dest on dest.codparc = notas.codparcdest
+inner join tmsnotasite nite on nite.nrounico = notas.nrounico
+inner join empresa emp on emp.codemp = ord.codemp
+inner join tgfvei vei on vei.codveiculo = ord.codveiculo
+left join parceiro mot on mot.codparc = ord.codparcmotorista
+left join tgfmdfe mdfe on mdfe.nuviag = ord.nuviag
+left join tgfpro pro on pro.descrprod = mdfe.descprod
+
+where pro.AD_PRODCONTRPF = 'S'
+and trunc(ord.dtinclusao) >= trunc($P{P_DTINI})
+and trunc(ord.dtinclusao) <= trunc($P{P_DTFIN})]]>
+		</queryString>
+		<field name="RAZAOSOCIALEMP" class="java.lang.String"/>
+		<field name="CGC" class="java.lang.String"/>
+		<field name="ENDERECOEMP" class="java.lang.String"/>
+		<field name="REMETENTE" class="java.lang.String"/>
+		<field name="CGCREME" class="java.lang.String"/>
+		<field name="DESTINATARIO" class="java.lang.String"/>
+		<field name="CGCDEST" class="java.lang.String"/>
+		<field name="DESCRPROD" class="java.lang.String"/>
+		<field name="AD_PRODCAS" class="java.lang.String"/>
+		<field name="AD_PRODCODPF" class="java.lang.String"/>
+		<field name="CODVOL" class="java.lang.String"/>
+		<field name="QTDNEG" class="java.lang.Double"/>
+		<field name="PLACA" class="java.lang.String"/>
+		<field name="RAZAOSOCIAL" class="java.lang.String"/>
+		<field name="ORIGEM" class="java.lang.String"/>
+		<field name="DESTINO" class="java.lang.String"/>
+		<field name="DHSAIDA" class="java.lang.String"/>
+		<field name="DHPREVCGD" class="java.lang.String"/>
+		<field name="DTINCLUSAO" class="java.sql.Timestamp"/>
+		<field name="DESCPROD" class="java.lang.String"/>
+	</subDataset>
+	<parameter name="P_DTINI" class="java.sql.Timestamp">
+		<parameterDescription><![CDATA[Data Inicial:]]></parameterDescription>
+	</parameter>
+	<parameter name="P_DTFIN" class="java.sql.Timestamp">
+		<parameterDescription><![CDATA[Data Final:]]></parameterDescription>
+	</parameter>
+	<queryString>
+		<![CDATA[Select 1 from dual]]>
+	</queryString>
+	<field name="1" class="java.math.BigDecimal"/>
+	<detail>
+		<band height="80" splitType="Stretch">
+			<componentElement>
+				<reportElement key="table" style="table" x="0" y="0" width="2511" height="80"/>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+					<datasetRun subDataset="Table Dataset 1">
+						<datasetParameter name="P_DTINI">
+							<datasetParameterExpression><![CDATA[$P{P_DTINI}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="P_DTFIN">
+							<datasetParameterExpression><![CDATA[$P{P_DTFIN}]]></datasetParameterExpression>
+						</datasetParameter>
+						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					</datasetRun>
+					<jr:column width="158">
+						<jr:tableHeader style="table_TH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="158" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<text><![CDATA[Transportadora_RazaoSocial]]></text>
+							</staticText>
+						</jr:tableHeader>
+						<jr:columnHeader style="table_CH" height="12" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="35" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="158" height="35"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{RAZAOSOCIALEMP}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="127">
+						<jr:tableHeader style="table_TH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="127" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<text><![CDATA[Transportadora_CNPJ]]></text>
+							</staticText>
+						</jr:tableHeader>
+						<jr:columnHeader style="table_CH" height="12" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="35" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="127" height="35"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{CGC}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="181">
+						<jr:tableHeader style="table_TH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="181" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<text><![CDATA[Transportadora_Endereco]]></text>
+							</staticText>
+						</jr:tableHeader>
+						<jr:columnHeader style="table_CH" height="12" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="35" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="181" height="35"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{ENDERECOEMP}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="142">
+						<jr:tableHeader style="table_TH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="142" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<text><![CDATA[Remetente_RazaoSocial]]></text>
+							</staticText>
+						</jr:tableHeader>
+						<jr:columnHeader style="table_CH" height="12" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="35" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="142" height="35"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{REMETENTE}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="127">
+						<jr:tableHeader style="table_TH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="127" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<text><![CDATA[Remetente_CNPJ]]></text>
+							</staticText>
+						</jr:tableHeader>
+						<jr:columnHeader style="table_CH" height="12" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="35" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="127" height="35"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{CGCREME}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="174">
+						<jr:tableHeader style="table_TH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="174" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<text><![CDATA[Destinatario_RazaoSocial]]></text>
+							</staticText>
+						</jr:tableHeader>
+						<jr:columnHeader style="table_CH" height="12" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="35" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="174" height="35"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{DESTINATARIO}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="127">
+						<jr:tableHeader style="table_TH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="127" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<text><![CDATA[Destinatario_CNPJ]]></text>
+							</staticText>
+						</jr:tableHeader>
+						<jr:columnHeader style="table_CH" height="12" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="35" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="127" height="35"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{CGCDEST}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="178">
+						<jr:tableHeader style="table_TH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="178" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<text><![CDATA[Produto_Nome]]></text>
+							</staticText>
+						</jr:tableHeader>
+						<jr:columnHeader style="table_CH" height="12" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="35" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="178" height="35"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{DESCRPROD}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="127">
+						<jr:tableHeader style="table_TH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="127" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<text><![CDATA[Produto_CAS]]></text>
+							</staticText>
+						</jr:tableHeader>
+						<jr:columnHeader style="table_CH" height="12" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="35" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="127" height="35"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{AD_PRODCAS}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="127">
+						<jr:tableHeader style="table_TH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="127" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<text><![CDATA[Produto_CodigoPF]]></text>
+							</staticText>
+						</jr:tableHeader>
+						<jr:columnHeader style="table_CH" height="12" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="35" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="127" height="35"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{AD_PRODCODPF}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="127">
+						<jr:tableHeader style="table_TH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="127" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<text><![CDATA[Produto_Unidade]]></text>
+							</staticText>
+						</jr:tableHeader>
+						<jr:columnHeader style="table_CH" height="12" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="35" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="127" height="35"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{CODVOL}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="127">
+						<jr:tableHeader style="table_TH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="127" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<text><![CDATA[Produto_Quantidade]]></text>
+							</staticText>
+						</jr:tableHeader>
+						<jr:columnHeader style="table_CH" height="12" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="35" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="127" height="35"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<textFieldExpression class="java.lang.Double"><![CDATA[$F{QTDNEG}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="127">
+						<jr:tableHeader style="table_TH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="127" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<text><![CDATA[Veiculo_Placa]]></text>
+							</staticText>
+						</jr:tableHeader>
+						<jr:columnHeader style="table_CH" height="12" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="35" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="127" height="35"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{PLACA}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="127">
+						<jr:tableHeader style="table_TH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="127" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<text><![CDATA[Motorista_Nome]]></text>
+							</staticText>
+						</jr:tableHeader>
+						<jr:columnHeader style="table_CH" height="12" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="35" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="127" height="35"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{RAZAOSOCIAL}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="127">
+						<jr:tableHeader style="table_TH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="127" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<text><![CDATA[Origem]]></text>
+							</staticText>
+						</jr:tableHeader>
+						<jr:columnHeader style="table_CH" height="12" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="35" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="127" height="35"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{ORIGEM}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="127">
+						<jr:tableHeader style="table_TH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="127" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<text><![CDATA[Destino]]></text>
+							</staticText>
+						</jr:tableHeader>
+						<jr:columnHeader style="table_CH" height="12" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="35" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="127" height="35"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{DESTINO}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="127">
+						<jr:tableHeader style="table_TH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="127" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<text><![CDATA[Data_Saida]]></text>
+							</staticText>
+						</jr:tableHeader>
+						<jr:columnHeader style="table_CH" height="12" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="35" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="127" height="35"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{DHSAIDA}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="127">
+						<jr:tableHeader style="table_TH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="127" height="30"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<text><![CDATA[Data_ChegadaPrevista]]></text>
+							</staticText>
+						</jr:tableHeader>
+						<jr:columnHeader style="table_CH" height="12" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="35" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="127" height="35"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle"/>
+								<textFieldExpression class="java.lang.String"><![CDATA[$F{DHPREVCGD}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+				</jr:table>
+			</componentElement>
+		</band>
+	</detail>
+</jasperReport>
