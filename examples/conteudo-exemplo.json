@@ -1,0 +1,52 @@
+{
+  "title": "Nome da Demanda",
+  "subtitle": "Proposta Técnica: Nome da Demanda",
+  "identification": {
+    "Parceiro": "Nome do Cliente",
+    "Solicitante": "Nome do Solicitante",
+    "Módulo / Rotina": "Área ou rotina impactada",
+    "Abordagem técnica sugerida": "Módulo Java Sankhya + SQL existente"
+  },
+  "sections": [
+    {
+      "heading": "1. Objetivo do Projeto",
+      "paragraphs": [
+        "Descrever o objetivo principal da demanda em linguagem de negócio.",
+        "Descrever o resultado esperado e o ganho operacional."
+      ]
+    },
+    {
+      "heading": "2. Contexto e Necessidade",
+      "paragraphs": [
+        "Explicar o problema atual, a limitação do processo e por que a mudança é necessária."
+      ]
+    },
+    {
+      "heading": "3. Escopo Funcional",
+      "numbered": [
+        "Criar controle funcional necessário.",
+        "Disponibilizar rotina de execução.",
+        "Aplicar regra de negócio definida.",
+        "Registrar auditoria quando aplicável."
+      ]
+    },
+    {
+      "heading": "4. Regras de Negócio",
+      "paragraphs": ["Descrever a regra principal."],
+      "bullets": [
+        "Condição A gera comportamento B.",
+        "Condição não preenchida segue comportamento padrão."
+      ]
+    }
+  ],
+  "tables": [
+    {
+      "after_heading": "5.1 Artefatos Técnicos Previstos",
+      "headers": ["Artefato", "Tratamento proposto"],
+      "rows": [
+        ["Campo adicional", "Finalidade do campo."],
+        ["Botão de ação", "Papel da rotina de execução."]
+      ]
+    }
+  ]
+}
