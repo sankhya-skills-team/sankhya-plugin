@@ -1,0 +1,53 @@
+_type: skill
+id: sankhya-js
+version: 1.1.0
+category: context
+domain: sankhyaeip
+scope: integration
+description: "Framework frontend AngularJS 1.x do Sankhya OM: ServiceProxy, FluidBuilder, sk-dataset, sk-datagrid, wizard, pesquisa, MetadataProvider, SkI18nService, SkComponentRegistry, SkWorkspace e módulos VC (JSP)."
+
+metadata:
+  name: sankhya-js
+  paths: "**/*.js, **/*.html, **/*.jsp, **/*.less"
+
+# Arquivos que compõem esta skill.
+# main → conteúdo injetado em {active_skills_content} dos agentes que declaram esta skill.
+# reference/ e templates/ → copiados para o target output_path (Claude CLI) ou achatados (Copilot).
+files:
+  main: SKILL.md
+  reference:
+    - reference/anti-patterns.md
+    - reference/api-cheatsheet.md
+    - reference/application.md
+    - reference/bootstrap-release.md
+    - reference/build-grunt.md
+    - reference/code-quality.md
+    - reference/datagrid.md
+    - reference/dataset.md
+    - reference/filter-panel.md
+    - reference/form.md
+    - reference/gotchas.md
+    - reference/inputs.md
+    - reference/messages-popup.md
+    - reference/navigator.md
+    - reference/patterns.md
+    - reference/pesquisa.md
+    - reference/sidenav.md
+    - reference/tabs.md
+    - reference/wizard.md
+  templates:
+    - templates/component-directive.js
+    - templates/dataset-standalone.js
+    - templates/filter-panel-interceptor.js
+    - templates/popup-custom.js
+    - templates/service-call-builder.js
+    - templates/service-call-simple.js
+    - templates/wizard-step.js
+
+targets:
+  claude_cli:
+    output_path: .claude/skills/{id}/
+    include_in_index: true
+  copilot:
+    output_path: .github/instructions/{id}.instructions.md
+    format: flat
