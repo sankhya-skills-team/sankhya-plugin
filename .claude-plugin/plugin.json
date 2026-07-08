@@ -1,7 +1,7 @@
 {
   "name": "sankhya",
   "version": "1.6.1",
-  "description": "Skills, agents e hooks para desenvolvimento no ERP Sankhya OM. Skills: Addon Studio, Módulo Java, persistência JAPE, dicionário de dados, BI/dashboards, relatórios Jasper, frontend (AngularJS sankhya-js e Design System EzUI), padrões de segurança da plataforma, análise de requisitos e estimativa, geração de documento de escopo e de entrega, e commits. Agents: orquestrador, backend, data, BI e frontend de desenvolvimento, mais a suíte de code review. Hook de encoding ISO-8859-1 automático.",
+  "description": "Skills, agents e hook de encoding para desenvolvimento no ERP Sankhya OM: Addon Studio, Módulo Java, JAPE, dicionário, BI, relatórios, frontend, segurança, escopo/estimativa, entrega e commits.",
   "author": {
     "name": "Felipe Rosa, Daniel Ratkevicius, Claiton Farias",
     "url": "https://github.com/sankhya-skills-team"
