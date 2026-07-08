@@ -10,12 +10,22 @@ Plugin do Claude Code com skills, agents e hook para desenvolvimento no **ERP Sa
 | `sankhya-addon` | Addon Studio: `@ActionButton`, `@Listener`, `@Job`, `DynamicVO`, `JapeFactory`, SDK Sankhya. |
 | `sankhya-modulo-java` | Módulo Java: `EventoProgramavelJava`, `AcaoRotinaJava`, `RegraNegocioJava`, helpers dstech. |
 | `sankhya-relatorio` | Relatórios JasperReports / iReport / `.jrxml`, impressão Sankhya. |
+| `sankhya-dicionario` | Dicionário de dados: tabelas/campos/relacionamentos (`TGF*`, `TSI*`, `AD_*`), `entityName` para JAPE. |
+| `sankhya-bi` | Construtor de Componentes de BI: dashboards, gadgets, gráficos, HTML5 component. |
+| `sankhya-estimativa-planejador` | Escopo/requisitos → backlog, épicos/stories, estimativa de horas, addon × módulo. |
+| `sankhya-doc-entrega` | Gera documento de entrega de desenvolvimento em `.docx`. |
+| `sankhya-js` | Frontend AngularJS sankhya-js (`sk-*`, `ServiceProxy`, telas html5 `vc`). |
+| `sankhya-gera-escopo` | Gera documento de escopo em `.docx` a partir do contexto da demanda. |
+| `sankhya-jape` | Persistência JAPE: `JapeSession`, `NativeSql`, `EntityFacade`, `DynamicVO`, transações, macros. |
+| `sankhya-padroes-seguranca` | Padrões de vulnerabilidade específicos do Sankhya (bypass de contexto, SQLi, PCI/PDV, SEFAZ). |
 | `sankhya-commit` | Commit Git interativo: analisa o diff e gera mensagem Conventional Commits com emojis. |
 | `sankhya-doc-entrega-html` | Gera documento de entrega de desenvolvimento em `.html` para projetos Java Sankhya. |
 
 ### Agents (`agents/`)
-Suíte de code review para projetos Java Sankhya. `code-review-orchestrator` coordena os demais:
-`arch-reviewer`, `clean-code`, `security-scanner`, `perf-analyzer`, `doc-checker`.
+
+**Code review** — `code-review-orchestrator` coordena: `arch-reviewer`, `clean-code`, `security-scanner`, `perf-analyzer`, `doc-checker`.
+
+**Desenvolvimento Sankhya** — `sankhya-orchestrator-agent-dev` planeja e roteia do escopo ao código; `sankhya-backend-dev`, `sankhya-data-dev`, `sankhya-bi-report-dev` especializados; `sankhya-frontend-dev` roteia entre `sankhya-frontend-angular` (sankhya-js legado) e `sankhya-frontend-design-system` (EzUI/Node).
 
 ### Hooks (`hooks/`)
 
@@ -25,6 +35,12 @@ Suíte de code review para projetos Java Sankhya. `code-review-orchestrator` coo
 | `sankhya-autoupdate-nudge.js` | `SessionStart` (startup/clear/compact) | Lembra 1×/dia para ligar o auto-update do marketplace, se estiver desligado. Só leitura — nunca edita config. |
 
 Ambos são **Node.js puro** (multi-OS) e exigem só `node` no `PATH`.
+
+## Autores
+
+- Felipe Rosa
+- Daniel Ratkevicius
+- Claiton Farias
 
 ## Instalação
 
