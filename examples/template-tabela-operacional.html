@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<!--
+  TEMPLATE: Tabela Operacional com Filtros
+  Sankhya OM — HTML5 Component (Padrão SankhyaJX)
+
+  Uso: copiar para index/index.html dentro do ZIP do componente
+  Dependência: SankhyaJX (https://github.com/wansleynery/SankhyaJX)
+
+  Substituir:
+    - TITULO_DO_DASHBOARD — título do painel
+    - QUERY_SQL           — query principal
+    - columnConfig        — colunas a exibir
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TITULO_DO_DASHBOARD</title>
+  <script src="https://cdn.jsdelivr.net/gh/wansleynery/SankhyaJX@main/jx.min.js"></script>
+  <style>
+    :root {
+      --bg: #f9fafb;
+      --panel: #ffffff;
+      --panel-2: #f1f5f9;
+      --text: #1e293b;
+      --muted: #64748b;
+      --primary: #2563eb;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box }
+    html, body { height: 100vh; margin: 0; overflow: hidden; background: var(--bg); color: var(--text); font: 14px/1.35 system-ui, sans-serif; }
+    .app { height: 100%; display: flex; flex-direction: column; }
+
+    header { flex: 0 0 auto; background: rgba(255,255,255,.9); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 10px 16px; }
+    .title { display: flex; gap: 12px; align-items: center; }
+    .title h1 { margin: 0; font-size: 18px; font-weight: 700; }
+    .badge { padding: 4px 10px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--border); font-size: 12px; }
+
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .control { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--border); padding: 6px 10px; border-radius: 10px; }
+    .control input, .control select { background: transparent; border: 0; color: var(--text); outline: none; min-width: 120px; }
+    .btn { background: var(--panel); border: 1px solid var(--border); padding: 7px 12px; border-radius: 10px; color: var(--text); cursor: pointer; font-size: 13px; }
+    .btn:hover { border-color: #94a3b8; }
+    .btn.primary { background: linear-gradient(180deg,#2563eb22,#2563eb11); border-color: #2563eb55; }
+
+    main { flex: 1; overflow: hidden; padding: 10px 16px; display: flex; flex-direction: column; }
+    .table-wrap { flex: 1; overflow: auto; border: 1px solid var(--border); border-radius: 14px; background: var(--panel); }
+
+    table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    thead th { position: sticky; top: 0; z-index: 2; background: var(--panel-2); border-bottom: 1px solid var(--border); padding: 10px; text-align: left; font-weight: 600; white-space: nowrap; cursor: pointer; user-select: none; }
+    thead th:hover { background: #e2e8f0; }
+    th span.seta { font-size: 12px; margin-left: 4px; opacity: 0.3; }
+    th.ativo span.seta { opacity: 1; color: var(--primary); }
+    tbody td { border-top: 1px solid var(--border); padding: 10px; vertical-align: top; }
+    .loading { text-align: center; padding: 40px; color: var(--muted); font-style: italic; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="title">
+      <h1>TITULO_DO_DASHBOARD</h1>
+      <span class="badge" id="counter">Carregando...</span>
+    </div>
+    <div class="toolbar">
+      <label class="control">
+        🔎 <input id="q" placeholder="Pesquisar...">
+      </label>
+      <!-- Adicionar mais filtros conforme necessário -->
+      <!-- <label class="control">Status <select id="fStatus"><option value="">Todos</option></select></label> -->
+      <button id="btnClear" class="btn">Limpar filtros</button>
+      <button id="btnRefresh" class="btn primary">Atualizar</button>
+    </div>
+  </header>
+  <main>
+    <div class="table-wrap">
+      <table id="grid">
+        <thead></thead>
+        <tbody><tr><td class="loading">Carregando dados...</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script>
+  // ── CONFIGURAÇÃO ────────────────────────────────────────────
+  // Definir colunas: key = nome do campo na query, title = cabeçalho
+  const columnConfig = [
+    { key: 'CAMPO1', title: 'Campo 1', width: 120 },
+    { key: 'CAMPO2', title: 'Campo 2', width: 200 },
+    { key: 'CAMPO3', title: 'Campo 3', width: 100 },
+  ];
+
+  const QUERY_SQL = `
+    SELECT
+        CAMPO1,
+        CAMPO2,
+        CAMPO3
+    FROM AD_TABELA
+    WHERE ATIVO = 'S'
+    ORDER BY CAMPO1
+  `;
+  // ────────────────────────────────────────────────────────────
+
+  let dados = [];
+  let currentSort = { key: null, order: 'asc' };
+
+  const thead = document.querySelector('#grid thead');
+  const tbody = document.querySelector('#grid tbody');
+  const counter = document.getElementById('counter');
+  const q = document.getElementById('q');
+
+  // Utilitários
+  function normalize(s) { return (s || '').toString().toLowerCase().trim(); }
+
+  function renderHeader() {
+    thead.innerHTML = '';
+    const tr = document.createElement('tr');
+    columnConfig.forEach(col => {
+      const th = document.createElement('th');
+      th.style.width = (col.width || 120) + 'px';
+      th.dataset.key = col.key;
+      th.innerHTML = `${col.title} <span class="seta"></span>`;
+      th.addEventListener('click', () => handleSort(col.key));
+      tr.appendChild(th);
+    });
+    thead.appendChild(tr);
+    updateSortIcons();
+  }
+
+  function renderRows(list) {
+    if (!list || list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="${columnConfig.length}" class="loading">Nenhum dado encontrado</td></tr>`;
+      counter.textContent = '0 registros';
+      return;
+    }
+    const fragment = document.createDocumentFragment();
+    list.forEach(row => {
+      const tr = document.createElement('tr');
+      columnConfig.forEach(col => {
+        const td = document.createElement('td');
+        td.textContent = row[col.key] || '';
+        tr.appendChild(td);
+      });
+      fragment.appendChild(tr);
+    });
+    tbody.innerHTML = '';
+    tbody.appendChild(fragment);
+    counter.textContent = `${list.length} registros`;
+  }
+
+  function handleSort(key) {
+    currentSort.order = currentSort.key === key && currentSort.order === 'asc' ? 'desc' : 'asc';
+    currentSort.key = key;
+    updateSortIcons();
+    applyFilters();
+  }
+
+  function updateSortIcons() {
+    document.querySelectorAll('#grid th').forEach(th => {
+      th.classList.remove('ativo');
+      const seta = th.querySelector('.seta');
+      if (seta) seta.textContent = '';
+      if (th.dataset.key === currentSort.key) {
+        th.classList.add('ativo');
+        if (seta) seta.textContent = currentSort.order === 'asc' ? '↑' : '↓';
+      }
+    });
+  }
+
+  function sortData(list) {
+    if (!currentSort.key) return list;
+    const key = currentSort.key, order = currentSort.order === 'asc' ? 1 : -1;
+    return [...list].sort((a, b) => {
+      let valA = a[key] ?? '', valB = b[key] ?? '';
+      const numA = parseFloat(valA), numB = parseFloat(valB);
+      if (!isNaN(numA) && !isNaN(numB)) return (numA - numB) * order;
+      valA = valA.toString().toLowerCase(); valB = valB.toString().toLowerCase();
+      return valA < valB ? -order : valA > valB ? order : 0;
+    });
+  }
+
+  function applyFilters() {
+    const term = normalize(q.value);
+    let temp = dados.filter(row => {
+      if (term) {
+        const texto = columnConfig.map(c => normalize(row[c.key])).join(' ');
+        if (!texto.includes(term)) return false;
+      }
+      return true;
+    });
+    renderRows(sortData(temp));
+  }
+
+  q.addEventListener('input', applyFilters);
+  document.getElementById('btnClear').addEventListener('click', () => { q.value = ''; applyFilters(); });
+
+  function loadData() {
+    counter.textContent = 'Carregando...';
+    JX.consultar(QUERY_SQL)
+      .then(result => {
+        dados = result || [];
+        renderHeader();
+        applyFilters();
+      })
+      .catch(err => {
+        console.error('Erro ao carregar dados:', err);
+        tbody.innerHTML = `<tr><td colspan="${columnConfig.length}" class="loading" style="color:#dc2626">Erro ao carregar dados.</td></tr>`;
+        counter.textContent = 'Erro';
+      });
+  }
+
+  document.getElementById('btnRefresh').addEventListener('click', loadData);
+
+  // Ocultar barra do Sankhya
+  try {
+    const style = parent.document.createElement('style');
+    style.textContent = '.VCompactBar, .DashWindow-TopBar-Title { display: none !important; }';
+    parent.document.head.appendChild(style);
+  } catch(e) {}
+
+  loadData();
+</script>
+</body>
+</html>
