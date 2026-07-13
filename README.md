@@ -92,6 +92,8 @@ Ou no seu `settings.json`:
 | Hook | script em `hooks/`, registrar bloco `hooks` | Sim |
 | MCP server | bloco `mcpServers` | Sim |
 
+Após adicionar: bump `version` em `.claude-plugin/plugin.json` → commit → push → devs rodam `/plugin update`.
+
 ## Autores
 
 Skills, agents e hooks deste plugin são desenvolvidos e mantidos por:
@@ -99,5 +101,3 @@ Skills, agents e hooks deste plugin são desenvolvidos e mantidos por:
 - **Felipe Rosa da Silva**
 - **Daniel Ratkevicius**
 - **Claiton Trisch Farias**
-
-Após adicionar: bump `version` em `.claude-plugin/plugin.json` → commit → push → devs rodam `/plugin update`.
