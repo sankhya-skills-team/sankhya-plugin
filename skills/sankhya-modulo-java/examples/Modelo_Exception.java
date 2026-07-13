@@ -1,4 +1,4 @@
-package br.com.sankhya.dstech.nomedemanda.exception;
+package br.com.sankhya.customizacao.nomedemanda.exception;
 
 /**
  * Exceção de domínio da demanda NomeDemanda.

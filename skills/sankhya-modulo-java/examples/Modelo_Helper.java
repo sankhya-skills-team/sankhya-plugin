@@ -1,19 +1,19 @@
-package br.com.sankhya.dstech.nomedemanda.helper;
+package br.com.sankhya.customizacao.nomedemanda.helper;
 
-// Helpers transversais (usados por vários módulos) ficam em br.com.sankhya.dstech.helper
-// Helpers específicos de um módulo ficam em br.com.sankhya.dstech.nomedemanda.helper
+// Helpers transversais (usados por vários módulos) ficam em br.com.sankhya.customizacao.helper
+// Helpers específicos de um módulo ficam em br.com.sankhya.customizacao.nomedemanda.helper
 
-import br.com.sankhya.dstech.helper.CabecalhoNotaHelper;
-import br.com.sankhya.dstech.helper.ItemNotaHelper;
-import br.com.sankhya.dstech.helper.ParceiroHelper;
-import br.com.sankhya.dstech.utils.DwfUtils;
+import br.com.sankhya.customizacao.helper.CabecalhoNotaHelper;
+import br.com.sankhya.customizacao.helper.ItemNotaHelper;
+import br.com.sankhya.customizacao.helper.ParceiroHelper;
+import br.com.sankhya.customizacao.utils.DwfUtils;
 import br.com.sankhya.jape.core.JapeSession;
 import br.com.sankhya.jape.vo.DynamicVO;
 import br.com.sankhya.jape.wrapper.JapeFactory;
 import br.com.sankhya.modelcore.MGEModelException;
 import br.com.sankhya.modelcore.auth.AuthenticationInfo;
 import br.com.sankhya.modelcore.util.DynamicEntityNames;
-import br.com.sankhya.dstech.utils.Logger;
+import br.com.sankhya.customizacao.utils.Logger;
 
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -35,7 +35,7 @@ public class Modelo_Helper {
     }
 
     // -------------------------------------------------------------------------
-    // Exemplos de consulta com helpers do modelo dstech
+    // Exemplos de consulta com helpers de customização
     // -------------------------------------------------------------------------
 
     public static void exemploCabecalhoNota(BigDecimal nuNota) throws Exception {

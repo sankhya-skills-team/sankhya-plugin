@@ -15,7 +15,7 @@ __start_fileinformation__{"name":"planilha.xlsx","size":12345,"type":"applicatio
 ## BlobUtil — API
 
 ```java
-import br.com.sankhya.dstech.utils.BlobUtil;
+import br.com.sankhya.customizacao.utils.BlobUtil;
 
 byte[] conteudoBlob = (byte[]) vo.getProperty("CAMPO_BLOB");
 BlobUtil blob = new BlobUtil(conteudoBlob); // lança MGEModelException se BLOB vazio

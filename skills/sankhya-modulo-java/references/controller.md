@@ -20,10 +20,10 @@ Endpoint REST/serviço exposto externamente ao módulo via `ServiceProvider` man
 ## Skeleton
 
 ```java
-package br.com.sankhya.dstech.nomedemanda.controller;
+package br.com.sankhya.customizacao.nomedemanda.controller;
 
-import br.com.sankhya.dstech.nomedemanda.component.NomeComponent;
-import br.com.sankhya.dstech.nomedemanda.exception.NomeDemandaException;
+import br.com.sankhya.customizacao.nomedemanda.component.NomeComponent;
+import br.com.sankhya.customizacao.nomedemanda.exception.NomeDemandaException;
 import br.com.sankhya.modelcore.MGEModelException;
 import br.com.sankhya.modelcore.util.EntityFacadeFactory;
 import br.com.sankhya.jape.core.JapeSession;
@@ -36,7 +36,7 @@ import java.math.BigDecimal;
  *
  * Configuração no Sankhya:
  *   - Tipo: ServiceProvider (registro manual via Construtor de Telas ou configuração)
- *   - Classe: br.com.sankhya.dstech.nomedemanda.controller.NomeController
+ *   - Classe: br.com.sankhya.customizacao.nomedemanda.controller.NomeController
  */
 public class NomeController {
 
@@ -119,7 +119,7 @@ ou via Construtor de Telas. Consultar `references/estrutura-modulo.md` para deta
 
 ```xml
 <!-- Exemplo de registro como ServiceProvider -->
-<service class="br.com.sankhya.dstech.nomedemanda.controller.NomeController"
+<service class="br.com.sankhya.customizacao.nomedemanda.controller.NomeController"
          name="NomeController" />
 ```
 

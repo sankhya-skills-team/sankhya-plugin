@@ -1,4 +1,4 @@
-package br.com.sankhya.dstech.nomedemanda.regra;
+package br.com.sankhya.customizacao.nomedemanda.regra;
 
 import br.com.sankhya.jape.core.JapeSession;
 import br.com.sankhya.modelcore.MGEModelException;
@@ -14,9 +14,9 @@ import java.math.BigDecimal;
  *
  * Diferente de RegraNegocioJava, esta interface é registrada via preferência:
  *   Preferência: MODREGCENTRAL
- *   Valor      : {codTipOper}@br.com.sankhya.dstech.nomedemanda.regradenegocio.NomeRegraPreferencia
+ *   Valor      : {codTipOper}@br.com.sankhya.customizacao.nomedemanda.regradenegocio.NomeRegraPreferencia
  *
- * Exemplo de valor: 10@br.com.sankhya.dstech.nomedemanda.regradenegocio.NomeRegraPreferencia
+ * Exemplo de valor: 10@br.com.sankhya.customizacao.nomedemanda.regradenegocio.NomeRegraPreferencia
  */
 public class Modelo_RegraPreferencia implements Regra {
 

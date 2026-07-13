@@ -1,4 +1,4 @@
-package br.com.sankhya.dstech.nomedemanda.event;
+package br.com.sankhya.customizacao.nomedemanda.event;
 
 import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
 import br.com.sankhya.jape.event.PersistenceEvent;
@@ -13,8 +13,8 @@ import br.com.sankhya.jape.vo.DynamicVO;
  * Configuração no Sankhya:
  *   Entidade    : AD_NOMETABELA
  *   Tipo        : Before Insert, Before Update
- *   Classe Java : br.com.sankhya.dstech.nomedemanda.event.NomeEvento
- *   Módulo      : dstech-nomemodulo
+ *   Classe Java : br.com.sankhya.customizacao.nomedemanda.event.NomeEvento
+ *   Módulo      : customizacao-nomemodulo
  */
 public class Modelo_Evento implements EventoProgramavelJava {
 

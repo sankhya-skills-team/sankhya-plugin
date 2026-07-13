@@ -251,5 +251,4 @@ Ao revisar código, pergunte-se:
 
 ---
 
-**Última atualização:** Fevereiro de 2026  
-**Autor:** Time de Desenvolvimento SankhyaW
+**Última atualização:** Fevereiro de 2026

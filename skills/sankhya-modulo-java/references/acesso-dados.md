@@ -103,7 +103,7 @@ DynamicVO vo = dao.findByPK(id);
 ## DwfUtils — Busca de Coleção
 
 ```java
-import br.com.sankhya.dstech.utils.DwfUtils;
+import br.com.sankhya.customizacao.utils.DwfUtils;
 import java.util.Collection;
 
 // Busca simples

@@ -81,7 +81,7 @@ sankhya-modulo-java/
 ## Arquitetura de Camadas
 
 ```
-br.com.sankhya.dstech.
+br.com.sankhya.customizacao.
   nomedemanda/
     actionbutton/    ← AcaoRotinaJava — validação de UI, abre sessão, delega para component/
     component/       ← Hub obrigatório — orquestra service/ e repository/; chamado por todos os artefatos
@@ -119,10 +119,4 @@ br.com.sankhya.dstech.
 | Frontend | Popups via `PopUpBuilder` | xhtml5, SankhyaJS, Design System |
 | Telas/Tabelas | XML Construtor de Telas (manual) | `datadictionary/` (deploy automático) |
 | Build | Gradle → JAR → importação manual | Gradle → deploy automático |
-| Pacote raiz | `br.com.sankhya.dstech` | `br.com.empresa.addon` |
-
----
-
-## Licença
-
-Uso interno — DSTech Soluções.
+| Pacote raiz | `br.com.sankhya.customizacao` | `br.com.empresa.addon` |

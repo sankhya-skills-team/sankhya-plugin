@@ -1,7 +1,7 @@
-package br.com.sankhya.dstech.nomedemanda.actionbutton;
+package br.com.sankhya.customizacao.nomedemanda.actionbutton;
 
-import br.com.sankhya.dstech.nomedemanda.component.NomeComponent;
-import br.com.sankhya.dstech.nomedemanda.exception.NomeModuloException;
+import br.com.sankhya.customizacao.nomedemanda.component.NomeComponent;
+import br.com.sankhya.customizacao.nomedemanda.exception.NomeModuloException;
 import br.com.sankhya.extensions.actionbutton.AcaoRotinaJava;
 import br.com.sankhya.extensions.actionbutton.ContextoAcao;
 import br.com.sankhya.jape.core.JapeSession;
@@ -18,7 +18,7 @@ import java.math.BigDecimal;
  *
  * Configuração no Sankhya:
  *   Entidade    : AD_NOMETABELA
- *   Classe Java : br.com.sankhya.dstech.nomedemanda.actionbutton.NomeAction
+ *   Classe Java : br.com.sankhya.customizacao.nomedemanda.actionbutton.NomeAction
  *   Descrição   : Texto exibido no menu "Ações"
  */
 public class Modelo_ActionButton implements AcaoRotinaJava {

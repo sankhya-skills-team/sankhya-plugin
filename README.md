@@ -8,7 +8,7 @@ Plugin do Claude Code com skills, agents e hook para desenvolvimento no **ERP Sa
 | Skill | Quando aciona |
 |---|---|
 | `sankhya-addon` | Addon Studio: `@ActionButton`, `@Listener`, `@Job`, `DynamicVO`, `JapeFactory`, SDK Sankhya. |
-| `sankhya-modulo-java` | Módulo Java: `EventoProgramavelJava`, `AcaoRotinaJava`, `RegraNegocioJava`, helpers dstech. |
+| `sankhya-modulo-java` | Módulo Java: `EventoProgramavelJava`, `AcaoRotinaJava`, `RegraNegocioJava`, helpers de customização. |
 | `sankhya-relatorio` | Relatórios JasperReports / iReport / `.jrxml`, impressão Sankhya. |
 | `sankhya-commit` | Commit Git interativo: analisa o diff e gera mensagem Conventional Commits com emojis. |
 | `sankhya-doc-entrega-html` | Gera documento de entrega de desenvolvimento em `.html` para projetos Java Sankhya. |

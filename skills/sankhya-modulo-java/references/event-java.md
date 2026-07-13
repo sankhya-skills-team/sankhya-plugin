@@ -65,9 +65,9 @@ public class NomeEvento implements EventoProgramavelJava {
 Preenche um campo calculado antes de inserir/atualizar. Delegação para helper.
 
 ```java
-package br.com.sankhya.dstech.nomedemanda.event;
+package br.com.sankhya.customizacao.nomedemanda.event;
 
-import br.com.sankhya.dstech.utils.DwfUtils;
+import br.com.sankhya.customizacao.utils.DwfUtils;
 import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
 import br.com.sankhya.jape.event.PersistenceEvent;
 import br.com.sankhya.jape.event.TransactionContext;
@@ -86,7 +86,7 @@ import java.util.Collection;
  * Configuração no Sankhya:
  *   Entidade    : AD_NOMETABELA
  *   Tipo        : Before Insert, Before Update
- *   Classe Java : br.com.sankhya.dstech.nomedemanda.event.CalcularTotalEvento
+ *   Classe Java : br.com.sankhya.customizacao.nomedemanda.event.CalcularTotalEvento
  */
 public class CalcularTotalEvento implements EventoProgramavelJava {
 
@@ -224,7 +224,7 @@ public void beforeUpdate(PersistenceEvent event) throws Exception {
  * Configuração no Sankhya:
  *   Entidade    : AD_NOMETABELA
  *   Tipo        : After Insert
- *   Classe Java : br.com.sankhya.dstech.nomedemanda.event.CriarItensPadraoEvento
+ *   Classe Java : br.com.sankhya.customizacao.nomedemanda.event.CriarItensPadraoEvento
  */
 public class CriarItensPadraoEvento implements EventoProgramavelJava {
 

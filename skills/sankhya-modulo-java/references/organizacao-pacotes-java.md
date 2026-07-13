@@ -13,19 +13,19 @@ Duas demandas implantadas no mesmo servidor, ambas com um `OrdemService`:
 
 ```java
 // ❌ ERRADO — demanda "ordemcoleta"
-package br.com.sankhya.dstech.service;
+package br.com.sankhya.customizacao.service;
 
 public class OrdemService { ... }
 ```
 
 ```java
 // ❌ ERRADO — demanda "ordemvenda"
-package br.com.sankhya.dstech.service;
+package br.com.sankhya.customizacao.service;
 
 public class OrdemService { ... }  // mesmo FQN!
 ```
 
-FQN gerado em ambos: `br.com.sankhya.dstech.service.OrdemService`
+FQN gerado em ambos: `br.com.sankhya.customizacao.service.OrdemService`
 
 Quando o servidor carrega o segundo JAR, a classe já está registrada. A demanda `ordemvenda`
 pode executar silenciosamente a lógica de `ordemcoleta`.
@@ -34,27 +34,27 @@ pode executar silenciosamente a lógica de `ordemcoleta`.
 
 ## A Solução: Segmento de Demanda no Pacote
 
-O pacote raiz do DSTech é `br.com.sankhya.dstech`. Cada demanda **deve** ter seu próprio
+O pacote raiz é `br.com.sankhya.customizacao`. Cada demanda **deve** ter seu próprio
 segmento como parte do pacote:
 
 ```
-br.com.sankhya.dstech.{nomedemanda}.{camada}
+br.com.sankhya.customizacao.{nomedemanda}.{camada}
 ```
 
 ```java
 // ✅ CORRETO — demanda "ordemcoleta"
-package br.com.sankhya.dstech.ordemcoleta.service;
+package br.com.sankhya.customizacao.ordemcoleta.service;
 
 public class OrdemService { ... }
-// FQN: br.com.sankhya.dstech.ordemcoleta.service.OrdemService
+// FQN: br.com.sankhya.customizacao.ordemcoleta.service.OrdemService
 ```
 
 ```java
 // ✅ CORRETO — demanda "ordemvenda"
-package br.com.sankhya.dstech.ordemvenda.service;
+package br.com.sankhya.customizacao.ordemvenda.service;
 
 public class OrdemService { ... }
-// FQN: br.com.sankhya.dstech.ordemvenda.service.OrdemService
+// FQN: br.com.sankhya.customizacao.ordemvenda.service.OrdemService
 ```
 
 Zero conflito — FQNs únicos.
@@ -64,7 +64,7 @@ Zero conflito — FQNs únicos.
 ## Estrutura Padrão do Projeto
 
 ```
-br.com.sankhya.dstech.
+br.com.sankhya.customizacao.
   {nomedemanda}/          ← substituir pelo nome real (ex: ordemcoleta, registroamostra)
     actionbutton/
     component/
@@ -87,21 +87,21 @@ O segmento `nomedemanda` é o que garante o isolamento entre demandas.
 
 ## Antipadrão: Classes "Comuns" sem Segmento de Demanda
 
-Um erro frequente é criar classes compartilhadas diretamente sob `br.com.sankhya.dstech`:
+Um erro frequente é criar classes compartilhadas diretamente sob `br.com.sankhya.customizacao`:
 
 ```java
-// ❌ ERRADO — direto sob dstech, sem demanda
-package br.com.sankhya.dstech.service;
+// ❌ ERRADO — direto sob a raiz, sem demanda
+package br.com.sankhya.customizacao.service;
 public class NotaService { ... }
 
 // ❌ ERRADO
-package br.com.sankhya.dstech.repository;
+package br.com.sankhya.customizacao.repository;
 public class ParceirRepository { ... }
 ```
 
 Se outro JAR tiver uma classe com o mesmo nome nesse pacote, conflito garantido.
 
-**Exceção legítima:** `br.com.sankhya.dstech.utils` — utilitários genuinamente transversais
+**Exceção legítima:** `br.com.sankhya.customizacao.utils` — utilitários genuinamente transversais
 a todas as demandas (`DwfUtils`, `MessageUtils`, `PopUpBuilder`). Mas mesmo esses devem ter
 nomes suficientemente específicos para evitar colisão.
 
@@ -124,11 +124,11 @@ gerar confusão em logs e stack traces:
 
 ```java
 // RUIM — o que é "Service" no stack trace?
-package br.com.sankhya.dstech.ordemcoleta.service;
+package br.com.sankhya.customizacao.ordemcoleta.service;
 public class Service { ... }
 
 // BOM — contexto imediato no stack trace
-package br.com.sankhya.dstech.ordemcoleta.service;
+package br.com.sankhya.customizacao.ordemcoleta.service;
 public class OrdemColetaService { ... }
 // Stack trace: "...ordemcoleta.service.OrdemColetaService.validar(..."
 ```
@@ -137,7 +137,7 @@ public class OrdemColetaService { ... }
 
 ## Regra de Ouro
 
-> Nunca declare classes diretamente em `br.com.sankhya.dstech.{camada}`.
-> Sempre use `br.com.sankhya.dstech.{nomedemanda}.{camada}`.
+> Nunca declare classes diretamente em `br.com.sankhya.customizacao.{camada}`.
+> Sempre use `br.com.sankhya.customizacao.{nomedemanda}.{camada}`.
 
 Isso garante zero conflito de ClassLoader entre demandas implantadas no mesmo servidor.

@@ -117,9 +117,3 @@ O script instala automaticamente se necessário:
 python-docx   — geração do .docx
 pdfplumber    — leitura de PDF (opcional, para escopo em PDF)
 ```
-
----
-
-## Licença
-
-Uso interno — DSTech Soluções.

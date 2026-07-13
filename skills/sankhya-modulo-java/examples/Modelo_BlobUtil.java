@@ -1,4 +1,4 @@
-package br.com.sankhya.dstech.utils;
+package br.com.sankhya.customizacao.utils;
 
 import br.com.sankhya.modelcore.MGEModelException;
 

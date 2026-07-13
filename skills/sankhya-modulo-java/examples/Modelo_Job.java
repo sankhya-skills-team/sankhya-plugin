@@ -1,7 +1,7 @@
-package br.com.sankhya.dstech.nomedemanda.job;
+package br.com.sankhya.customizacao.nomedemanda.job;
 
-import br.com.sankhya.dstech.nomedemanda.component.NomeComponent;
-import br.com.sankhya.dstech.utils.Logger;
+import br.com.sankhya.customizacao.nomedemanda.component.NomeComponent;
+import br.com.sankhya.customizacao.utils.Logger;
 import br.com.sankhya.jape.core.JapeSession;
 import br.com.sankhya.modelcore.MGEModelException;
 import org.cuckoo.core.ScheduledAction;
@@ -14,7 +14,7 @@ import org.cuckoo.core.ScheduledActionContext;
  * Sem regras de negócio — toda a lógica fica no component/.
  *
  * Configuração no Sankhya:
- *   Classe Java : br.com.sankhya.dstech.nomedemanda.job.NomeJob
+ *   Classe Java : br.com.sankhya.customizacao.nomedemanda.job.NomeJob
  *   Frequência  : definida no menu Ações Agendadas
  */
 public class Modelo_Job implements ScheduledAction {

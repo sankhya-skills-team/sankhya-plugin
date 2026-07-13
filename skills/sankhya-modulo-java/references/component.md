@@ -16,11 +16,11 @@ Hub de orquestração da demanda. Ponto de entrada único para todos os artefato
 ## Skeleton base
 
 ```java
-package br.com.sankhya.dstech.nomedemanda.component;
+package br.com.sankhya.customizacao.nomedemanda.component;
 
-import br.com.sankhya.dstech.nomedemanda.exception.NomeDemandaException;
-import br.com.sankhya.dstech.nomedemanda.repository.NomeRepository;
-import br.com.sankhya.dstech.nomedemanda.service.NomeService;
+import br.com.sankhya.customizacao.nomedemanda.exception.NomeDemandaException;
+import br.com.sankhya.customizacao.nomedemanda.repository.NomeRepository;
+import br.com.sankhya.customizacao.nomedemanda.service.NomeService;
 import br.com.sankhya.jape.vo.DynamicVO;
 
 import java.math.BigDecimal;

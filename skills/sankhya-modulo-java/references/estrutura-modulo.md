@@ -1,21 +1,20 @@
-# Estrutura do Projeto — Módulo Java DSTech
+# Estrutura do Projeto — Módulo Java
 
 ## Visão Geral
 
 Um módulo Java Sankhya é um projeto Gradle que gera um JAR implantado via Construtor de Telas.
-O projeto modelo de referência é `modelo-dstech-customizacoes` em `/mnt/c/Projetos/modelo-dstech-customizacoes`.
 
-**Pacote raiz:** `br.com.sankhya.dstech`
+**Pacote raiz:** `br.com.sankhya.customizacao`
 
 ---
 
-## Estrutura de Diretórios (Modelo DSTech)
+## Estrutura de Diretórios
 
 ```
-projeto-dstech/
+projeto-customizacao/
 ├── Java/
 │   └── src/
-│       └── br/com/sankhya/dstech/
+│       └── br/com/sankhya/customizacao/
 │           ├── nomedemanda/               ← substituir pelo nome real do módulo
 │           │   ├── actionbutton/
 │           │   │   └── NomeAction.java          ← AcaoRotinaJava
@@ -45,7 +44,7 @@ projeto-dstech/
 │               ├── MessageUtils.java
 │               └── PopUpBuilder.java      ← Não nativo — copiar de examples/PopUpBuilder.java
 ├── Kotlin/                               ← utilitários Kotlin (MathUtils, ErrorHandle)
-│   └── src/br/com/sankhya/dstech/utils/
+│   └── src/br/com/sankhya/customizacao/utils/
 ├── build.gradle
 └── Telas Adicionais/                     ← XMLs de metadados para importação
     └── nomedemanda/
@@ -60,17 +59,17 @@ projeto-dstech/
 
 | Camada | Pacote | Substituir |
 |---|---|---|
-| Botões de ação | `br.com.sankhya.dstech.nomedemanda.actionbutton` | `nomedemanda` → nome real |
-| Eventos | `br.com.sankhya.dstech.nomedemanda.event` | idem |
-| Jobs agendados | `br.com.sankhya.dstech.nomedemanda.job` | idem |
-| Regras de negócio | `br.com.sankhya.dstech.nomedemanda.regra` | idem |
-| Service | `br.com.sankhya.dstech.nomedemanda.service` | idem |
-| Repository | `br.com.sankhya.dstech.nomedemanda.repository` | idem |
-| Exception | `br.com.sankhya.dstech.nomedemanda.exception` | idem |
-| DTO | `br.com.sankhya.dstech.nomedemanda.dto` | idem |
-| Enums do módulo | `br.com.sankhya.dstech.nomedemanda.enums` | idem |
-| Helper do módulo | `br.com.sankhya.dstech.nomedemanda.helper` | idem |
-| Utilitários | `br.com.sankhya.dstech.utils` | fixo |
+| Botões de ação | `br.com.sankhya.customizacao.nomedemanda.actionbutton` | `nomedemanda` → nome real |
+| Eventos | `br.com.sankhya.customizacao.nomedemanda.event` | idem |
+| Jobs agendados | `br.com.sankhya.customizacao.nomedemanda.job` | idem |
+| Regras de negócio | `br.com.sankhya.customizacao.nomedemanda.regra` | idem |
+| Service | `br.com.sankhya.customizacao.nomedemanda.service` | idem |
+| Repository | `br.com.sankhya.customizacao.nomedemanda.repository` | idem |
+| Exception | `br.com.sankhya.customizacao.nomedemanda.exception` | idem |
+| DTO | `br.com.sankhya.customizacao.nomedemanda.dto` | idem |
+| Enums do módulo | `br.com.sankhya.customizacao.nomedemanda.enums` | idem |
+| Helper do módulo | `br.com.sankhya.customizacao.nomedemanda.helper` | idem |
+| Utilitários | `br.com.sankhya.customizacao.utils` | fixo |
 
 ### Classes
 
@@ -95,7 +94,7 @@ projeto-dstech/
 ## AdicionalEntityNames — Enum de Entidades Customizadas
 
 ```java
-package br.com.sankhya.dstech.nomedemanda.enums;
+package br.com.sankhya.customizacao.nomedemanda.enums;
 
 public enum AdicionalEntityNames {
     MINHA_ENTIDADE("AD_MINHAENTIDADE"),
@@ -162,7 +161,7 @@ dependencies {
 }
 
 jar {
-    archiveFileName = 'dstech-nomemodulo.jar'
+    archiveFileName = 'customizacao-nomemodulo.jar'
     from('Java/resources') {
         include "${moduleName}/**"   // inclui HTML/JS de popup e arquivos .sql
     }
@@ -171,12 +170,12 @@ jar {
 
 ### Processo de Deploy
 
-1. **Build:** `gradle jar` → gera `build/libs/dstech-nomemodulo.jar`
+1. **Build:** `gradle jar` → gera `build/libs/customizacao-nomemodulo.jar`
 2. **Empacotar ZIP** (quando houver XML de metadados):
    ```
    Metadados_NOMETABELA.zip
    ├── metadata.xml
-   └── dstech-nomemodulo.jar
+   └── customizacao-nomemodulo.jar
    ```
 3. **Importar:** Sankhya → Construtor de Telas → Importar Metadados → selecionar ZIP
 4. **Registrar manualmente** (se não constar no XML):
@@ -201,19 +200,19 @@ Facilita re-registro após atualizações de servidor.
  * Configuração no Sankhya:
  *   Entidade    : AD_NOMETABELA                                       (evento)
  *   Tipo        : Before Insert, Before Update                        (evento)
- *   Classe Java : br.com.sankhya.dstech.nomedemanda.event.NomeEvento
+ *   Classe Java : br.com.sankhya.customizacao.nomedemanda.event.NomeEvento
  *
  *   — ou —
  *
  *   Entidade : AD_NOMETABELA                                          (botão)
- *   Classe   : br.com.sankhya.dstech.nomedemanda.actionbutton.NomeAction
+ *   Classe   : br.com.sankhya.customizacao.nomedemanda.actionbutton.NomeAction
  *
  *   — ou —
  *
- *   Classe   : br.com.sankhya.dstech.nomedemanda.job.NomeJob          (job)
+ *   Classe   : br.com.sankhya.customizacao.nomedemanda.job.NomeJob          (job)
  *
  *   — ou —
  *
- *   Classe   : br.com.sankhya.dstech.nomedemanda.regra.NomeRegra      (regra)
+ *   Classe   : br.com.sankhya.customizacao.nomedemanda.regra.NomeRegra      (regra)
  */
 ```

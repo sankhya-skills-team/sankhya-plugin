@@ -37,9 +37,9 @@ public class NomeRegra implements RegraNegocioJava {
 ## Padrão Completo — RegraNegocioJava com Liberação de Limite
 
 ```java
-package br.com.sankhya.dstech.nomedemanda.regra;
+package br.com.sankhya.customizacao.nomedemanda.regra;
 
-import br.com.sankhya.dstech.utils.MessageUtils;
+import br.com.sankhya.customizacao.utils.MessageUtils;
 import br.com.sankhya.extensions.regrasnegocio.ContextoRegra;
 import br.com.sankhya.extensions.regrasnegocio.RegraNegocioJava;
 import br.com.sankhya.jape.core.JapeSession;
@@ -56,7 +56,7 @@ import java.util.Collection;
  * Regra de negócio registrada na tela Regras de Negócio do Sankhya.
  *
  * Configuração no Sankhya:
- *   Classe Java : br.com.sankhya.dstech.nomedemanda.regra.NomeRegra
+ *   Classe Java : br.com.sankhya.customizacao.nomedemanda.regra.NomeRegra
  *   Evento      : ID do evento cadastrado em Regras de Negócio
  */
 public class NomeRegra implements RegraNegocioJava {
@@ -175,11 +175,11 @@ public class NomeRegra implements RegraNegocioJava {
 
 ## Interface `Regra` — Alternativa para Regras via Preferência
 
-Registrada como preferência no sistema (ex: `10@br.com.sankhya.dstech.nomedemanda.regra`).
+Registrada como preferência no sistema (ex: `10@br.com.sankhya.customizacao.nomedemanda.regra`).
 Usada quando a regra deve ser configurável por preferência de módulo Java.
 
 ```java
-package br.com.sankhya.dstech.nomedemanda.regra;
+package br.com.sankhya.customizacao.nomedemanda.regra;
 
 import br.com.sankhya.jape.core.JapeSession;
 import br.com.sankhya.modelcore.MGEModelException;
@@ -190,11 +190,11 @@ import com.sankhya.util.BigDecimalUtil;
 import java.math.BigDecimal;
 
 /**
- * Regra registrada via preferência: NOME_PREFERENCIA = "10@br.com.sankhya.dstech..."
+ * Regra registrada via preferência: NOME_PREFERENCIA = "10@br.com.sankhya.customizacao..."
  *
  * Configuração no Sankhya:
  *   Preferência : NOME_PREFERENCIA
- *   Valor       : {codModulo}@br.com.sankhya.dstech.nomedemanda.regra.NomeRegraPreferencia
+ *   Valor       : {codModulo}@br.com.sankhya.customizacao.nomedemanda.regra.NomeRegraPreferencia
  */
 public class NomeRegraPreferencia implements Regra {
 
@@ -244,7 +244,7 @@ Tarefa agendada registrada no Sankhya via menu **Ações Agendadas**. Interface 
 da biblioteca `org.cuckoo.core`.
 
 ```java
-package br.com.sankhya.dstech.nomedemanda.job;
+package br.com.sankhya.customizacao.nomedemanda.job;
 
 import org.cuckoo.core.ScheduledAction;
 import org.cuckoo.core.ScheduledActionContext;
@@ -257,7 +257,7 @@ import org.apache.log4j.Logger;
  *
  * Configuração no Sankhya:
  *   Menu        : Gerenciamento → Ações Agendadas
- *   Classe Java : br.com.sankhya.dstech.nomedemanda.job.NomeAgendada
+ *   Classe Java : br.com.sankhya.customizacao.nomedemanda.job.NomeAgendada
  *   Frequência  : configurada na própria tela (CRON ou intervalo)
  */
 public class NomeAgendada implements ScheduledAction {
@@ -303,7 +303,7 @@ Menu: Gerenciamento → Ações Agendadas (ou Agendador de Tarefas)
 
 Campos:
   Descrição   : nome descritivo
-  Classe Java : br.com.sankhya.dstech.nomedemanda.job.NomeAgendada
+  Classe Java : br.com.sankhya.customizacao.nomedemanda.job.NomeAgendada
   Frequência  : CRON ou intervalo em milissegundos
 ```
 

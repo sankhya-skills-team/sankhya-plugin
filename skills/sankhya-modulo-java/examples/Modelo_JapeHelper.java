@@ -1,4 +1,4 @@
-package br.com.sankhya.dstech.nomedemanda.helper;
+package br.com.sankhya.customizacao.nomedemanda.helper;
 
 import br.com.sankhya.jape.core.JapeSession;
 

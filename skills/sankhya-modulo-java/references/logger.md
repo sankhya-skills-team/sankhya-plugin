@@ -1,11 +1,11 @@
-# Logger — br.com.sankhya.dstech.utils.Logger
+# Logger — br.com.sankhya.customizacao.utils.Logger
 
 ## Localização
 
 Classe estática compartilhada, disponível em todos os módulos:
 
 ```
-shared/Java/src/br/com/sankhya/dstech/utils/Logger.java
+shared/Java/src/br/com/sankhya/customizacao/utils/Logger.java
 ```
 
 Incluída automaticamente em todo JAR gerado pelo `build.gradle`.
@@ -22,7 +22,7 @@ Sem a tela AD_LOG, o INSERT falha silenciosamente — sem erro na aplicação.
 ## Configuração
 
 ```java
-import br.com.sankhya.dstech.utils.Logger;
+import br.com.sankhya.customizacao.utils.Logger;
 
 // Uso estático — sem instância
 Logger.info("Mensagem");

@@ -5,8 +5,6 @@ description: >
   "criar documento de entrega de desenvolvimento", "documentar módulo do addon",
   "gerar .html de entrega", "documentar o que foi entregue", "gerar documentação Sankhya",
   ou qualquer variação de geração automática de documento de entrega para projetos Java Sankhya OM.
-license: Proprietary
-version: 3.0.0
 ---
 
 # Gerador de Documento de Entrega de Desenvolvimento

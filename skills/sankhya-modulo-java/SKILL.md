@@ -4,7 +4,7 @@ description: |
   Esta skill deve ser utilizada quando o usuário mencionar módulo Java Sankhya,
   EventoProgramavelJava, AcaoRotinaJava, RegraNegocioJava, ScheduledAction, JapeFactory,
   DwfUtils, MGEModelException, DynamicEntityNames, AdicionalEntityNames, CustomModuleLoader,
-  Construtor de Telas, JapeSession, EntityFacade, helpers dstech, ou qualquer desenvolvimento
+  Construtor de Telas, JapeSession, EntityFacade, helpers de customização, ou qualquer desenvolvimento
   Java para Sankhya OM que não utiliza as anotações @ActionButton/@Listener/@Job do Addon Studio.
   Também acionar para: "módulo java", "evento programável", "botão de ação manual",
   "tela personalizada", "metadados sankhya", "importar módulo", "criar evento",
@@ -45,11 +45,11 @@ Antes de qualquer análise ou implementação, confirmar com o usuário:
 
 ## Pacote Padrão
 
-Raiz: `br.com.sankhya.dstech`. Substituir `nomedemanda` pelo nome real do módulo
+Raiz: `br.com.sankhya.customizacao`. Substituir `nomedemanda` pelo nome real do módulo
 (ex: `ordemcoleta`, `registroamostra`, `contratos`).
 
 ```
-br.com.sankhya.dstech.
+br.com.sankhya.customizacao.
   nomedemanda/
     actionbutton/		← AcaoRotinaJava
     component/			← Hub de orquestração — chamado por todos os artefatos
@@ -249,7 +249,7 @@ Todas as classes Java criadas devem usar **ISO-8859-1** como encoding do arquivo
 - [ ] Helper com construtor privado e métodos estáticos
 - [ ] Enum no lugar de strings mágicas
 - [ ] Encoding do arquivo fonte: **ISO-8859-1** (nunca UTF-8) — converter com Python3/iconv após geração → `instructions/encoding-instructions.md`
-- [ ] Pacote inclui segmento `nomedemanda` — nunca classes direto em `br.com.sankhya.dstech.{camada}`
+- [ ] Pacote inclui segmento `nomedemanda` — nunca classes direto em `br.com.sankhya.customizacao.{camada}`
 
 ### Camadas e fluxo
 - [ ] Artefatos Sankhya delegam para `component/` — nunca acessam `repository/` ou `service/` diretamente
@@ -271,7 +271,7 @@ Todas as classes Java criadas devem usar **ISO-8859-1** como encoding do arquivo
 - [ ] Sem SQL dentro de loop
 
 ### Qualidade
-- [ ] Logger: usar `br.com.sankhya.dstech.utils.Logger` — `Logger.info()` para rastreamento de fluxo, `Logger.error(mensagem, e)` em todo bloco catch com exceção real
+- [ ] Logger: usar `br.com.sankhya.customizacao.utils.Logger` — `Logger.info()` para rastreamento de fluxo, `Logger.error(mensagem, e)` em todo bloco catch com exceção real
 
 ---
 

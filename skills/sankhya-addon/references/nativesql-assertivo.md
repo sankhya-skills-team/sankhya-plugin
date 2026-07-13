@@ -1,7 +1,6 @@
 ﻿# NativeSql — Como Utilizar de Forma Assertiva
 
 **Classe:** `br.com.sankhya.jape.sql.NativeSql`
-**Autor Principal:** daniel.cesar
 **Versão do Documento:** 1.0
 **Data:** 2026-03-25
 **Versão mínima do SankhyaOn:** 4.35b525
@@ -414,7 +413,6 @@ String ativo = NativeSql.getString("ATIVO", "TGFPRO", "CODPROD = ?", codProd);
 
 **Classe:** `com.sankhya.util.MapUtils`
 **Módulo:** SankhyaUtil
-**Autor Principal:** daniel.cesar
 
 Fornece métodos auxiliares para trabalhar com `Map<String, Object>` retornados por consultas SQL, especialmente úteis em conjunto com `NativeSql.getResultSetAsCollection()` e `NativeSql.getColumnsAsMap()`.
 

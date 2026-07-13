@@ -1329,9 +1329,4 @@ Antes de fazer commit/merge, verifique:
 
 Este documento é vivo e deve ser atualizado conforme o projeto evolui. Sugestões de melhorias são bem-vindas!
 
-**Última atualização:** Fevereiro de 2026
-**Mantenedores:** Time de Arquitetura SankhyaW
-
----
-
-**Dúvidas ou sugestões?** Entre em contato com o time de arquitetura.
+**Última atualização:** Julho de 2026

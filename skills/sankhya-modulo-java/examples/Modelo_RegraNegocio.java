@@ -1,7 +1,7 @@
-package br.com.sankhya.dstech.nomedemanda.regra;
+package br.com.sankhya.customizacao.nomedemanda.regra;
 
-import br.com.sankhya.dstech.helper.CabecalhoNotaHelper;
-import br.com.sankhya.dstech.utils.MessageUtils;
+import br.com.sankhya.customizacao.helper.CabecalhoNotaHelper;
+import br.com.sankhya.customizacao.utils.MessageUtils;
 import br.com.sankhya.extensions.regrasnegocio.ContextoRegra;
 import br.com.sankhya.extensions.regrasnegocio.RegraNegocioJava;
 import br.com.sankhya.jape.core.JapeSession;
@@ -20,7 +20,7 @@ import java.util.Collection;
  * Configuração no Sankhya:
  *   Menu: Configurações → Regras de Negócio
  *   Entidade    : CabecalhoNota (ou entidade alvo)
- *   Classe Java : br.com.sankhya.dstech.nomedemanda.regra.NomeRegra
+ *   Classe Java : br.com.sankhya.customizacao.nomedemanda.regra.NomeRegra
  */
 public class Modelo_RegraNegocio implements RegraNegocioJava {
 

@@ -1,4 +1,4 @@
-package br.com.sankhya.dstech.nomedemanda.repository;
+package br.com.sankhya.customizacao.nomedemanda.repository;
 
 import br.com.sankhya.jape.core.JapeSession;
 import br.com.sankhya.jape.vo.DynamicVO;

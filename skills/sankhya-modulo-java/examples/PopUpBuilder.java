@@ -1,4 +1,4 @@
-package br.com.sankhya.dstech.utils;
+package br.com.sankhya.customizacao.utils;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -11,10 +11,10 @@ import java.util.Map;
  * Builder para popups personalizados em Módulos Java Sankhya OM.
  *
  * IMPORTANTE: Esta classe NÃO é nativa do Sankhya SDK. Deve ser incluída
- * manualmente no pacote br.com.sankhya.dstech.utils do projeto.
+ * manualmente no pacote br.com.sankhya.customizacao.utils do projeto.
  *
  * Referência original: addon-controle-projeto-daniel (utils.PopUpBuilder)
- * Adaptação: pacote ajustado para br.com.sankhya.dstech.utils
+ * Adaptação: pacote ajustado para br.com.sankhya.customizacao.utils
  *
  * Como funciona:
  * 1. Gera um HTML completo com CSS/JS embutidos
@@ -47,13 +47,13 @@ import java.util.Map;
  *   - scope.$dismiss() para fechar o popup
  *
  * Convenção de nomes de arquivo:
- *   Java:  br.com.sankhya.dstech.{modulo}.helper.PopUp{Nome}Helper.java
+ *   Java:  br.com.sankhya.customizacao.{modulo}.helper.PopUp{Nome}Helper.java
  *   HTML:  Java/resources/{pacote}/popup/PopUp{Nome}.html
  *   JS:    Java/resources/{pacote}/popup/PopUp{Nome}.js
  *
  * Para que os recursos sejam incluídos no JAR, coloque-os em:
- *   Java/resources/br/com/sankhya/dstech/{modulo}/popup/
- * Isso garante que o include "br/com/sankhya/dstech/${moduleName}/**"
+ *   Java/resources/br/com/sankhya/customizacao/{modulo}/popup/
+ * Isso garante que o include "br/com/sankhya/customizacao/${moduleName}/**"
  * do build.gradle capture os arquivos.
  */
 public class PopUpBuilder {

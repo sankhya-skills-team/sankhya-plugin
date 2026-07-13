@@ -1,7 +1,7 @@
-package br.com.sankhya.dstech.nomedemanda.helper;
+package br.com.sankhya.customizacao.nomedemanda.helper;
 
-import br.com.sankhya.dstech.utils.MessageUtils;
-import br.com.sankhya.dstech.utils.PopUpBuilder;
+import br.com.sankhya.customizacao.utils.MessageUtils;
+import br.com.sankhya.customizacao.utils.PopUpBuilder;
 
 import java.math.BigDecimal;
 

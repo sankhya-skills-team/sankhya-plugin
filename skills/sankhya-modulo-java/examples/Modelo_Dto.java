@@ -1,4 +1,4 @@
-package br.com.sankhya.dstech.nomedemanda.dto;
+package br.com.sankhya.customizacao.nomedemanda.dto;
 
 import java.math.BigDecimal;
 

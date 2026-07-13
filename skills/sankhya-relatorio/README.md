@@ -119,9 +119,3 @@ Necessidade de impressão
 - [ ] Expressões null-safe para campos opcionais
 - [ ] `.jasper` compilado e testado no iReport antes de entregar
 - [ ] `SUBREPORT_DIR` com separador de diretório ao final (`\\`)
-
----
-
-## Licença
-
-Uso interno — DSTech Soluções.

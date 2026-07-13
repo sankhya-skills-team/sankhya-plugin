@@ -1,6 +1,6 @@
-package br.com.sankhya.dstech.nomedemanda.service;
+package br.com.sankhya.customizacao.nomedemanda.service;
 
-import br.com.sankhya.dstech.nomedemanda.exception.NomeModuloException;
+import br.com.sankhya.customizacao.nomedemanda.exception.NomeModuloException;
 import br.com.sankhya.jape.vo.DynamicVO;
 import com.sankhya.util.BigDecimalUtil;
 

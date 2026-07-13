@@ -77,7 +77,7 @@ from('Java/resources') {
 
 ```
 Java/
-├── src/br/com/sankhya/dstech/
+├── src/br/com/sankhya/customizacao/
 │   ├── utils/
 │   │   └── PopUpBuilder.java              ← OBRIGATÓRIO — copiar de examples/PopUpBuilder.java
 │   └── {modulo}/
@@ -90,11 +90,11 @@ Java/
             └── PopUpNome.js               ← sem comentários //
 ```
 
-> **ATENÇÃO:** O path de resources é `Java/resources/{modulo}/popup/` — **não** `br/com/sankhya/dstech/{modulo}/`.
+> **ATENÇÃO:** O path de resources é `Java/resources/{modulo}/popup/` — **não** `br/com/sankhya/customizacao/{modulo}/`.
 > O build.gradle usa `from('Java/resources') { include "${moduleName}/**" }`.
 > O JAR resultante contém o arquivo em `/{modulo}/popup/PopUpNome.html`.
 >
-> **PopUpBuilder NÃO é nativo do Sankhya SDK.** É uma classe customizada em `br.com.sankhya.dstech.utils.PopUpBuilder`.
+> **PopUpBuilder NÃO é nativo do Sankhya SDK.** É uma classe customizada em `br.com.sankhya.customizacao.utils.PopUpBuilder`.
 > A implementação completa está em `examples/PopUpBuilder.java`.
 
 ---
@@ -102,8 +102,8 @@ Java/
 ## PopUpBuilder API
 
 ```java
-import br.com.sankhya.dstech.utils.PopUpBuilder;
-import br.com.sankhya.dstech.utils.MessageUtils;
+import br.com.sankhya.customizacao.utils.PopUpBuilder;
+import br.com.sankhya.customizacao.utils.MessageUtils;
 
 private static final String POPUP_HTML = "/{modulo}/popup/PopUpNome.html";
 private static final String POPUP_JS   = "/{modulo}/popup/PopUpNome.js";
@@ -750,7 +750,7 @@ public void beforeUpdate(PersistenceEvent event) throws Exception {
 
 ## Checklist
 
-- [ ] `PopUpBuilder.java` existe em `br.com.sankhya.dstech.utils` (copiar de `examples/PopUpBuilder.java`)
+- [ ] `PopUpBuilder.java` existe em `br.com.sankhya.customizacao.utils` (copiar de `examples/PopUpBuilder.java`)
 - [ ] HTML e JS em `Java/resources/{modulo}/popup/`
 - [ ] `build.gradle`: `include "${moduleName}/**"` (não `*.sql`)
 - [ ] `getResourceAsStream` usa path `"/{modulo}/popup/PopUpNome.html"` (classpath a partir da raiz do JAR)
