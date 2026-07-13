@@ -92,10 +92,12 @@ Ou no seu `settings.json`:
 | Hook | script em `hooks/`, registrar bloco `hooks` | Sim |
 | MCP server | bloco `mcpServers` | Sim |
 
+## Autores
+
+Skills, agents e hooks deste plugin são desenvolvidos e mantidos por:
+
+- **Felipe Rosa da Silva**
+- **Daniel Ratkevicius**
+- **Claiton Trisch Farias**
+
 Após adicionar: bump `version` em `.claude-plugin/plugin.json` → commit → push → devs rodam `/plugin update`.
-
-## Pendente
-
-- **MCP `sankhya-schema`**: ainda **não** incluído. Projeto Python separado (Oracle instantclient
-  ~80 MB + credenciais), instalado à parte. Avaliar integração futura via `mcpServers` apontando
-  para install externa.
