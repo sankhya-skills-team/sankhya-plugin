@@ -8,3 +8,10 @@ Thumbs.db
 *.env
 .env
 !.env.example
+
+# Branch de trabalho (feature ratk) — material-fonte para merge manual no plugin.
+# NUNCA versionar; sera excluida apos concluir os ajustes.
+/sankhya-plugin-feat-skills-e-agentes-ratk/
+
+# Documento de handoff (trabalho em andamento) — persiste em disco, nao commita.
+/HANDOFF.md
