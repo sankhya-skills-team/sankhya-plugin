@@ -15,6 +15,7 @@ Plugin do Claude Code com skills, agents e hook para desenvolvimento no **ERP Sa
 | `sankhya-dicionario` | Dicionário de dados Sankhya OM: ~730 tabelas mapeadas (campos, PKs, FKs, enums, entityNames), metamodelo TDD, relacionamentos. |
 | `sankhya-js` | Framework frontend AngularJS 1.x (`sankhya-js`): telas HTML5, `ServiceProxy`/`FluidBuilder`, componentes (grid, dataset, wizard, popup), MetadataProvider, i18n. |
 | `sankhya-estimativa-planejador` | Análise de requisitos funcionais → backlog (epics/stories/critérios), recomendação Addon × Módulo Java e estimativa de horas em 7 fases. |
+| `sankhya-gera-escopo` | Geração de documento de escopo `.docx` (proposta técnica) a partir de contexto bruto, preservando template Word padrão. |
 | `sankhya-commit` | Commit Git interativo: analisa o diff e gera mensagem Conventional Commits com emojis. |
 | `sankhya-doc-entrega-html` | Gera documento de entrega de desenvolvimento em `.html` para projetos Java Sankhya. |
 
