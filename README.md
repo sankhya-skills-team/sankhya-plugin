@@ -17,7 +17,7 @@ Plugin do Claude Code com skills, agents e hook para desenvolvimento no **ERP Sa
 | `sankhya-estimativa-planejador` | Análise de requisitos funcionais → backlog (epics/stories/critérios), recomendação Addon × Módulo Java e estimativa de horas em 7 fases. |
 | `sankhya-gera-escopo` | Geração de documento de escopo `.docx` (proposta técnica) a partir de contexto bruto, preservando template Word padrão. |
 | `sankhya-commit` | Commit Git interativo: analisa o diff e gera mensagem Conventional Commits com emojis. |
-| `sankhya-doc-entrega-html` | Gera documento de entrega de desenvolvimento em `.html` para projetos Java Sankhya. |
+| `sankhya-doc-entrega` | Gera documento de entrega de desenvolvimento em `.html` interativo ou `.docx` Word (à escolha) para projetos Java Sankhya. |
 
 ### Agents (`agents/`)
 Suíte de code review para projetos Java Sankhya. `code-review-orchestrator` coordena os demais:

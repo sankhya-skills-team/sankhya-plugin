@@ -3,17 +3,23 @@ name: gerar-doc-entrega-dev
 description: >
   Esta skill deve ser utilizada quando o usuário quiser "gerar documento de entrega",
   "criar documento de entrega de desenvolvimento", "documentar módulo do addon",
-  "gerar .html de entrega", "documentar o que foi entregue", "gerar documentação Sankhya",
-  ou qualquer variação de geração automática de documento de entrega para projetos Java Sankhya OM.
+  "gerar .html de entrega", "gerar .docx de entrega", "documentar o que foi entregue",
+  "gerar documentação Sankhya", ou qualquer variação de geração automática de documento
+  de entrega para projetos Java Sankhya OM. Gera em dois formatos, à escolha do usuário:
+  HTML interativo (colapsáveis, homologação com evidências, checklist de deploy) ou
+  DOCX Word (editável, com tabela de identificação e bloco de assinaturas).
 ---
 
 # Gerador de Documento de Entrega de Desenvolvimento
 
 ## Objetivo
 
-Gerar automaticamente `Documentacao/Entrega - {NOME_CUSTOMIZACAO}.html` a partir da análise dos fontes Java de um módulo Sankhya OM — Addon Studio ou Módulo Java complementar.
+Gerar automaticamente o documento de entrega — `Documentacao/Entrega - {NOME_CUSTOMIZACAO}.{html|docx}` — a partir da análise dos fontes Java de um módulo Sankhya OM (Addon Studio ou Módulo Java complementar). O usuário escolhe o formato:
 
-O documento HTML é interativo: funcionalidades colapsáveis com abas (Passo a Passo / Testes), testes de homologação com marcação de status e evidências por imagem. O botão "Exportar com evidências" gera versão limpa com seção Homologação dedicada.
+- **HTML interativo** (default): funcionalidades colapsáveis, testes de homologação com marcação de status e evidências por imagem, checklist de deploy, botão "Exportar com evidências". Fluxo completo.
+- **DOCX Word**: documento editável no Word com tabela de identificação, manual de uso, homologação em texto e bloco de assinaturas. Fluxo enxuto (sem homologação interativa, deploy-scan nem personas).
+
+A análise dos fontes Java (Etapas de análise) e a leitura do escopo são idênticas nos dois formatos; só a **coleta de inputs extras** e a **geração final** ramificam por formato.
 
 ---
 
@@ -28,6 +34,18 @@ Exibir o resultado e perguntar:
 > "A pasta raiz do projeto é `{cwd}`? Confirme ou informe o caminho correto."
 
 Usar a resposta como `PASTA_RAIZ`.
+
+---
+
+## Etapa 0.5 — Formato do documento
+
+Perguntar:
+> "Em qual formato deseja o documento de entrega? (`html` interativo — default, ou `docx` Word editável)"
+
+Armazenar como `FORMATO` (`"html"` ou `"docx"`; se o usuário não responder, usar `"html"`).
+
+- **`FORMATO = "html"`** → seguir todas as etapas normalmente.
+- **`FORMATO = "docx"`** → na Etapa 1 **pular** as perguntas de homologação (8), assinaturas (9, 9a, 9b); **pular** as Etapas 3B (scan de deploy) e 6 (testes de homologação); gerar pela **Etapa 7-DOCX** em vez da Etapa 7.
 
 ---
 
@@ -67,7 +85,9 @@ Resolver o caminho absoluto: `PASTA_RAIZ + '/' + resposta`. Usar como `PASTA_FON
 **Pergunta 7 — Responsável(eis) técnico(s):**
 > "Quem desenvolveu este módulo? Se houve passagem de responsabilidade, informe como: 'Dev A → Dev B (a partir da v1.1)'."
 
-**Pergunta 8 — Bloco de Homologação:**
+> **As perguntas 8 e 9 abaixo são exclusivas do `FORMATO = "html"`.** Se `FORMATO = "docx"`, pular as três e definir `INCLUIR_HOMOLOGACAO = False`, `INCLUIR_ASSINATURAS = True` (o DOCX sempre inclui o bloco de assinaturas padrão), `TEXTO_PERSONAS_SANKHYA = ""` e `TEXTO_PERSONAS_CLIENTE = ""`.
+
+**Pergunta 8 — Bloco de Homologação (só HTML):**
 > "Deseja incluir o bloco de homologação (testes de aceitação) no documento? (sim/não)"
 
 Armazenar como `INCLUIR_HOMOLOGACAO` (`True` se "sim", `False` se "não").
@@ -198,6 +218,8 @@ Se não for possível determinar na Etapa 3, o campo será complementado no dril
 ---
 
 ## Etapa 3B — Scan de Artefatos de Deploy
+
+> **Só HTML.** Se `FORMATO = "docx"`, pular toda a Etapa 3B (o DOCX não tem checklist de deploy).
 
 Executar após a Etapa 3. Construir `CHECKLIST_DEPLOY` com dois grupos: `pre_requisitos` e `pos_deploy`.
 
@@ -455,6 +477,8 @@ Para cada funcionalidade em `FUNCIONALIDADES`, preencher `funcionalidade["testes
 ---
 
 ## Etapa 7 — Geração do arquivo HTML
+
+> **Só quando `FORMATO = "html"`.** Para `FORMATO = "docx"`, pular esta etapa e usar a **Etapa 7-DOCX**.
 
 Executar o script Python abaixo **após preencher todas as variáveis** das etapas anteriores.
 
@@ -1012,12 +1036,163 @@ print(f"✅ Documento gerado: {ARQUIVO_SAIDA}")
 
 ---
 
+## Etapa 7-DOCX — Geração do arquivo .docx
+
+> **Só quando `FORMATO = "docx"`.** Alternativa à Etapa 7 (HTML). Usa as mesmas variáveis
+> das etapas de análise (`NOME_CUSTOMIZACAO`, `OBJETIVO`, `FUNCIONALIDADES`, `LIMITACOES_GERAIS`,
+> `CAMINHO_SISTEMA`, `PARCEIRO`, `ID_DEMANDA`, `RESPONSAVEL_TECNICO`, `VERSAO`).
+
+Executar o script Python abaixo. Ele gera um Word com tabela de identificação, manual de uso,
+homologação em texto e bloco de assinaturas. `FUNCIONALIDADES` aqui reusa a estrutura da Etapa 3
+(`titulo`, `passos` como lista, `obs`, `limitacoes`).
+
+```python
+import os
+try:
+    from docx import Document
+except ImportError:
+    os.system('pip install python-docx --break-system-packages -q')
+    from docx import Document
+from docx.shared import Pt, Cm, RGBColor, Inches
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+# ── Caminho de saída (.docx) ───────────────────────────────────────
+PASTA_DOC_DOCX = os.path.join(PASTA_RAIZ, PASTA_DEMANDA, "Documentacao")
+ARQUIVO_SAIDA_DOCX = os.path.join(PASTA_DOC_DOCX, f"Entrega - {NOME_CUSTOMIZACAO}.docx")
+
+# ── Cores/constantes ───────────────────────────────────────────────
+GREEN = (106, 168, 79); WHITE = (255, 255, 255); BLACK = (0, 0, 0); GREEN_HEX = '6AA84F'
+
+def set_cell_shading(cell, fill_hex):
+    tcPr = cell._tc.get_or_add_tcPr()
+    shd = OxmlElement('w:shd')
+    shd.set(qn('w:val'), 'clear'); shd.set(qn('w:color'), 'auto'); shd.set(qn('w:fill'), fill_hex)
+    tcPr.append(shd)
+
+def add_run(para, text, bold=None, size=None, color=None):
+    run = para.add_run(text)
+    if bold is not None: run.bold = bold
+    if size is not None: run.font.size = Pt(size)
+    if color is not None: run.font.color.rgb = RGBColor(*color)
+    return run
+
+def add_custom_heading(doc, text, level=2):
+    p = doc.add_paragraph(); run = p.add_run(text); run.bold = True
+    run.font.color.rgb = RGBColor(0, 0, 0)
+    p.paragraph_format.space_before = Pt(24 if level == 2 else 12)
+    p.paragraph_format.space_after = Pt(6)
+    run.font.size = Pt(14 if level == 2 else 12)
+    return p
+
+def label_valor(doc, label, valor=""):
+    p = doc.add_paragraph(style='Normal'); add_run(p, label, bold=True)
+    if valor: add_run(p, valor)
+    return p
+
+def print_lines(doc, valor):
+    # aceita string (com \n) ou lista de strings
+    linhas = valor if isinstance(valor, list) else str(valor).split('\n')
+    for linha in linhas:
+        c = str(linha).strip()
+        if c: doc.add_paragraph(c, style='Normal')
+
+def fill_sign_cell(cell, role, is_last=False):
+    p1 = cell.paragraphs[0]; p1.paragraph_format.space_after = Pt(0)
+    p1.add_run("_______________________________________")
+    p2 = cell.add_paragraph(); p2.paragraph_format.space_after = Pt(0); p2.add_run("Nome:").bold = True
+    p3 = cell.add_paragraph(); p3.paragraph_format.space_after = Pt(0) if is_last else Pt(36); p3.add_run(role)
+
+# ── Documento ──────────────────────────────────────────────────────
+doc = Document()
+for style in doc.styles:
+    if hasattr(style, 'font'): style.font.name = 'Roboto'
+for section in doc.sections:
+    section.top_margin = Cm(1.78); section.bottom_margin = Cm(1.60)
+    section.left_margin = Cm(2.14); section.right_margin = Cm(1.43)
+
+p_titulo = doc.add_paragraph(style='Normal')
+add_run(p_titulo, "Entrega de Desenvolvimento", bold=True, size=16, color=GREEN)
+p_titulo.paragraph_format.space_before = Pt(12)
+p_sub = doc.add_paragraph(style='Normal'); add_run(p_sub, NOME_CUSTOMIZACAO)
+p_sub.paragraph_format.space_after = Pt(24)
+
+# Identificação
+id_table = doc.add_table(rows=6, cols=2); id_table.style = 'Table Grid'
+hcell = id_table.rows[0].cells[0].merge(id_table.rows[0].cells[1])
+set_cell_shading(hcell, GREEN_HEX)
+add_run(hcell.paragraphs[0], "Identificação", bold=True, color=WHITE)
+dados_id = [
+    ("Parceiro:", PARCEIRO),
+    ("ID Demanda:", ID_DEMANDA or "—"),
+    ("Responsável Técnico:", RESPONSAVEL_TECNICO),
+    ("Versão da Customização:", VERSAO),
+    ("Caminho no Sistema:", CAMINHO_SISTEMA),
+]
+for i, (col0, col1) in enumerate(dados_id):
+    row = id_table.rows[i + 1]
+    row.cells[0].paragraphs[0].add_run(col0).bold = True
+    row.cells[1].paragraphs[0].add_run(str(col1))
+
+# 1. Objetivos
+add_custom_heading(doc, "1. Objetivos", level=2)
+doc.add_paragraph(OBJETIVO, style='Normal')
+
+# 2. Manual de Uso
+add_custom_heading(doc, "2. Manual de Uso das Customizações", level=2)
+p_c = doc.add_paragraph(style='Normal'); add_run(p_c, "Caminho no sistema: ", bold=True); add_run(p_c, CAMINHO_SISTEMA)
+for i, func in enumerate(FUNCIONALIDADES, 1):
+    add_custom_heading(doc, f"Funcionalidade {i}: {func.get('titulo','')}", level=3)
+    ph = doc.add_paragraph(); add_run(ph, "Passo a Passo:", bold=True)
+    print_lines(doc, func.get("passos", ""))
+    if func.get("obs"):
+        po = doc.add_paragraph(style='Normal'); add_run(po, "Observações: ", bold=True); add_run(po, str(func["obs"]))
+    if func.get("limitacoes"):
+        pl = doc.add_paragraph(style='Normal'); add_run(pl, "Limitações: ", bold=True); add_run(pl, str(func["limitacoes"]))
+
+# 3. Limitações Conhecidas
+add_custom_heading(doc, "3. Limitações Conhecidas", level=2)
+print_lines(doc, LIMITACOES_GERAIS if 'LIMITACOES_GERAIS' in dir() else "")
+
+# 4. Homologação e Testes (preenchimento manual)
+add_custom_heading(doc, "4. Homologação e Testes", level=2)
+for label in ("Responsável pelos testes no cliente: [Nome e cargo]",
+              "Data da homologação: [dd/mm/aaaa]",
+              "Resultado: [ ] Aprovado  [ ] Reprovado (com pendências abaixo)"):
+    doc.add_paragraph(label, style='Normal')
+
+# 5. Observações finais
+add_custom_heading(doc, "Observações", level=2)
+doc.add_paragraph(
+    "Por se tratar de uma personalização o Service Desk não atua nos casos de dúvidas ou "
+    "incidentes; qualquer alteração ou suporte deverá ser negociada como horas adicionais "
+    "com a Unidade para o atendimento.", style='Normal')
+
+# 6. Local, data e assinaturas
+p_cd = doc.add_paragraph("_______, ____ de _______ de ____", style='Normal')
+p_cd.paragraph_format.space_before = Pt(40); p_cd.paragraph_format.space_after = Pt(24)
+sign = doc.add_table(rows=2, cols=3); sign.autofit = False
+sign.columns[0].width = Inches(2.8); sign.columns[1].width = Inches(0.4); sign.columns[2].width = Inches(2.8)
+fill_sign_cell(sign.cell(0, 0), "Líder do Projeto")
+fill_sign_cell(sign.cell(0, 2), "Gerente de Projetos – Sankhya")
+fill_sign_cell(sign.cell(1, 0), "Consultor", is_last=True)
+fill_sign_cell(sign.cell(1, 2), "Solicitante", is_last=True)
+
+os.makedirs(PASTA_DOC_DOCX, exist_ok=True)
+doc.save(ARQUIVO_SAIDA_DOCX)
+ARQUIVO_SAIDA = ARQUIVO_SAIDA_DOCX
+print(f"✅ Documento gerado: {ARQUIVO_SAIDA_DOCX}")
+```
+
+---
+
 ## Etapa 8 — Retorno ao usuário
 
 Após gerar o arquivo, informar:
 
-1. **Arquivo gerado:** `{PASTA_DEMANDA}/Documentacao/Entrega - {NOME_CUSTOMIZACAO}.html`
-2. **Versão:** `{VERSAO}` — backup da anterior em `{PASTA_DEMANDA}/Documentacao/Entrega - {NOME} v{versao_anterior}.html` (se existia)
+1. **Arquivo gerado:** `{PASTA_DEMANDA}/Documentacao/Entrega - {NOME_CUSTOMIZACAO}.{html|docx}` (conforme `FORMATO`)
+2. **Versão** (só HTML): `{VERSAO}` — backup da anterior em `{PASTA_DEMANDA}/Documentacao/Entrega - {NOME} v{versao_anterior}.html` (se existia)
 3. **Funcionalidades documentadas:** lista numerada com título e tipo de cada uma
 4. Se `INCLUIR_HOMOLOGACAO = True`: **Testes gerados** — total por funcionalidade (ex.: `Validação de Pesagem: 3 testes`)
 
