@@ -175,6 +175,25 @@ Collection<DynamicVO> entidades = (Collection<DynamicVO>)
 boolean existe = !entidades.isEmpty();
 ```
 
+### Outros métodos do EntityFacade
+
+```java
+// Instância vazia já com os defaults do Dicionário
+DynamicVO finVO = (DynamicVO) dwfFacade.getDefaultValueObjectInstance(
+        DynamicEntityNames.FINANCEIRO);
+
+// Buscar por PK como VO (somente leitura — não gerenciado)
+DynamicVO leitura = (DynamicVO) dwfFacade.findEntityByPrimaryKeyAsVO(
+        DynamicEntityNames.FINANCEIRO, new Object[]{ nuFin });
+
+// Remover por critério (não por PK)
+FinderWrapper filtro = new FinderWrapper(
+        DynamicEntityNames.FINANCEIRO,
+        "this.CODPARC = ? AND this.DTVENC >= ?",
+        new Object[]{ codParc, dtVenc });
+dwfFacade.removeByCriteria(filtro);
+```
+
 ---
 
 ## DynamicVO — Leitura e Escrita
@@ -380,6 +399,20 @@ try {
 - **NUNCA usar dentro de eventos** — a sessão já está aberta pela plataforma
 - **Sempre usar `finally`** — garante fechamento mesmo em caso de exceção
 - **`JapeSession.close(null)`** é seguro — não lança exceção se `hnd` for null
+
+### Evitar timeout em processo longo
+
+```java
+hnd.setCanTimeout(false);
+```
+
+### Propriedades de sessão (lidas por regras/gatilhos)
+
+```java
+JapeSession.putProperty("usuario_logado", CODUSU);
+JapeSession.putProperty("emp_usu_logado", usuVO.getCODEMP());
+JapeSession.putProperty("dh_atual", new Timestamp(System.currentTimeMillis()));
+```
 
 ---
 

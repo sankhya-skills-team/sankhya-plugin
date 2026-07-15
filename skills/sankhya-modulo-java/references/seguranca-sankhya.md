@@ -8,7 +8,9 @@ Padrões de vulnerabilidade próprios do ecossistema Sankhya (OM, módulos, add-
 
 **Padrão vulnerável:** uma rotina de uso geral (ex: nota fiscal) aciona operação de módulo restrito (ex: financeiro) e o serviço chamado não revalida se o usuário em contexto tem permissão naquele recurso. Usuário com acesso só à rotina geral acaba operando no módulo restrito.
 
-**Correção:** toda operação sensível começa validando autorização do usuário corrente (`MGEAuthorizationManager` + checagem de recurso). Não confie em quem chamou; valide no início do método.
+**Detecção:** procure por `DynamicProxy.getFor(...)` (chamada inter-módulo via Dynamic Proxy) e verifique se o método invocado valida autorização logo no início.
+
+**Correção:** toda operação sensível começa validando autorização do usuário corrente (`MGEAuthorizationManager` / `UserContextManager` + checagem de módulo/recurso). Não confie em quem chamou; valide no início do método.
 
 **Severidade típica:** ALTA (escalonamento de privilégio dentro da aplicação).
 

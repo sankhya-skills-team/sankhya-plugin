@@ -20,6 +20,11 @@ Pacote central de utilitários do back-end Sankhya. Disponível em módulos Java
 | `BigDecimalUtil` | Arredondamento, divisão segura, porcentagem, null-safe, conversões | `references/sankhyautil/bigdecimalutil.md` |
 | `CollectionUtils` | Verificar se coleção está vazia (null-safe), split para batch IN | `references/sankhyautil/collectionutils.md` |
 | `SessionFile` | Criar arquivos temporários de sessão (PDF, Excel, etc.) para download | `references/sankhyautil/sessionfile.md` |
+| `ListUtils` | Split de lista em lotes, `ResultSet` → `List<Map>` | seção "Utilitários adicionais" abaixo |
+| `MapUtils` | Verificar map vazio (null-safe), lookup de chave, ler valor tipado | seção "Utilitários adicionais" abaixo |
+| `ObjectUtils` | Comparação null-safe entre objetos heterogêneos | seção "Utilitários adicionais" abaixo |
+| `WrapperUtils` | Unboxing null-safe de `Boolean` | seção "Utilitários adicionais" abaixo |
+| `ComparationUtils` | Comparação de versão do SankhyaOm / SankhyaNFe | seção "Utilitários adicionais" abaixo |
 
 ---
 
@@ -68,3 +73,47 @@ import org.w3c.dom.Element; // ClassCastException em runtime
 // CORRETO
 import org.jdom.Element;
 ```
+
+---
+
+## Utilitários adicionais
+
+Classes menores do mesmo pacote `com.sankhya.util`. Antes de escrever comparação,
+null-check ou lookup manual, use o equivalente aqui.
+
+### MapUtils — `import com.sankhya.util.MapUtils;`
+
+| Método | Assinatura |
+|---|---|
+| `isEmpty` | `(Map map) : boolean` |
+| `isNotEmpty` | `(Map map) : boolean` |
+| `containsSomeKey` | `(Object[] keys, Map targetMap) : boolean` |
+| `containsAllKeys` | `(Collection keys, Map targetMap) : boolean` |
+| `getMapValueAsBigDecimal` | `(Map map, String key) : BigDecimal` |
+| `getMapValueAsTimestamp` | `(Map map, String key) : Timestamp` |
+| `getMapValueAsString` | `(Map map, String key) : String` |
+
+> **Atenção:** os `getMapValue*` fazem **cast**, não conversão. Uma `String "123"`
+> em `getMapValueAsBigDecimal()` lança `ClassCastException`.
+
+### WrapperUtils — `import com.sankhya.util.WrapperUtils;`
+
+| Método | Assinatura | Substitui |
+|---|---|---|
+| `getBooleanOrFalse` | `(Object boolObj) : boolean` | `boolObj != null && (Boolean) boolObj` |
+
+### ObjectUtils — `import com.sankhya.util.ObjectUtils;`
+
+| Método | Assinatura | Substitui |
+|---|---|---|
+| `safelyEquals` | `(Object o1, Object o2) : boolean` (BigDecimal usa `compareTo`) | `o1 != null && o1.equals(o2)` |
+
+### ListUtils — `import com.sankhya.util.ListUtils;`
+
+Split de lista em lotes e conversão `ResultSet` → `List<Map>`. Assinaturas não
+confirmadas via `javap` — verificar no jar antes de usar; não inventar método.
+
+### ComparationUtils — `import com.sankhya.util.ComparationUtils;`
+
+Comparação de versão do SankhyaOm e do SankhyaNFe. Assinaturas não confirmadas via
+`javap` — verificar no jar antes de usar; não inventar método.
