@@ -11,6 +11,7 @@ Plugin do Claude Code com skills, agents e hook para desenvolvimento no **ERP Sa
 | `sankhya-modulo-java` | Módulo Java: `EventoProgramavelJava`, `AcaoRotinaJava`, `RegraNegocioJava`, helpers de customização. |
 | `sankhya-jape` | Persistência JAPE: `JapeSession`, `NativeSql`, `EntityFacade`, `DynamicVO`, `execWithTX`, transações, macros portáveis Oracle/SQL Server. |
 | `sankhya-relatorio` | Relatórios JasperReports / iReport / `.jrxml`, impressão Sankhya. |
+| `sankhya-bi` | Dashboards e componentes de BI (gadgets) no Sankhya OM: Construtor de Componentes de BI, gráficos, XML `TSIGDG.CONFIG`, HTML5. |
 | `sankhya-commit` | Commit Git interativo: analisa o diff e gera mensagem Conventional Commits com emojis. |
 | `sankhya-doc-entrega-html` | Gera documento de entrega de desenvolvimento em `.html` para projetos Java Sankhya. |
 
