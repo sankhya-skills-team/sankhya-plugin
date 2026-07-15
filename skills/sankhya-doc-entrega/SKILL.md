@@ -102,7 +102,6 @@ Se `INCLUIR_ASSINATURAS = True`, fazer as duas perguntas adicionais abaixo:
 **Pergunta 9a — Personas Sankhya:**
 > "Informe as personas da Sankhya (nome — função), uma por linha:
 > Ex:
-> Fulano de Tal — Consultor
 > Ana Paula Souza — Gerente de Projetos"
 
 Armazenar como `TEXTO_PERSONAS_SANKHYA`.
