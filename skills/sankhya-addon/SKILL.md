@@ -126,6 +126,8 @@ Identificar o artefato correto e **ler o arquivo de referência antes de impleme
 | **Parâmetros** | Parâmetros embarcados no add-on via `parameter.xml` | `references/parameters.md` |
 | **Dashboards** | Dashboards embarcados no add-on | `references/dashboards.md` |
 | **Organização de pacotes Java** | Estrutura de pacotes para evitar conflitos de ClassLoader | `references/organizacao-pacotes-java.md` |
+| **Micromódulo (legado EJB2)** | SPBeans, `service-providers.xml`, `BaseSPBean`, XDoclet | `references/micromodule.md` |
+| **Micromódulo (SDK moderno)** | `@Service`, `@Repository`, `@Listener`, DI Guice, `@Transactional` | `references/micromodule-sdk.md` |
 
 ### Qualidade de código
 
