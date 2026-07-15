@@ -20,8 +20,21 @@ Plugin do Claude Code com skills, agents e hook para desenvolvimento no **ERP Sa
 | `sankhya-doc-entrega` | Gera documento de entrega de desenvolvimento em `.html` interativo ou `.docx` Word (à escolha) para projetos Java Sankhya. |
 
 ### Agents (`agents/`)
-Suíte de code review para projetos Java Sankhya. `code-review-orchestrator` coordena os demais:
+
+**Suíte de code review** para projetos Java Sankhya. `code-review-orchestrator` coordena os demais:
 `arch-reviewer`, `clean-code`, `security-scanner`, `perf-analyzer`, `doc-checker`.
+
+**Agents de desenvolvimento** — geram/alteram código Sankhya por especialidade:
+
+| Agent | Quando aciona |
+|---|---|
+| `sankhya-orchestrator-agent-dev` | Planeja e roteia o desenvolvimento a partir de escopo/backlog: decide Addon × Módulo Java, fatia por artefato e aciona os especialistas abaixo. |
+| `sankhya-backend-dev` | Backend Java: `AcaoRotinaJava`, botão de ação, `EventoProgramavelJava`, `RegraNegocioJava`, ações agendadas, Helper/Service/Repository, `@ActionButton`/`@Listener`/`@Job`. Módulo Java e Addon Studio. |
+| `sankhya-data-dev` | Estrutura de dados e persistência: tabelas `AD_`, DataDictionary, DBScripts dual-dialect (Oracle/SQL Server), migrations, repositórios JAPE, views/triggers/functions. |
+| `sankhya-bi-report-dev` | BI e relatórios: dashboards/gadgets (Construtor de Componentes de BI) e JasperReports/iReport. |
+| `sankhya-frontend-dev` | Roteador de frontend: decide entre `sankhya-frontend-angular` (padrão) e `sankhya-frontend-design-system` e delega. |
+| `sankhya-frontend-angular` | Telas HTML5 AngularJS `sankhya-js` **sem** Node/Design System: `sk-application`, `sk-datagrid`, `sk-wizard`, `ServiceProxy`. |
+| `sankhya-frontend-design-system` | Telas no Design System EzUI/Acorde (`ez-`/`snk-` web components) com pipeline Node (npm/Vite). |
 
 ### Hooks (`hooks/`)
 
