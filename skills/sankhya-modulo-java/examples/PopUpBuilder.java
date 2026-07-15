@@ -8,25 +8,25 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Builder para popups personalizados em M√≥dulos Java Sankhya OM.
+ * Builder para popups personalizados em MÛdulos Java Sankhya OM.
  *
- * IMPORTANTE: Esta classe N√ÉO √© nativa do Sankhya SDK. Deve ser inclu√≠da
+ * IMPORTANTE: Esta classe N√O È nativa do Sankhya SDK. Deve ser incluÌda
  * manualmente no pacote br.com.sankhya.customizacao.utils do projeto.
  *
- * Refer√™ncia original: addon-controle-projeto-daniel (utils.PopUpBuilder)
- * Adapta√ß√£o: pacote ajustado para br.com.sankhya.customizacao.utils
+ * ReferÍncia original: addon interno de controle de projeto (utils.PopUpBuilder)
+ * AdaptaÁ„o: pacote ajustado para br.com.sankhya.customizacao.utils
  *
  * Como funciona:
  * 1. Gera um HTML completo com CSS/JS embutidos
- * 2. O HTML usa Angular do Sankhya OM e jQuery (dispon√≠veis no contexto do popup)
- * 3. Servi√ßos Angular (MessageUtils, ServiceProxy, etc.) s√£o injetados automaticamente
- * 4. O HTML gerado √© passado para MessageUtils.showInfo() que usa ServiceContext.setStatus(2)
+ * 2. O HTML usa Angular do Sankhya OM e jQuery (disponÌveis no contexto do popup)
+ * 3. ServiÁos Angular (MessageUtils, ServiceProxy, etc.) s„o injetados automaticamente
+ * 4. O HTML gerado È passado para MessageUtils.showInfo() que usa ServiceContext.setStatus(2)
  * 5. O frontend Sankhya reconhece status=2 e renderiza como modal popup
  *
  * Uso:
  * <pre>
  *   String popup = new PopUpBuilder.Builder()
- *       .setTitle("T√≠tulo do Popup")
+ *       .setTitle("TÌtulo do Popup")
  *       .setHtmlFile(getClass().getResourceAsStream("/popup/MeuPopUp.html"))
  *       .setJsFile(getClass().getResourceAsStream("/popup/MeuPopUp.js"))
  *       .setWidth(700)
@@ -39,19 +39,19 @@ import java.util.Map;
  *   MessageUtils.showInfo(popup);
  * </pre>
  *
- * No JavaScript do popup, ap√≥s o build(), os seguintes est√£o dispon√≠veis:
+ * No JavaScript do popup, apÛs o build(), os seguintes est„o disponÌveis:
  *   - scope         (AngularJS scope do popup)
  *   - ObjectUtils, MessageUtils, AngularUtil, DateUtils, NumberUtils,
  *     ServiceProxy, StringUtils, SkApplicationInstance
- *   - Todas as vari√°veis adicionadas via addVariable()
+ *   - Todas as vari·veis adicionadas via addVariable()
  *   - scope.$dismiss() para fechar o popup
  *
- * Conven√ß√£o de nomes de arquivo:
+ * ConvenÁ„o de nomes de arquivo:
  *   Java:  br.com.sankhya.customizacao.{modulo}.helper.PopUp{Nome}Helper.java
  *   HTML:  Java/resources/{pacote}/popup/PopUp{Nome}.html
  *   JS:    Java/resources/{pacote}/popup/PopUp{Nome}.js
  *
- * Para que os recursos sejam inclu√≠dos no JAR, coloque-os em:
+ * Para que os recursos sejam incluÌdos no JAR, coloque-os em:
  *   Java/resources/br/com/sankhya/customizacao/{modulo}/popup/
  * Isso garante que o include "br/com/sankhya/customizacao/${moduleName}/**"
  * do build.gradle capture os arquivos.
@@ -68,7 +68,7 @@ public class PopUpBuilder {
         private int height;
         private Map<String, Object> variables;
 
-        // CSS padr√£o injetado em todo popup ‚Äî ajusta o modal para o tamanho configurado
+        // CSS padr„o injetado em todo popup -- ajusta o modal para o tamanho configurado
         private final String defaultCss =
             "<style>" +
             ".modal-backdrop.in{background-color:#fff}" +
@@ -80,7 +80,7 @@ public class PopUpBuilder {
             ".sk-popup.modal.fade .modal-dialog,.sk-popup.modal.in .modal-dialog{margin-left:-190px!important}" +
             ".modal-body{min-height:${height}px !important;width:${width}px}";
 
-        // JavaScript padr√£o: esconde bot√µes nativos, injeta scope e servi√ßos Angular
+        // JavaScript padr„o: esconde botıes nativos, injeta scope e serviÁos Angular
         private final String defaultJs =
             "</style>" +
             "<div id=\"myPopUp\">" +
@@ -137,14 +137,14 @@ public class PopUpBuilder {
         }
 
         /**
-         * Adiciona uma vari√°vel Java ao escopo JavaScript do popup.
+         * Adiciona uma vari·vel Java ao escopo JavaScript do popup.
          *
-         * String  ‚Üí var key = 'value';   (aspas simples)
-         * Outros  ‚Üí var key = value;     (sem aspas ‚Äî n√∫mero, boolean, JSON)
+         * String  -> var key = 'value';   (aspas simples)
+         * Outros  -> var key = value;     (sem aspas -- n˙mero, boolean, JSON)
          *
          * Para passar JSON como String sem que as aspas duplas causem problema,
-         * o JSON √© envolvido em aspas simples, o que √© seguro pois nomes de
-         * tabelas/colunas n√£o cont√™m aspas simples.
+         * o JSON È envolvido em aspas simples, o que È seguro pois nomes de
+         * tabelas/colunas n„o contÍm aspas simples.
          */
         public Builder addVariable(String key, Object value) {
             this.variables.put(key, value);
