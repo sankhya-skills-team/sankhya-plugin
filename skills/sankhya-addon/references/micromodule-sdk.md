@@ -6,7 +6,7 @@
 
 ## Quando usar
 
-- Criar ou alterar componentes com `@Service`, `@Controller`, `@Repository`, `@Listener`, `@BusinessRule`, `@Callback`, `@ActionButton`, `@Job`
+- Criar ou alterar componentes com `@Controller` (ou `@Service`, **deprecated**), `@Repository`, `@Listener`, `@BusinessRule`, `@Callback`, `@ActionButton`, `@Job`
 - Configurar injeção de dependências (`@Inject`, `@Component`)
 - Transações declarativas (`@Transactional`) e validação (`@Valid`)
 - Tratamento de exceções (`@ControllerAdvice`, `@ExceptionHandler`)
@@ -17,7 +17,7 @@
 
 | Aspecto | Legado (`micromodule`) | SDK (`micromodule-sdk`) |
 |--------|----------------------|------------------------|
-| Endpoints | `BaseSPBean` + XDoclet + `service-providers.xml` | `@Service` / `@Controller` |
+| Endpoints | `BaseSPBean` + XDoclet + `service-providers.xml` | `@Controller` (`@Service` deprecated) |
 | DI | manual (`new`, singletons) | `@Inject` via construtor (Guice) |
 | Dados | `JapeSession`, `EntityFacade`, `NativeSql` direto | `@Repository` + `JapeRepository` |
 | Listeners | interface `EntityListener` | `@Listener` + `PersistenceEventAdapter` |
@@ -41,8 +41,8 @@
 
 | Anotação | Propósito | Detalhe |
 |------------|---------|--------|
-| `@Service` | endpoint HTTP (REST) | `serviceName` DEVE terminar com `SP` |
-| `@Controller` | alias de `@Service`, TX padrão `Supports` | usar na camada de orquestração |
+| `@Controller` | endpoint HTTP (REST) — substituto oficial de `@Service` | `serviceName` DEVE terminar com `SP`; TX padrão `Supports` |
+| `@Service` | **deprecated** — será removido; use `@Controller` | mantida só para manutenção de legado |
 | `@Component` | bean gerenciado | lógica de negócio, validadores, helpers |
 | `@Inject` | injeção de dependência | usar `com.google.inject.Inject`, **nunca** `javax.inject.Inject` |
 | `@Repository` | camada de acesso a dados | estende `JapeRepository<ID, Entity>` |
@@ -57,10 +57,10 @@
 | `@ControllerAdvice` | tratamento centralizado de exceções | handlers retornam POJO, nunca void |
 | `@Value` | injeção de valor de fontes externas | eager (direto) ou lazy (`Provider<T>`) |
 
-## Exemplo mínimo de @Service
+## Exemplo mínimo de @Controller
 
 ```java
-@Service(serviceName = "PedidoServiceSP")
+@Controller(serviceName = "PedidoControllerSP")
 public class PedidoController {
 
     private final PedidoRepository pedidoRepository;
@@ -99,15 +99,15 @@ public interface PedidoRepository extends JapeRepository<BigDecimal, Pedido> {
 
 1. **`@Inject` deve ser `com.google.inject.Inject`** — nunca `javax.inject.Inject`
 2. **Injeção via construtor** — nunca por campo ou setter
-3. **`serviceName` termina com `SP`** — para `@Service`, `@Controller` e `@Job`
-4. **Métodos de `@Service` recebem/retornam DTOs** — nunca `ServiceContext`
+3. **`serviceName` termina com `SP`** — para `@Controller`, `@Service` (legado) e `@Job`
+4. **Métodos de `@Controller`/`@Service` recebem/retornam DTOs** — nunca `ServiceContext`
 5. **`@Repository` estende `JapeRepository<ID, Entity>`**
 6. **`@Parameter("nome")`** em queries — não `@Param`
 7. **`@Modifying` obrigatório** para queries de escrita (`@NativeQuery` INSERT/UPDATE/DELETE)
 8. **`@Listener` usa `instanceNames`** = nome da instância/entidade, não da tabela
 9. **`@Job frequency` começa com `&`** antes da expressão CRON
 10. **`@ExceptionHandler` retorna POJO** — nunca void ou ServiceContext
-11. **Use `TransactionType` (UPPER_SNAKE_CASE)** em `@Transactional`; `EJBTransactionType` (PascalCase) em `@Service`
+11. **Use `TransactionType` (UPPER_SNAKE_CASE)** em `@Transactional`; `EJBTransactionType` (PascalCase) na anotação de classe (`@Controller`/`@Service`)
 
 ## Erros comuns
 
@@ -121,7 +121,7 @@ public interface PedidoRepository extends JapeRepository<BigDecimal, Pedido> {
 | Listener não dispara | `instanceNames` = nome da tabela | usar nome da entidade/instância |
 | Job não agenda | `frequency` sem `&` | adicionar prefixo `&` à CRON |
 | `@ExceptionHandler` engolido | catch-all genérico `Exception.class` | usar tipos específicos de exceção |
-| Enum de TX divergente | mistura `TransactionType` / `EJBTransactionType` | `@Transactional` → `TransactionType`, `@Service` → `EJBTransactionType` |
+| Enum de TX divergente | mistura `TransactionType` / `EJBTransactionType` | `@Transactional` → `TransactionType`, `@Controller`/`@Service` → `EJBTransactionType` |
 
 ## Estrutura do projeto
 

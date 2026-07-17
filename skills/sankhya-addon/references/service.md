@@ -1,5 +1,12 @@
 # A Camada de Serviço (@Service)
 
+> **⚠️ DEPRECATED — `@Service` foi descontinuada.** A própria anotação está marcada com `@Deprecated`:
+> *"Use a nova anotação `@Controller`. Esta anotação será removida em versões futuras."*
+>
+> **Código novo → use `@Controller`** (`references/sdk-controller.md`). O `@Controller` é o substituto oficial: mesmo runtime, mas com injeção de dependência via `@Inject`, controle transacional granular por método (`@Transactional`) e retorno tipado — sem o boilerplate de `ServiceContext` + `JapeSession` manual.
+>
+> Este arquivo permanece como referência para **manutenção de projetos existentes** que ainda usam `@Service`. A anotação continua funcionando em runtime, mas não deve ser usada em código novo.
+
 ## Visão Geral
 
 A anotação `@Service` designa uma classe como ponto de entrada (endpoint) para requisições externas. Atua como um "Controller" no padrão MVC, orquestrando a interação entre o mundo exterior e a lógica de negócio.
@@ -191,7 +198,8 @@ O retorno contém `jsessionId`, que deve ser passado como `mgeSession` nas requi
 
 | TransactionType | Descrição | Quando Usar |
 |---|---|---|
-| `Required` | (Padrão) Usa transação existente ou cria uma nova | Operações de escrita simples |
+| `Supports` | (Padrão) Participa de transação existente; se não houver, executa sem transação | Leitura que pode ou não estar em transação |
+| `Required` | Usa transação existente ou cria uma nova | Operações de escrita simples |
 | `RequiresNew` | Sempre cria uma nova transação | Logs de auditoria independentes |
 | `NotSupported` | Executa fora de qualquer transação | Consultas, ou quando usa `execWithTX`/`execWithFakeTX` manualmente |
 | `Mandatory` | Exige transação já existente | Raro — garantir contexto transacional |

@@ -54,7 +54,7 @@ Antes de qualquer análise ou implementação, confirmar com o usuário:
 ### Add-on Studio 2.0 (padrão desta skill)
 
 Identificadores no código:
-- `@Service(serviceName = "...")`, `@Listener`, `@ActionButton`, `@Job`, `@BusinessRule`, `@Callback`
+- `@Controller` (endpoint — recomendado) ou `@Service(serviceName = "...")` (**deprecated**, será removido — só manutenção de legado), `@Listener`, `@ActionButton`, `@Job`, `@BusinessRule`, `@Callback`
 - Acesso a dados via `JapeFactory.dao(...)`, `DynamicVO`, `JapeWrapper`, `NativeSql`
 
 ### SDK Sankhya (beta — acesso antecipado)
@@ -98,7 +98,7 @@ Identificar o artefato correto e **ler o arquivo de referência antes de impleme
 | **CRUD Service Listener** | Legado (`DatasetCRUDListenerAdapter`): intercepta CRUD da grade/tela DWF; enxerga campos transientes do dataset | `references/crud-service-listener.md` |
 | **Callback** | Reage a eventos de negócio de documentos comerciais (confirmação, faturamento) — incluindo notas de entrada | `references/callback.md` |
 | **Business Rule** | Validação vinculada à confirmação/faturamento de notas de saída com interação no barramento de regras | `references/business-rules.md` |
-| **Service** | Endpoint externo, integração ou reutilização entre artefatos | `references/service.md` |
+| **Controller / Service** | Endpoint externo, integração ou reutilização entre artefatos. Código novo: `@Controller` (`references/sdk-controller.md`). `@Service` está **deprecated** — `references/service.md` só para legado | `references/sdk-controller.md` |
 | **Job** | Execução periódica, processamento em lote, background | `references/job.md` |
 | **Dynamic Form** | Tela de cadastro gerada automaticamente pelo dicionário de dados | `references/dynamic-form.md` |
 | **Tela Personalizada** | Interface customizada com controle total de layout | ver seção abaixo |
@@ -127,7 +127,7 @@ Identificar o artefato correto e **ler o arquivo de referência antes de impleme
 | **Dashboards** | Dashboards embarcados no add-on | `references/dashboards.md` |
 | **Organização de pacotes Java** | Estrutura de pacotes para evitar conflitos de ClassLoader | `references/organizacao-pacotes-java.md` |
 | **Micromódulo (legado EJB2)** | SPBeans, `service-providers.xml`, `BaseSPBean`, XDoclet | `references/micromodule.md` |
-| **Micromódulo (SDK moderno)** | `@Service`, `@Repository`, `@Listener`, DI Guice, `@Transactional` | `references/micromodule-sdk.md` |
+| **Micromódulo (SDK moderno)** | `@Controller`, `@Repository`, `@Listener`, DI Guice, `@Transactional` | `references/micromodule-sdk.md` |
 
 ### Qualidade de código
 

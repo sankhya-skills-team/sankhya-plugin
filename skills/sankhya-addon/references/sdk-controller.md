@@ -1,10 +1,12 @@
-# SDK Sankhya — Camada de Controller (@Controller)
+# Camada de Controller (@Controller)
 
-> **Acesso Antecipado (Beta):** APIs sujeitas a modificações.
+> **Substituto oficial de `@Service`.** A anotação `@Service` foi marcada como `@Deprecated` e será removida em versões futuras — a própria plataforma recomenda migrar para `@Controller`. Use `@Controller` em todo código novo.
 
 ## O que é
 
-`@Controller` é um alias semântico para `@Service`. Usado para marcar classes que representam pontos de entrada da API, separando controllers de serviços de negócio internos. Recomendado para clareza arquitetural em projetos maiores.
+`@Controller` marca classes que representam pontos de entrada da API. É o padrão go-forward para expor ações acessíveis externamente, substituindo a anotação `@Service` (deprecated).
+
+Roda sobre o mesmo runtime do antigo `@Service`, mas com um modelo mais limpo: injeção de dependência via `@Inject` no construtor, controle transacional granular por método (`@Transactional`) e retorno tipado via DTO — sem o boilerplate de `ServiceContext` + `JapeSession` manual do padrão clássico.
 
 ---
 
@@ -16,7 +18,7 @@
 - Mantenha lógica de negócio fora do controller — delegue para `@Component`
 
 ```java
-@Controller
+@Controller(serviceName = "EstoqueControllerSP")
 public class EstoqueController {
 
     private final EstoqueRepository estoqueRepository;
@@ -82,7 +84,7 @@ O retorno contém `jsessionId` para usar como `mgeSession`. Em ambientes com Gat
 |---|---|---|
 | `Required` | Usa transação existente ou cria nova | Operações de escrita |
 | `NotSupported` | Executa fora de qualquer transação | Consultas — melhor performance |
-| `Supported` | Junta-se à transação existente, ou executa sem (padrão) | Leitura que pode ou não estar em transação |
+| `Supports` | (Padrão) Junta-se à transação existente, ou executa sem | Leitura que pode ou não estar em transação |
 
 `@Transactional` em um método sempre tem precedência sobre o `transactionType` da classe.
 
