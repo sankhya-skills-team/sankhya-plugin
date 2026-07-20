@@ -1,0 +1,85 @@
+name: release
+
+# Cria uma GitHub Release sempre que `version` de plugin.json muda no master.
+# Tag vX.Y.Z + changelog agrupado por tipo de Conventional Commit.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '.claude-plugin/plugin.json'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ler versão de plugin.json
+        id: ver
+        run: |
+          VERSION=$(jq -r '.version' .claude-plugin/plugin.json)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Abortar se a tag já existe
+        id: check
+        run: |
+          if git rev-parse "${{ steps.ver.outputs.tag }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Tag ${{ steps.ver.outputs.tag }} já existe — nada a fazer."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Gerar changelog
+        if: steps.check.outputs.exists == 'false'
+        id: log
+        run: |
+          PREV=$(git tag -l 'v*' --sort=-v:refname | head -n1)
+          if [ -z "$PREV" ]; then
+            RANGE=""            # primeira release: todo o histórico
+          else
+            RANGE="$PREV..HEAD"
+          fi
+
+          emit() { # $1=prefixo regex  $2=título
+            local body
+            body=$(git log $RANGE --no-merges --pretty='%s' \
+              | grep -iE "^$1(\(.+\))?!?: " \
+              | sed -E "s/^$1(\(.+\))?!?: //" \
+              | sed 's/^/- /')
+            [ -n "$body" ] && printf '## %s\n%s\n\n' "$2" "$body"
+          }
+
+          {
+            emit 'feat'     '✨ Funcionalidades'
+            emit 'fix'      '🐛 Correções'
+            emit 'docs'     '📚 Documentação'
+            emit 'refactor' '♻️ Refatoração'
+            emit 'perf'     '⚡ Performance'
+            emit 'chore'    '🔧 Manutenção'
+          } > NOTES.md
+
+          # fallback: nenhum commit convencional no range
+          [ -s NOTES.md ] || git log $RANGE --no-merges --pretty='- %s' > NOTES.md
+
+          if [ -n "$PREV" ]; then
+            printf '\n**Comparar:** %s...%s\n' "$PREV" "${{ steps.ver.outputs.tag }}" >> NOTES.md
+          fi
+
+      - name: Criar tag e release
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git tag "${{ steps.ver.outputs.tag }}"
+          git push origin "${{ steps.ver.outputs.tag }}"
+          gh release create "${{ steps.ver.outputs.tag }}" \
+            --title "${{ steps.ver.outputs.tag }}" \
+            --notes-file NOTES.md
