@@ -1,5 +1,7 @@
 # Plugin Sankhya
 
+[![release](https://img.shields.io/github/v/release/sankhya-skills-team/sankhya-plugin?label=release&color=blue)](https://github.com/sankhya-skills-team/sankhya-plugin/releases/latest)
+
 Plugin do Claude Code com skills, agents e hook para desenvolvimento no **ERP Sankhya**.
 
 ## Conteúdo
@@ -112,6 +114,10 @@ Ou no seu `settings.json`:
 | MCP server | bloco `mcpServers` | Sim |
 
 Após adicionar: bump `version` em `.claude-plugin/plugin.json` → commit → push → devs rodam `/plugin update`.
+
+## Versionamento
+
+SemVer, uma tag git por release (`v1.16.0`, ...). O push de um bump de `version` em `plugin.json` gera a tag e a [release](https://github.com/sankhya-skills-team/sankhya-plugin/releases) automaticamente, com changelog dos commits. **Changelog completo nas [releases](https://github.com/sankhya-skills-team/sankhya-plugin/releases).**
 
 ## Autores
 

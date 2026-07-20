@@ -37,46 +37,66 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Gerar changelog
+      - name: Montar release notes
         if: steps.check.outputs.exists == 'false'
         id: log
+        env:
+          TAG: ${{ steps.ver.outputs.tag }}
+          REPO: ${{ github.repository }}
         run: |
           PREV=$(git tag -l 'v*' --sort=-v:refname | head -n1)
-          if [ -z "$PREV" ]; then
-            RANGE=""            # primeira release: todo o histórico
-          else
-            RANGE="$PREV..HEAD"
-          fi
+          [ -z "$PREV" ] && RANGE="" || RANGE="$PREV..HEAD"
 
           # normaliza prefixos-lixo (@ , gitmoji :word:, emoji) antes do match
           NORM='s/^@ +//; s/^:[a-z_]+: *//; s/^[^A-Za-z]+//'
+          norm() { sed -E "$NORM"; }
+
+          # título = resumo do commit que bumpou a version (sem prefixo de tipo)
+          SUMMARY=$(git log -1 --pretty='%s' -- .claude-plugin/plugin.json | norm \
+            | sed -E 's/^(feat|fix|docs|refactor|perf|chore|ci|style|test)(\(.+\))?!?: //')
+          echo "title=$TAG — $SUMMARY" >> "$GITHUB_OUTPUT"
+
+          # nota manual opcional: .github/release-notes/vX.Y.Z.md tem prioridade total
+          MANUAL=".github/release-notes/$TAG.md"
 
           emit() { # $1=prefixo regex  $2=título
             local body
-            body=$(git log $RANGE --no-merges --pretty='%s' \
-              | sed -E "$NORM" \
+            body=$(git log $RANGE --no-merges --pretty='%s' | norm \
               | grep -iE "^$1(\(.+\))?!?: " \
-              | sed -E "s/^$1(\(.+\))?!?: //" \
-              | sed 's/^/- /')
-            [ -n "$body" ] && printf '## %s\n%s\n\n' "$2" "$body"
+              | sed -E "s/^$1(\(.+\))?!?: //" | sed 's/^/- /')
+            [ -n "$body" ] && printf '### %s\n%s\n\n' "$2" "$body"
           }
 
           {
-            emit 'feat'     '✨ Funcionalidades'
-            emit 'fix'      '🐛 Correções'
-            emit 'docs'     '📚 Documentação'
-            emit 'refactor' '♻️ Refatoração'
-            emit 'perf'     '⚡ Performance'
-            emit 'chore'    '🔧 Manutenção'
-            emit 'ci'       '👷 CI'
+            printf '## %s\n\n' "$SUMMARY"
+            if [ -f "$MANUAL" ]; then
+              cat "$MANUAL"; printf '\n\n'
+            else
+              CHANGES=$( {
+                emit 'feat'     '✨ Funcionalidades'
+                emit 'fix'      '🐛 Correções'
+                emit 'docs'     '📚 Documentação'
+                emit 'refactor' '♻️ Refatoração'
+                emit 'perf'     '⚡ Performance'
+                emit 'chore'    '🔧 Manutenção'
+                emit 'ci'       '👷 CI'
+              } )
+              # fallback: nenhum commit convencional no range
+              [ -n "$CHANGES" ] || CHANGES=$(git log $RANGE --no-merges --pretty='%s' | norm | sed 's/^/- /')
+              printf '%s\n' "$CHANGES"
+            fi
+
+            printf -- '---\n\n'
+            printf '### 📦 Instalar / atualizar\n'
+            printf 'No Claude Code:\n\n'
+            printf '```\n/plugin update sankhya@sankhya\n```\n\n'
+            printf 'Primeira instalação: `/plugin marketplace add %s` → `/plugin install sankhya`.\n\n' "$REPO"
+
+            if [ -n "$PREV" ]; then
+              printf '**Changelog completo:** [%s...%s](https://github.com/%s/compare/%s...%s)\n' \
+                "$PREV" "$TAG" "$REPO" "$PREV" "$TAG"
+            fi
           } > NOTES.md
-
-          # fallback: nenhum commit convencional no range
-          [ -s NOTES.md ] || git log $RANGE --no-merges --pretty='%s' | sed -E "$NORM" | sed 's/^/- /' > NOTES.md
-
-          if [ -n "$PREV" ]; then
-            printf '\n**Comparar:** %s...%s\n' "$PREV" "${{ steps.ver.outputs.tag }}" >> NOTES.md
-          fi
 
       - name: Criar tag e release
         if: steps.check.outputs.exists == 'false'
@@ -86,5 +106,5 @@ jobs:
           git tag "${{ steps.ver.outputs.tag }}"
           git push origin "${{ steps.ver.outputs.tag }}"
           gh release create "${{ steps.ver.outputs.tag }}" \
-            --title "${{ steps.ver.outputs.tag }}" \
+            --title "${{ steps.log.outputs.title }}" \
             --notes-file NOTES.md
