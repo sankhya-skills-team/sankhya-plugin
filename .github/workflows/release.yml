@@ -65,6 +65,7 @@ jobs:
               | grep -iE "^$1(\(.+\))?!?: " \
               | sed -E "s/^$1(\(.+\))?!?: //" | sed 's/^/- /')
             [ -n "$body" ] && printf '### %s\n%s\n\n' "$2" "$body"
+            return 0   # nunca falha sob bash -e quando a categoria fica vazia
           }
 
           {
