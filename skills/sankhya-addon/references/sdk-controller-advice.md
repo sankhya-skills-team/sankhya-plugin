@@ -1,10 +1,8 @@
 # SDK Sankhya — Tratamento Global de Exceções (@ControllerAdvice)
 
-> **Acesso Antecipado (Beta):** APIs sujeitas a modificações.
-
 ## Visão Geral
 
-`@ControllerAdvice` cria um ponto centralizado de tratamento de exceções para todos os `@Service`. Intercepta exceções lançadas durante a execução e retorna respostas padronizadas em JSON.
+`@ControllerAdvice` cria um ponto centralizado de tratamento de exceções para todos os `@Controller`. Intercepta exceções lançadas durante a execução e retorna respostas padronizadas em JSON.
 
 **Benefícios:**
 - Elimina `try-catch` duplicado em cada serviço
@@ -50,11 +48,11 @@ public class GlobalExceptionHandler {
 
 ---
 
-## Serviços ficam limpos
+## Controllers ficam limpos
 
 ```java
-@Service(serviceName = "PedidoServiceSP")
-public class PedidoService {
+@Controller(serviceName = "PedidoControllerSP")
+public class PedidoController {
 
     @Transactional
     public void criarPedido(@Valid PedidoDTO pedido) {
