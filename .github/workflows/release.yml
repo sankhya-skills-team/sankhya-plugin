@@ -48,9 +48,13 @@ jobs:
             RANGE="$PREV..HEAD"
           fi
 
+          # normaliza prefixos-lixo (@ , gitmoji :word:, emoji) antes do match
+          NORM='s/^@ +//; s/^:[a-z_]+: *//; s/^[^A-Za-z]+//'
+
           emit() { # $1=prefixo regex  $2=título
             local body
             body=$(git log $RANGE --no-merges --pretty='%s' \
+              | sed -E "$NORM" \
               | grep -iE "^$1(\(.+\))?!?: " \
               | sed -E "s/^$1(\(.+\))?!?: //" \
               | sed 's/^/- /')
@@ -64,10 +68,11 @@ jobs:
             emit 'refactor' '♻️ Refatoração'
             emit 'perf'     '⚡ Performance'
             emit 'chore'    '🔧 Manutenção'
+            emit 'ci'       '👷 CI'
           } > NOTES.md
 
           # fallback: nenhum commit convencional no range
-          [ -s NOTES.md ] || git log $RANGE --no-merges --pretty='- %s' > NOTES.md
+          [ -s NOTES.md ] || git log $RANGE --no-merges --pretty='%s' | sed -E "$NORM" | sed 's/^/- /' > NOTES.md
 
           if [ -n "$PREV" ]; then
             printf '\n**Comparar:** %s...%s\n' "$PREV" "${{ steps.ver.outputs.tag }}" >> NOTES.md
