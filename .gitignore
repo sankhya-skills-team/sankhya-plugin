@@ -4,6 +4,10 @@
 .DS_Store
 Thumbs.db
 
+# Bytecode Python dos scripts de skill
+__pycache__/
+*.py[cod]
+
 # Nunca versionar credenciais
 *.env
 .env

@@ -71,15 +71,23 @@ Classes External são proxies — reconhecidas por:
 
 ## Mapeamento classe → Entrada em FUNCIONALIDADES
 
-Cada classe não-External identificada se torna **uma entrada na lista FUNCIONALIDADES** com:
+Cada classe não-External identificada se torna **uma entrada na lista `funcionalidades`**
+do `dados.json` (contrato completo no `SKILL.md`):
 
-```python
+```jsonc
 {
-  "titulo": "Botão Gerar Desconto",           # nome funcional descritivo
-  "passos": "1. O usuário seleciona...\n2. O sistema verifica...\n3. ...",
-  "obs": "• Requer status X\n• Bloqueado para grupo Y\n• Irreversível após..."
+  "titulo": "Gerar Desconto",                  // nome funcional descritivo
+  "tipo": "acao",                              // acao | evento | job | regra
+  "icone": "💰",
+  "passos": ["O usuário seleciona o pedido.", "O sistema verifica o limite de desconto."],
+  "obs": "Requer status Aberto. Restrito ao perfil Gerencial.",
+  "limitacoes": "Irreversível após o faturamento.",
+  "tipo_acesso": ""                            // relatorio | tela | dashboard | ""
 }
 ```
+
+`passos` é **lista de strings** — uma por etapa, sem numeração manual (o renderizador
+numera).
 
 **Ordenação recomendada:**
 1. Botões de Ação (`AcaoRotinaJava`)
