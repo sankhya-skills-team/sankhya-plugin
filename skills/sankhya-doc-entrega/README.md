@@ -22,7 +22,12 @@ o SKILL.md não carrega código de template para o contexto.
 | Formato | Conteúdo |
 |---|---|
 | **HTML interativo** (default) | Funcionalidades colapsáveis, checklist de deploy com persistência, homologação com marcação de status e evidências por imagem, histórico de versões, botão "Exportar com evidências" |
-| **DOCX Word** | Documento editável: identificação, histórico de versões, manual de uso passo a passo, checklist de deploy em tabela, homologação com coluna de resultado e bloco de assinaturas |
+| **DOCX Word** | Documento editável formatado na ABNT NBR 14724: identificação, histórico de versões, manual de uso passo a passo, checklist de deploy em tabela, homologação com coluna de resultado e bloco de assinaturas |
+
+O DOCX segue a ABNT NBR 14724 em margens (3 cm superior e esquerda, 2 cm inferior e
+direita), corpo de 12 pt, entrelinha 1,5 no texto, espaço simples dentro das tabelas e
+títulos separados por uma entrelinha antes e depois. O HTML não segue a norma: é
+documento de tela, não de impressão.
 
 ---
 

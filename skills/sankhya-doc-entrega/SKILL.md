@@ -19,7 +19,7 @@ complementar), no design system Sankhya.
 | Formato | Conteúdo |
 |---|---|
 | **HTML** (default) | Funcionalidades colapsáveis, checklist de deploy com persistência, homologação com marcação de status e evidências por imagem, botão "Exportar com evidências" |
-| **DOCX** | Word editável — identificação, manual de uso, checklist de deploy, homologação em tabela e bloco de assinaturas |
+| **DOCX** | Word editável, formatado na ABNT NBR 14724 — identificação, manual de uso, checklist de deploy, homologação em tabela e bloco de assinaturas |
 
 Ambos compartilham análise, escopo e histórico de versões. A diferença está apenas na
 renderização final.

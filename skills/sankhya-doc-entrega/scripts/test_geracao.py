@@ -107,6 +107,21 @@ def main():
         doc = Document(alvo_dx)
         assert doc.core_properties.version == "1.1"
         texto = "\n".join(p.text for p in doc.paragraphs)
+
+        # ABNT NBR 14724: margens 3/2/3/2 cm e entrelinha 1,5 no corpo.
+        # O Word grava em twips, então a volta em cm não bate no EMU exato.
+        s = doc.sections[0]
+        margens = [m.cm for m in (s.top_margin, s.bottom_margin,
+                                  s.left_margin, s.right_margin)]
+        assert all(abs(m - alvo) < 0.01 for m, alvo in zip(margens, (3, 2, 3, 2))), \
+            "margens fora da ABNT: %s" % margens
+        assert doc.styles["Normal"].paragraph_format.line_spacing == 1.5, "entrelinha fora da ABNT"
+        assert doc.styles["Normal"].font.size.pt == 12, "corpo fora da ABNT"
+        assert all(p.paragraph_format.line_spacing == 1.0
+                   for t in doc.tables for r in t.rows for c in r.cells
+                   for p in c.paragraphs), "tabela deveria usar espaço simples"
+        # A numeração dos passos reinicia a cada funcionalidade.
+        assert texto.count("1. O usuário seleciona o ticket.") == 1
         assert "Entrega de Desenvolvimento" in texto and "Checklist de Deploy" in texto
         assert "Homologação e Testes" in texto
         assert len(doc.inline_shapes) == 1, "logo ausente no DOCX"

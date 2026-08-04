@@ -41,6 +41,57 @@ C_WHITE     = RGBColor(255, 255, 255)
 HEX_TERTIARY = B.hexr(B.TERTIARY)
 
 
+# ── ABNT NBR 14724 ─────────────────────────────────────────────────
+# 5.1 margens: 3 cm em cima e a esquerda, 2 cm embaixo e a direita.
+# 5.2 espacamento: 1,5 entre linhas no texto; simples em tabelas,
+#     legendas e notas, nestas com corpo menor.
+ABNT_MARGEM_SUP  = Cm(3)
+ABNT_MARGEM_INF  = Cm(2)
+ABNT_MARGEM_ESQ  = Cm(3)
+ABNT_MARGEM_DIR  = Cm(2)
+ABNT_CORPO       = Pt(12)
+ABNT_ENTRELINHA  = 1.5
+ABNT_LINHA       = Pt(18)   # uma entrelinha de 1,5 sobre corpo de 12 pt
+ABNT_TABELA      = 1.0      # espaco simples dentro de tabela
+
+ESTILOS_TEXTO = ("Normal", "List Bullet", "List Number")
+
+
+def aplicar_abnt_paginas(doc):
+    for secao in doc.sections:
+        secao.top_margin = ABNT_MARGEM_SUP
+        secao.bottom_margin = ABNT_MARGEM_INF
+        secao.left_margin = ABNT_MARGEM_ESQ
+        secao.right_margin = ABNT_MARGEM_DIR
+
+
+def aplicar_abnt_estilos(doc):
+    for nome in ESTILOS_TEXTO:
+        try:
+            estilo = doc.styles[nome]
+        except KeyError:
+            continue
+        estilo.font.size = ABNT_CORPO
+        pf = estilo.paragraph_format
+        pf.line_spacing = ABNT_ENTRELINHA
+        pf.space_before = Pt(0)
+        pf.space_after = Pt(0)
+
+
+def aplicar_abnt_tabelas(doc):
+    """Espaco simples dentro das tabelas, como manda a norma.
+
+    Roda no fim: as celulas herdam o estilo Normal, que ja esta em 1,5.
+    Mexe so na entrelinha -- o espacamento vertical entre paragrafos ja vem
+    zerado do estilo, e zerar de novo apagaria o vao entre as assinaturas.
+    """
+    for tabela in doc.tables:
+        for linha in tabela.rows:
+            for celula in linha.cells:
+                for par in celula.paragraphs:
+                    par.paragraph_format.line_spacing = ABNT_TABELA
+
+
 # ── Helpers de formatacao ──────────────────────────────────────────
 
 def sombrear(celula, hex_fill):
@@ -68,8 +119,11 @@ def run(par, texto, bold=None, size=None, color=None, italic=None):
 def titulo(doc, texto, nivel=2):
     p = doc.add_paragraph()
     run(p, texto, bold=True, size=14 if nivel == 2 else 12, color=C_TERTIARY)
-    p.paragraph_format.space_before = Pt(20 if nivel == 2 else 12)
-    p.paragraph_format.space_after = Pt(6)
+    # ABNT 5.2: titulo separado do texto anterior e posterior por uma
+    # entrelinha de 1,5 -- 18 pt sobre corpo de 12 pt.
+    p.paragraph_format.space_before = ABNT_LINHA
+    p.paragraph_format.space_after = ABNT_LINHA
+    p.paragraph_format.line_spacing = 1.0
     if nivel == 2:
         _borda_inferior(p, B.hexr(B.PRIMARY))
     return p
@@ -103,6 +157,23 @@ def linhas(doc, valor, estilo="List Bullet"):
             doc.add_paragraph(texto, style=estilo)
 
 
+def linhas_numeradas(doc, valor):
+    """Passos numerados no proprio texto, com recuo deslocado.
+
+    Nao usa o estilo List Number: todos os paragrafos dele compartilham a
+    mesma instancia de numeracao, entao a contagem seguia acumulando de uma
+    funcionalidade para a proxima (2.2 comecava no 7).
+    """
+    itens = valor if isinstance(valor, list) else str(valor or "").split("\n")
+    itens = [str(i).strip() for i in itens if str(i).strip()]
+    for n, texto in enumerate(itens, 1):
+        p = doc.add_paragraph()
+        p.paragraph_format.left_indent = Cm(0.75)
+        p.paragraph_format.first_line_indent = Cm(-0.75)
+        run(p, "%d. " % n, bold=True, color=C_TERTIARY)
+        run(p, texto)
+
+
 def layout_fixo(tabela):
     """Faz o Word respeitar as larguras declaradas.
 
@@ -134,16 +205,13 @@ doc = Document()
 for estilo in doc.styles:
     if hasattr(estilo, "font"):
         estilo.font.name = B.FONT_DOCX
-for secao in doc.sections:
-    secao.top_margin = Cm(1.78)
-    secao.bottom_margin = Cm(1.60)
-    secao.left_margin = Cm(2.14)
-    secao.right_margin = Cm(1.43)
+aplicar_abnt_paginas(doc)
+aplicar_abnt_estilos(doc)
 
 # Cabecalho com logo
 if os.path.exists(B.LOGO_PNG):
     p_logo = doc.add_paragraph()
-    p_logo.paragraph_format.space_after = Pt(10)
+    p_logo.paragraph_format.space_after = ABNT_LINHA
     p_logo.add_run().add_picture(B.LOGO_PNG, width=Cm(4.0))
 
 p_tit = doc.add_paragraph()
@@ -151,7 +219,7 @@ run(p_tit, "Entrega de Desenvolvimento", bold=True, size=18, color=C_TERTIARY)
 p_sub = doc.add_paragraph()
 run(p_sub, D.get("nome_customizacao", ""), size=13, color=C_ON_SURF)
 run(p_sub, "   v%s" % VERSAO, bold=True, size=13, color=RGBColor(*B.rgb(B.PRIMARY)))
-p_sub.paragraph_format.space_after = Pt(20)
+p_sub.paragraph_format.space_after = ABNT_LINHA
 
 # ── Identificacao ──────────────────────────────────────────────────
 dados_id = [
@@ -203,14 +271,17 @@ for i, func in enumerate(FUNCIONALIDADES, 1):
     p_t = doc.add_paragraph()
     run(p_t, meta["badge"], bold=True, size=9, color=RGBColor(*B.rgb(meta["cor"])))
     p_p = doc.add_paragraph()
+    p_p.paragraph_format.space_before = ABNT_LINHA
     run(p_p, "Passo a passo:", bold=True, color=C_TERTIARY)
-    linhas(doc, func.get("passos", []), estilo="List Number")
+    linhas_numeradas(doc, func.get("passos", []))
     if func.get("obs"):
         p_o = doc.add_paragraph()
+        p_o.paragraph_format.space_before = ABNT_LINHA
         run(p_o, "Observações: ", bold=True, color=C_TERTIARY)
         run(p_o, str(func["obs"]), color=C_ON_SURF)
     if func.get("limitacoes"):
         p_l = doc.add_paragraph()
+        p_l.paragraph_format.space_before = ABNT_LINHA
         run(p_l, "Limitações: ", bold=True, color=C_TERTIARY)
         run(p_l, str(func["limitacoes"]), color=C_ON_SURF)
 
@@ -304,7 +375,7 @@ for i, rotulo in enumerate(
          "Resultado geral: [  ] Aprovado    [  ] Reprovado (pendências abaixo)")):
     p = doc.add_paragraph(rotulo)
     if i == 0:
-        p.paragraph_format.space_before = Pt(14)
+        p.paragraph_format.space_before = ABNT_LINHA
 secao_n += 1
 
 # ── Observacoes ────────────────────────────────────────────────────
@@ -357,6 +428,8 @@ if D.get("incluir_assinaturas", True):
             p = cliente[i]
             celula_assinatura(tab_s.cell(i, 2),
                               p["funcao"] or p["nome"] or "Cliente", ultima)
+
+aplicar_abnt_tabelas(doc)
 
 doc.core_properties.version = VERSAO
 doc.core_properties.title = "Entrega — %s" % D.get("nome_customizacao", "")
