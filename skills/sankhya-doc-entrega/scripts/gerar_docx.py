@@ -22,7 +22,7 @@ garantir("docx", "python-docx")
 from docx import Document
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.shared import Cm, Inches, Pt, RGBColor
+from docx.shared import Cm, Pt, RGBColor
 
 D = carregar_dados(sys.argv)
 
@@ -178,11 +178,29 @@ def layout_fixo(tabela):
     """Faz o Word respeitar as larguras declaradas.
 
     Sem w:tblLayout fixed o Word roda o autofit e ignora tanto
-    table.autofit=False quanto os valores de columns[i].width.
+    table.autofit=False quanto os valores de columns[i].width. O autofit
+    entrega a faixa a coluna de texto mais longo e espreme as outras ate a
+    largura de um caractere.
     """
     layout = OxmlElement("w:tblLayout")
     layout.set(qn("w:type"), "fixed")
     tabela._tbl.tblPr.append(layout)
+
+
+def aplicar_larguras(tabela, fracoes):
+    """Distribui a faixa util entre as colunas, em fracoes que somam 1.
+
+    A largura precisa estar em cada celula de cada linha: so em
+    columns[i].width o Word ignora.
+    """
+    tabela.autofit = False
+    layout_fixo(tabela)
+    larguras = [int(UTIL * f) for f in fracoes]
+    for c, largura in enumerate(larguras):
+        tabela.columns[c].width = largura
+    for linha in tabela.rows:
+        for c, largura in enumerate(larguras):
+            linha.cells[c].width = largura
 
 
 def celula_assinatura(celula, papel, ultima=False):
@@ -208,6 +226,9 @@ for estilo in doc.styles:
 aplicar_abnt_paginas(doc)
 aplicar_abnt_estilos(doc)
 
+_secao = doc.sections[0]
+UTIL = _secao.page_width - _secao.left_margin - _secao.right_margin
+
 # Cabecalho com logo
 if os.path.exists(B.LOGO_PNG):
     p_logo = doc.add_paragraph()
@@ -232,6 +253,7 @@ dados_id = [
 ]
 tab_id = doc.add_table(rows=1 + len(dados_id), cols=2)
 tab_id.style = "Table Grid"
+aplicar_larguras(tab_id, (0.34, 0.66))
 celula_cab = tab_id.rows[0].cells[0].merge(tab_id.rows[0].cells[1])
 sombrear(celula_cab, HEX_TERTIARY)
 run(celula_cab.paragraphs[0], "Identificação", bold=True, size=11, color=C_WHITE)
@@ -244,6 +266,7 @@ for i, (rotulo, valor) in enumerate(dados_id, 1):
 titulo(doc, "Histórico de versões", nivel=3)
 tab_h = doc.add_table(rows=1 + len(HISTORICO), cols=3)
 tab_h.style = "Table Grid"
+aplicar_larguras(tab_h, (0.13, 0.19, 0.68))
 cabecalho_tabela(tab_h, ["Versão", "Data", "Alterações"])
 for i, entrada in enumerate(HISTORICO, 1):
     linha = tab_h.rows[i]
@@ -308,31 +331,46 @@ CAMPOS_DETALHE = [("arquivo", "Arquivo"), ("entidade", "Entidade"),
                   ("caminho_servidor", "Destino"), ("observacao", None)]
 
 
-def detalhe_item(item):
+# OK estreita o bastante para "[  ]", Detalhes com o resto: e a coluna que
+# carrega FQN de classe e lista de arquivos.
+LARGURAS_CHECKLIST = (0.07, 0.17, 0.28, 0.48)
+
+
+def escrever_detalhes(celula, item):
+    """Um par chave-valor por linha.
+
+    Antes tudo ia emendado com " | " numa linha so, e a coluna virava um
+    bloco denso que ninguem le no meio de um checklist.
+    """
     nome = item.get("nome_exibicao") or item.get("nome") or item.get("arquivo", "")
-    partes = []
+    pares = []
     for chave, rotulo in CAMPOS_DETALHE:
         valor = item.get(chave)
         # Sem nome proprio, o arquivo virou o titulo: nao repetir no detalhe.
         if valor and valor != nome:
-            partes.append("%s: %s" % (rotulo, valor) if rotulo else str(valor))
-    return " | ".join(partes)
+            pares.append((rotulo, str(valor)))
+
+    for i, (rotulo, valor) in enumerate(pares):
+        par = celula.paragraphs[0] if i == 0 else celula.add_paragraph()
+        if rotulo:
+            run(par, "%s: " % rotulo, bold=True, size=8, color=C_TERTIARY)
+        run(par, valor, size=8, color=C_ON_SURF)
 
 
 def tabela_checklist(doc, itens):
     tab = doc.add_table(rows=1 + len(itens), cols=4)
     tab.style = "Table Grid"
+    aplicar_larguras(tab, LARGURAS_CHECKLIST)
     cabecalho_tabela(tab, ["OK", "Tipo", "Item", "Detalhes"])
-    tab.columns[0].width = Inches(0.4)
     for i, item in enumerate(itens, 1):
         linha = tab.rows[i]
-        run(linha.cells[0].paragraphs[0], "[  ]", color=C_ON_SURF)
+        run(linha.cells[0].paragraphs[0], "[  ]", size=10, color=C_ON_SURF)
         run(linha.cells[1].paragraphs[0],
             LABEL_TIPO.get(item.get("tipo", ""), item.get("tipo", "")),
-            size=9, color=C_ON_SURF)
+            size=8, color=C_ON_SURF)
         nome = item.get("nome_exibicao") or item.get("nome") or item.get("arquivo", "")
-        run(linha.cells[2].paragraphs[0], str(nome), bold=True, color=C_TERTIARY)
-        run(linha.cells[3].paragraphs[0], detalhe_item(item), size=9, color=C_ON_SURF)
+        run(linha.cells[2].paragraphs[0], str(nome), bold=True, size=10, color=C_TERTIARY)
+        escrever_detalhes(linha.cells[3], item)
 
 
 if PRE or POS:
@@ -361,6 +399,7 @@ if tem_testes:
         titulo(doc, func.get("titulo", ""), nivel=3)
         tab = doc.add_table(rows=1 + len(testes), cols=3)
         tab.style = "Table Grid"
+        aplicar_larguras(tab, (0.36, 0.42, 0.22))
         cabecalho_tabela(tab, ["Cenário", "Resultado esperado", "Resultado"])
         for i, teste in enumerate(testes, 1):
             linha = tab.rows[i]
@@ -400,23 +439,8 @@ if D.get("incluir_assinaturas", True):
 
     pares = max(len(sankhya), len(cliente))
     tab_s = doc.add_table(rows=pares, cols=3)
-    tab_s.autofit = False
-    layout_fixo(tab_s)
-
-    # Larguras derivadas da faixa util da pagina para sobreviver a mudanca
-    # de margem. A coluna do meio e so o vao entre as duas assinaturas.
-    secao = doc.sections[0]
-    util = secao.page_width - secao.left_margin - secao.right_margin
-    vao = int(util * 0.12)
-    coluna = (util - vao) // 2
-    larguras = (coluna, vao, coluna)
-
-    for c, largura in enumerate(larguras):
-        tab_s.columns[c].width = largura
-    for linha in tab_s.rows:
-        # A largura so vale se estiver em cada celula, inclusive na do vao.
-        for c, largura in enumerate(larguras):
-            linha.cells[c].width = largura
+    # A coluna do meio e so o vao entre as duas assinaturas.
+    aplicar_larguras(tab_s, (0.44, 0.12, 0.44))
 
     for i in range(pares):
         ultima = (i == pares - 1)

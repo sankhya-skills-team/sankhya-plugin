@@ -127,16 +127,25 @@ def main():
         assert len(doc.inline_shapes) == 1, "logo ausente no DOCX"
         assert doc.element.body.xml.count('w:fill="243143"') >= 4, "cabeçalhos sem shading"
 
-        # Bloco de assinaturas: sem layout fixo o Word ignora as larguras e a
-        # coluna da direita vaza para fora da margem.
+        # Sem layout fixo o Word ignora as larguras: o autofit entrega a faixa
+        # à coluna de texto mais longo e espreme as outras (a coluna "OK" do
+        # checklist quebrava "[ ]" em duas linhas).
         secao = doc.sections[0]
         util = secao.page_width - secao.left_margin - secao.right_margin
-        assinaturas = doc.tables[-1]
-        assert 'w:type="fixed"' in assinaturas._tbl.tblPr.xml, "tabela de assinatura sem layout fixo"
-        for linha in assinaturas.rows:
-            larguras = [c.width for c in linha.cells]
-            assert all(larguras), "célula de assinatura sem largura declarada"
-            assert sum(larguras) <= util, "assinaturas estouram a faixa útil da página"
+        assert doc.tables, "documento sem tabelas"
+        for n, tabela in enumerate(doc.tables):
+            assert 'w:type="fixed"' in tabela._tbl.tblPr.xml, "tabela %d sem layout fixo" % n
+            for linha in tabela.rows:
+                # Numa linha com merge, cells[] repete a mesma célula em cada
+                # índice que ela cobre; contar duas vezes dobraria a soma.
+                unicas, vistos = [], set()
+                for celula in linha.cells:
+                    if id(celula._tc) not in vistos:
+                        vistos.add(id(celula._tc))
+                        unicas.append(celula)
+                larguras = [c.width for c in unicas]
+                assert all(larguras), "tabela %d tem célula sem largura" % n
+                assert sum(larguras) <= util, "tabela %d estoura a faixa útil" % n
 
         print("OK — HTML e DOCX gerados, versionados e validados.")
     finally:
