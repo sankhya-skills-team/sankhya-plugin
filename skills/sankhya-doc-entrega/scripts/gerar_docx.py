@@ -103,8 +103,18 @@ def linhas(doc, valor, estilo="List Bullet"):
             doc.add_paragraph(texto, style=estilo)
 
 
+def layout_fixo(tabela):
+    """Faz o Word respeitar as larguras declaradas.
+
+    Sem w:tblLayout fixed o Word roda o autofit e ignora tanto
+    table.autofit=False quanto os valores de columns[i].width.
+    """
+    layout = OxmlElement("w:tblLayout")
+    layout.set(qn("w:type"), "fixed")
+    tabela._tbl.tblPr.append(layout)
+
+
 def celula_assinatura(celula, papel, ultima=False):
-    celula.width = Inches(2.6)
     # Borda inferior em vez de underscores: acompanha a largura da celula
     # em qualquer fonte, sem estourar para a linha seguinte.
     p1 = celula.paragraphs[0]
@@ -320,9 +330,23 @@ if D.get("incluir_assinaturas", True):
     pares = max(len(sankhya), len(cliente))
     tab_s = doc.add_table(rows=pares, cols=3)
     tab_s.autofit = False
-    tab_s.columns[0].width = Inches(2.6)
-    tab_s.columns[1].width = Inches(0.5)
-    tab_s.columns[2].width = Inches(2.6)
+    layout_fixo(tab_s)
+
+    # Larguras derivadas da faixa util da pagina para sobreviver a mudanca
+    # de margem. A coluna do meio e so o vao entre as duas assinaturas.
+    secao = doc.sections[0]
+    util = secao.page_width - secao.left_margin - secao.right_margin
+    vao = int(util * 0.12)
+    coluna = (util - vao) // 2
+    larguras = (coluna, vao, coluna)
+
+    for c, largura in enumerate(larguras):
+        tab_s.columns[c].width = largura
+    for linha in tab_s.rows:
+        # A largura so vale se estiver em cada celula, inclusive na do vao.
+        for c, largura in enumerate(larguras):
+            linha.cells[c].width = largura
+
     for i in range(pares):
         ultima = (i == pares - 1)
         if i < len(sankhya):

@@ -112,6 +112,17 @@ def main():
         assert len(doc.inline_shapes) == 1, "logo ausente no DOCX"
         assert doc.element.body.xml.count('w:fill="243143"') >= 4, "cabeçalhos sem shading"
 
+        # Bloco de assinaturas: sem layout fixo o Word ignora as larguras e a
+        # coluna da direita vaza para fora da margem.
+        secao = doc.sections[0]
+        util = secao.page_width - secao.left_margin - secao.right_margin
+        assinaturas = doc.tables[-1]
+        assert 'w:type="fixed"' in assinaturas._tbl.tblPr.xml, "tabela de assinatura sem layout fixo"
+        for linha in assinaturas.rows:
+            larguras = [c.width for c in linha.cells]
+            assert all(larguras), "célula de assinatura sem largura declarada"
+            assert sum(larguras) <= util, "assinaturas estouram a faixa útil da página"
+
         print("OK — HTML e DOCX gerados, versionados e validados.")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
