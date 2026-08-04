@@ -97,19 +97,11 @@ numera).
 
 ---
 
-## Regras de Linguagem Funcional
+## Regras de Linguagem
 
-Aplicar ao montar FUNCIONALIDADES e demais seções de conteúdo:
-
-| Padrão | Correto | Errado |
-|---|---|---|
-| Nomes de tabelas | "aba Financeiro", "tela Central de Notas" | "tabela TGFFIN", "TGFCAB" |
-| Nomes de campos técnicos | Apenas quando necessário para localizar na tela (ex: "campo AD_SITUACAO") | Evitar substituíveis por descrição funcional |
-| Bloqueios | "O sistema impede...", "Não é permitido..." | "lança MGEModelException" |
-| ScheduledAction | "processo automático, sem interação do usuário" | "método execute() processa" |
-| Regra / RegraNegocioJava | "disparado automaticamente ao confirmar NF", "ao alterar dados", "ao incluir item" | "afterUpdate()", "beforeInsert()" |
-| Grupo de usuário | "restrito ao perfil Gerencial" | "CODGRUPO = 14" |
-| External | "utiliza o padrão External — requer dois módulos registrados" | "CustomModuleLoader" |
+Estão em `references/linguagem.md` — fonte única, cobre tanto a tradução do código
+para linguagem de negócio quanto as marcas de texto gerado por IA. O lint
+`scripts/revisar_texto.py` trava a geração enquanto houver ocorrência.
 
 ---
 

@@ -228,10 +228,12 @@ CAMPOS_DETALHE = [("arquivo", "Arquivo"), ("entidade", "Entidade"),
 
 
 def detalhe_item(item):
+    nome = item.get("nome_exibicao") or item.get("nome") or item.get("arquivo", "")
     partes = []
     for chave, rotulo in CAMPOS_DETALHE:
         valor = item.get(chave)
-        if valor:
+        # Sem nome proprio, o arquivo virou o titulo: nao repetir no detalhe.
+        if valor and valor != nome:
             partes.append("%s: %s" % (rotulo, valor) if rotulo else str(valor))
     return " | ".join(partes)
 

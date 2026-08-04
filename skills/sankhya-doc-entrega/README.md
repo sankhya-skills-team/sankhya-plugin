@@ -34,7 +34,8 @@ sankhya-doc-entrega/
 ├── assets/
 │   └── sankhya-logo.png        Logo usado no DOCX
 ├── references/
-│   ├── analise-fontes.md       Categorias de artefatos e linguagem funcional
+│   ├── analise-fontes.md       Categorias de artefatos e extração por tipo de classe
+│   ├── linguagem.md            Linguagem funcional e marcas de texto gerado por IA
 │   └── design-system.md        Paleta, tipografia, regra HTML × DOCX, logo
 └── scripts/
     ├── _brand.py               Cores, logo (SVG + PNG) e metadados de tipo
@@ -42,8 +43,28 @@ sankhya-doc-entrega/
     ├── gerar_html.py           dados.json → .html
     ├── gerar_docx.py           dados.json → .docx
     ├── ler_escopo.py           Extrai texto de .md/.txt/.docx/.pdf
+    ├── revisar_texto.py        Lint de linguagem — trava a geração
     └── test_geracao.py         Auto-teste dos geradores
 ```
+
+---
+
+## Revisão de linguagem
+
+Todo o texto do documento vem da análise do agente, não dos scripts. Sem gate, a
+entrega sai com cara de texto gerado por IA.
+
+`revisar_texto.py` roda antes da geração e **sai com código 1** enquanto houver
+ocorrência de travessão, gerúndio de encerramento, vocabulário de propaganda,
+fuga do verbo "ser", paralelismo negativo ou negrito em campo de texto. Campos de
+identificação (`caminho_sistema`, `classe`, `arquivo`) e mensagens do sistema
+entre aspas ficam fora — o travessão ali é legítimo.
+
+O que regex não pega (regra de três inventada, sinônimos alternados, passo sem
+sujeito) está em `references/linguagem.md` e depende de leitura.
+
+Regras destiladas da skill [humanizer](https://github.com/Dicklesworthstone/humanizer)
+e adaptadas para português e para o gênero "documento de entrega".
 
 ---
 
@@ -93,8 +114,11 @@ O HTML não depende de nada além da stdlib.
 ## Manutenção
 
 ```bash
-python scripts/test_geracao.py
+python scripts/test_geracao.py          # geradores HTML e DOCX
+python scripts/revisar_texto.py --autoteste   # regras do lint de linguagem
 ```
 
-Gera HTML e DOCX de exemplo em diretório temporário e valida escape, paleta do design
-system, versionamento, backup, histórico e presença do logo.
+O primeiro gera HTML e DOCX de exemplo em diretório temporário e valida escape, paleta
+do design system, versionamento, backup, histórico e presença do logo. O segundo confere
+que as seis regras acusam e que campos de identificação e mensagens citadas continuam
+fora do lint.

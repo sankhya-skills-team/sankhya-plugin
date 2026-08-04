@@ -185,7 +185,8 @@ def build_deploy(checklist):
         detalhes = []
         for chave, rotulo, mono in CAMPOS_DETALHE:
             valor = it.get(chave)
-            if not valor:
+            # Sem nome proprio, o arquivo virou o titulo: nao repetir no detalhe.
+            if not valor or valor == nome:
                 continue
             texto = "<code>%s</code>" % h(valor) if mono else h(valor)
             detalhes.append("%s: %s" % (rotulo, texto) if rotulo else texto)

@@ -51,6 +51,7 @@ EXEMPLO = {
         "pos_deploy": [
             {"tipo": "acao", "nome_exibicao": "Calcular Pesagem", "entidade": "AD_PESAGEM",
              "tipo_sankhya": "AcaoRotinaJava", "classe": "br.com.sankhya.X", "perfis": "Balança"},
+            {"tipo": "jar", "arquivo": "pesagem-1.0.0.jar", "caminho_servidor": ""},
         ],
     },
 }
@@ -83,6 +84,7 @@ def main():
         assert "#6AA84F" not in html and "#1a4d2e" not in html, "cor antiga remanescente"
         assert html.count("class=\"crumb") == 3, "trilha de navegação incorreta"
         assert "congelarEstado" in html, "correção do export ausente"
+        assert html.count("pesagem-1.0.0.jar") == 1, "nome do JAR repetido no detalhe"
         assert "Histórico de versões" in html
         assert re.search(r'name="doc-versao" content="1\.0"', html)
         # nenhum placeholder de formatação sobrou no CSS

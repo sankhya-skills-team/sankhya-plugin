@@ -117,7 +117,9 @@ complementado no drill-down da Etapa 3.
 Monte também `objetivo` (2–3 frases sobre o que o módulo entrega ao negócio) e
 `limitacoes_gerais` (lista de limitações globais).
 
-**Regras de linguagem funcional:** `references/analise-fontes.md`.
+**Escreva já no registro certo:** `references/linguagem.md`. Vale tanto para traduzir
+o código em linguagem de negócio quanto para não deixar marca de texto gerado por IA.
+Corrigir na Etapa 6.5 custa mais caro do que escrever certo aqui.
 
 ### Slots de teste
 
@@ -224,30 +226,39 @@ estrutura nem a ordem.
 
 ```
 1. nome:     Executar '{titulo}' com {condicao_valida}
-   esperado: Operação concluída — {resultado_principal}
+   esperado: Operação concluída. {resultado_principal}
 2. nome:     Tentar executar '{titulo}' em condição inválida: {condicao_invalida}
-   esperado: Sistema bloqueia com mensagem: "{mensagem_bloqueio}"
+   esperado: Sistema bloqueia com a mensagem: "{mensagem_bloqueio}"
 3. nome:     Usuário sem perfil '{perfil}' tenta executar '{titulo}'
    esperado: Acesso negado ou botão indisponível para o perfil
 ```
 
 **O teste 3 só existe quando `perfil` foi identificado no fonte.** Se `perfil` for
-`"não identificado"`, omita-o — um teste com perfil vazio não é verificável.
+`"não identificado"`, omita-o. Um teste com perfil vazio não é verificável.
 
 **`evento`** — 2 testes:
 
 ```
 1. nome:     Realizar operação que dispara '{titulo}' com {condicao_valida}
-   esperado: Evento processa sem erros — {resultado_principal}
+   esperado: Evento processa sem erros. {resultado_principal}
 2. nome:     Realizar operação bloqueada por '{titulo}': {condicao_invalida}
-   esperado: Operação impedida — mensagem: "{mensagem_bloqueio}"
+   esperado: Operação impedida com a mensagem: "{mensagem_bloqueio}"
+```
+
+**O teste 2 pressupõe que o evento bloqueia.** Se não houver `mensagem_bloqueio`
+no fonte (listener que só propaga efeito, sem lançar exceção), troque-o pelo
+caminho negativo real:
+
+```
+2. nome:     Realizar operação que NÃO deve disparar '{titulo}': {condicao_invalida}
+   esperado: Nenhum efeito aplicado. {consequencia_da_nao_execucao}
 ```
 
 **`job`** — 2 testes:
 
 ```
 1. nome:     Acionar '{titulo}' com registros pendentes ({condicao_valida})
-   esperado: Processamento correto — {resultado_principal}
+   esperado: Processamento correto. {resultado_principal}
 2. nome:     Acionar '{titulo}' sem dados novos ou já processados
    esperado: Execução finaliza sem erros, sem duplicidade de processamento
 ```
@@ -256,10 +267,49 @@ estrutura nem a ordem.
 
 ```
 1. nome:     Executar ciclo atendendo '{titulo}': {condicao_valida}
-   esperado: Ciclo permitido sem bloqueio — {resultado_principal}
+   esperado: Ciclo permitido sem bloqueio. {resultado_principal}
 2. nome:     Executar ciclo violando '{titulo}': {condicao_invalida}
-   esperado: Ciclo bloqueado — mensagem: "{mensagem_bloqueio}"
+   esperado: Ciclo bloqueado com a mensagem: "{mensagem_bloqueio}"
 ```
+
+`{resultado_principal}` e `{condicao_*}` entram como frase própria, começando com
+maiúscula. Não emende com travessão — ver Etapa 6.5.
+
+---
+
+## Etapa 6.5 — Revisão de linguagem (obrigatória)
+
+Todo o texto do documento vem da sua análise, não dos scripts. Sem esta etapa a
+entrega sai com cara de texto gerado por IA e o cliente percebe.
+
+Grave o `dados.json` e rode o lint **antes** de gerar:
+
+```bash
+python {SKILL_DIR}/scripts/revisar_texto.py <dados.json>
+```
+
+Ele varre `objetivo`, `limitacoes_gerais`, `titulo`, `passos`, `obs`,
+`limitacoes`, os `testes` e as descrições do checklist — e trava (código 1) em:
+
+| Regra | O que acusa |
+|---|---|
+| `travessao` | `—`, `–` ou ` -- ` na prosa |
+| `gerundio` | oração de gerúndio pendurada no fim da frase ("…, garantindo a integridade.") |
+| `inflado` | vocabulário de propaganda (robusto, eficiente, crucial, vale ressaltar…) |
+| `copula` | fuga do verbo "ser" ("serve como", "atua como") |
+| `negativa` | paralelismo negativo ("não apenas… mas…") |
+| `negrito` | `**markdown**` dentro de campo de texto |
+
+Campos de identificação (`caminho_sistema`, `classe`, `arquivo`, `entidade`) e
+mensagens do sistema entre aspas ficam fora do lint — o travessão ali é legítimo.
+
+**Corrija o `dados.json` e rode de novo até sair limpo.** Só então prossiga.
+
+Lint limpo não encerra a revisão. Confira à mão o que regex não vê: regra de três
+inventada (conferir a contagem contra o fonte), sinônimos alternados para o mesmo
+conceito, passo sem sujeito e frase final que só repete a anterior.
+
+Regras completas com exemplos: `references/linguagem.md`.
 
 ---
 
@@ -366,6 +416,7 @@ versionamento, backup, histórico e presença do logo.
 
 | Tópico | Arquivo |
 |---|---|
-| Categorias de artefatos, extração por tipo de classe, linguagem funcional, indicadores de permissão | `references/analise-fontes.md` |
+| Categorias de artefatos, extração por tipo de classe, indicadores de permissão | `references/analise-fontes.md` |
+| Linguagem funcional e marcas de texto gerado por IA | `references/linguagem.md` |
 | Paleta, tipografia, regra HTML × DOCX, logo | `references/design-system.md` |
 | Cores, logo e metadados de tipo (implementação) | `scripts/_brand.py` |
