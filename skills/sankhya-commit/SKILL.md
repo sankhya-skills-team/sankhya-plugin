@@ -186,11 +186,53 @@ Confirmar commit com esta mensagem?
   EOF
   )"
   ```
-  Exibir output do git. Encerrar.
+  Exibir output do git. Seguir para Etapa 7.
 
 - `2` → perguntar o que alterar e regerar. Voltar ao início da Etapa 6.
 
 - `3` → encerrar sem commit.
+
+### Etapa 7 — Tag (somente se `version.properties` estiver no diff commitado)
+
+Verificar se `version.properties` está entre os arquivos do commit recém-criado
+(`git show --stat HEAD` ou o diff já obtido na Etapa 3). Se **não** estiver, encerrar
+— não perguntar sobre tag fora desse caso.
+
+Se estiver, extrair o valor da versão alterada (ex.: `OrdemDeServico=1.0.116`) e perguntar:
+
+```
+Esse commit alterou version.properties (nova versão: 1.0.116).
+
+Tag Git é um rótulo fixo num commit — serve pra, se um dia precisar
+recuperar exatamente esse ponto do código (ex.: voltar pra um JAR
+antigo), não precisar caçar hash de commit. Não guarda o .jar em si,
+só marca o código-fonte daquele momento.
+(a tag marca esse commit exato — se mudar algo no código depois sem
+comitar de novo, o build não vai mais bater com essa tag)
+
+Criar a tag v1.0.116 pra esse commit?
+  1 - Sim
+  2 - Não
+```
+
+- `1` → executar:
+  ```bash
+  git tag -a v1.0.116 -m "<primeira linha da mensagem de commit>"
+  ```
+  Depois perguntar:
+  ```
+  Enviar a tag pro remoto agora (git push origin v1.0.116)?
+  Sem isso ela fica só local, nesse computador.
+    1 - Sim
+    2 - Não, depois
+  ```
+  - `1` → executar `git push origin <tag>`. Exibir output. Encerrar.
+  - `2` → informar que a tag ficou local e encerrar.
+
+- `2` → encerrar sem criar tag.
+
+Pra **recuperar** o código de uma tag antiga depois (rebuildar um JAR de versão
+passada), usar a skill `sankhya-recuperar-versao` — não é escopo desta skill.
 
 ---
 
