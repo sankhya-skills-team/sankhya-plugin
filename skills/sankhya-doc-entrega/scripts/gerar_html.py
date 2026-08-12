@@ -300,6 +300,10 @@ body{font-family:%(font)s;background:var(--surface);color:var(--on-surface);
   border-radius:var(--r-lg);padding:10px 14px;font-family:inherit;font-size:14px;
   font-weight:600;cursor:pointer;width:calc(100%% - 32px)}
 .export-btn:hover{filter:brightness(.94)}
+.pdf-btn{margin:0 16px 16px;background:transparent;color:#fff;
+  border:1px solid rgba(255,255,255,.35);border-radius:var(--r-lg);padding:10px 14px;
+  font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;width:calc(100%% - 32px)}
+.pdf-btn:hover{background:rgba(255,255,255,.08)}
 
 /* main */
 .main{flex:1;padding:40px;max-width:920px}
@@ -405,6 +409,9 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:12px;background:#F3F4
 .evidence-item{position:relative}
 .evidence-item img{width:100%%;max-height:420px;object-fit:contain;border-radius:var(--r-lg);
   border:1px solid #EEF2F0;display:block;background:var(--surface)}
+.evidence-caption{width:100%%;margin-top:6px;font:inherit;font-size:13px;color:var(--on-surface);
+  border:1px solid #E5E7EB;border-radius:var(--r-md);padding:6px 10px;background:#fff}
+.evidence-caption:focus{outline:none;border-color:var(--primary)}
 .evidence-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .attach-btn{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
   color:var(--tertiary);background:rgba(74,222,128,.1);border:1px dashed var(--primary);
@@ -423,15 +430,31 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:12px;background:#F3F4
 .sign-name{font-size:14px;font-weight:600;color:var(--tertiary)}
 .sign-role{font-size:12px;color:#6B7280;margin-top:2px}
 
+/* capa — so existe na impressao/PDF, tela nunca mostra */
+.cover{display:none}
+
 @media print{
   body{background:#fff}
   .sidebar{display:none}
   .main{padding:0;max-width:100%%}
   .func-body{display:block!important}
-  .func-arrow,.attach-btn,.no-evidence,.export-btn,.remove-img{display:none}
+  .func-arrow,.attach-btn,.no-evidence,.export-btn,.remove-img,.pdf-btn{display:none}
   .test-case,.func-card,.ck-group{page-break-inside:avoid}
+  .evidence-caption{border:none;background:none;padding:2px 0;font-style:italic;color:#6B7280}
+  .evidence-caption:placeholder-shown{display:none}
+  .cover{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:28px;height:100vh;background:var(--tertiary);color:#fff;
+    page-break-after:always;text-align:center;padding:60px 40px}
+  .cover-logo .logo{height:44px;width:auto}
+  .cover-brand{font-size:13px;font-weight:600;letter-spacing:2px;color:var(--primary);
+    text-transform:uppercase}
+  .cover-title{font-size:34px;font-weight:700;color:#fff;line-height:1.25;max-width:640px}
+  .cover-info{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+  .cover-row{display:flex;gap:10px;justify-content:center;font-size:14px;
+    color:rgba(255,255,255,.65)}
+  .cover-row strong{color:#fff;font-weight:600}
 }
-@media (max-width:768px){
+@media screen and (max-width:768px){
   .layout{flex-direction:column}
   .sidebar{width:100%%;height:auto;position:static}
   .main{padding:24px 20px}
@@ -475,7 +498,9 @@ function attachImage(input,caseId){
       var rb=document.createElement('button');rb.className='remove-img';
       rb.type='button';rb.textContent='\\u2715';
       rb.setAttribute('onclick','removeImg(this,\\''+caseId+'\\')');
-      item.appendChild(img);item.appendChild(rb);gallery.appendChild(item);
+      var cap=document.createElement('input');cap.type='text';cap.className='evidence-caption';
+      cap.placeholder='Descreva o que esta imagem mostra...';
+      item.appendChild(img);item.appendChild(rb);item.appendChild(cap);gallery.appendChild(item);
       updateHint(caseId);
     };reader.readAsDataURL(file);
   });
@@ -499,6 +524,9 @@ function congelarEstado(){
   document.querySelectorAll('input[type=checkbox]').forEach(function(cb){
     if(cb.checked)cb.setAttribute('checked','checked');
     else cb.removeAttribute('checked');
+  });
+  document.querySelectorAll('input.evidence-caption').forEach(function(cap){
+    cap.setAttribute('value',cap.value);
   });
 }
 
@@ -556,6 +584,17 @@ HTML = (
     '<meta name="doc-versao" content="%(versao)s">\n'
     '<title>Entrega — %(nome)s v%(versao)s</title>\n'
     '<style>%(css)s</style>\n</head>\n<body>\n'
+    '<div class="cover">\n'
+    '<div class="cover-logo">%(logo)s</div>\n'
+    '<div class="cover-brand">Entrega de Desenvolvimento</div>\n'
+    '<h1 class="cover-title">%(nome)s</h1>\n'
+    '<div class="cover-info">\n'
+    '<div class="cover-row"><span>Parceiro</span><strong>%(parceiro)s</strong></div>\n'
+    '<div class="cover-row"><span>ID Demanda</span><strong>%(id_demanda)s</strong></div>\n'
+    '<div class="cover-row"><span>Versão</span><strong>v%(versao)s</strong></div>\n'
+    '<div class="cover-row"><span>Data</span><strong>%(data)s</strong></div>\n'
+    '</div>\n'
+    '</div>\n'
     '<div class="layout">\n'
     '<nav class="sidebar">\n'
     '<div class="sidebar-logo">%(logo)s'
@@ -565,11 +604,13 @@ HTML = (
     '<div class="s-meta">Gerado em %(data)s</div></div>\n'
     '<div class="nav">%(nav)s</div>\n'
     '%(export)s'
+    '<button class="pdf-btn" type="button" onclick="window.print()">🖨️ Gerar PDF</button>\n'
     '</nav>\n'
     '<main class="main">%(main)s</main>\n'
     '</div>\n<script>%(jsconst)s%(js)s</script>\n</body>\n</html>'
 ) % {
     "versao": h(VERSAO), "nome": h(NOME), "css": CSS, "logo": B.LOGO_SVG,
+    "parceiro": h(D.get("parceiro", "")), "id_demanda": h(D.get("id_demanda") or "—"),
     "data": DATA_GERACAO, "nav": nav_html, "main": main_html,
     "js": JS, "jsconst": JS_CONST,
     # seta simples (U+2193): o glifo emoji U+2B07 falta em varias fontes

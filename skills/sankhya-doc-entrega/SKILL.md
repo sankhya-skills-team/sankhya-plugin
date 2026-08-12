@@ -18,7 +18,7 @@ complementar), no design system Sankhya.
 
 | Formato | Conteúdo |
 |---|---|
-| **HTML** (default) | Funcionalidades colapsáveis, checklist de deploy com persistência, homologação com marcação de status e evidências por imagem, botão "Exportar com evidências" |
+| **HTML** (default) | Capa (só na impressão/PDF), funcionalidades colapsáveis, checklist de deploy com persistência, homologação com marcação de status e evidências por imagem com legenda, botão "Exportar com evidências" e botão "🖨️ Gerar PDF" |
 | **DOCX** | Word editável, formatado na ABNT NBR 14724 — identificação, manual de uso, checklist de deploy, homologação em tabela e bloco de assinaturas |
 
 Ambos compartilham análise, escopo e histórico de versões. A diferença está apenas na
@@ -325,6 +325,12 @@ python {SKILL_DIR}/scripts/gerar_docx.py /caminho/dados.json
 Grave o JSON fora da pasta de entrega (use o diretório de scratchpad da sessão) — ele é
 insumo, não artefato de entrega.
 
+O HTML sai com um botão **🖨️ Gerar PDF** na sidebar (chama a impressão nativa do
+navegador, `window.print()`, reaproveitando o mesmo CSS que monta a capa e oculta a
+sidebar). É o próprio usuário quem clica — normalmente depois de completar a
+homologação (evidências e legendas) e exportar. Não gere o PDF por fora nem antecipe
+esse clique; é o usuário quem decide o momento.
+
 ### Contrato `dados.json`
 
 ```jsonc
@@ -394,10 +400,12 @@ Se `FORMATO = html` **e** `INCLUIR_HOMOLOGACAO`, exiba também:
 > **Como usar o bloco de Homologação:**
 >
 > 1. Abra o `.html` no navegador e vá até **Homologação**.
-> 2. Clique no status de cada teste (⏳ → ✅ → ❌) e use **📎 Adicionar evidência** para anexar a imagem de tela.
-> 3. Clique em **↓ Exportar com evidências** — gera um novo HTML com as imagens embutidas em base64 e o checklist de deploy preservado.
-> 4. **Substitua** o arquivo original pelo exportado para tornar as evidências permanentes.
-> 5. Para corrigir: abra o exportado, remova/substitua a imagem e exporte de novo.
+> 2. Clique no status de cada teste (⏳ → ✅ → ❌) e use **📎 Adicionar evidência** para anexar a imagem de tela — pode anexar várias em sequência.
+> 3. Preencha a legenda abaixo de cada imagem anexada, descrevendo o que ela mostra.
+> 4. Clique em **↓ Exportar com evidências** — gera um novo HTML com as imagens e legendas embutidas em base64 e o checklist de deploy preservado.
+> 5. **Substitua** o arquivo original pelo exportado para tornar as evidências permanentes.
+> 6. Para corrigir: abra o exportado, remova/substitua a imagem ou legenda e exporte de novo.
+> 7. Quando o documento estiver pronto pra assinatura, clique em **🖨️ Gerar PDF** — abre o diálogo de impressão do navegador; escolha "Salvar como PDF" como destino.
 
 ---
 
