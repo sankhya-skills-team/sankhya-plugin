@@ -16,6 +16,33 @@ Use para criar, revisar ou corrigir a estrutura principal de um `.jrxml`.
 - Não usar tags/atributos de versões recentes do schema
 - Compilar no mesmo runtime do servidor quando possível
 
+## Regra crítica Sankhya: sem comentários XML nem linhas em branco
+
+O parser do Sankhya que lê o `.jrxml` para o cadastro de relatório (Configurações > Relatórios)
+falha ao encontrar `<!-- ... -->` ou linhas em branco no arquivo — mesmo quando o `.jasper`
+compila normalmente no iReport. Sintoma típico: o relatório principal roda isolado, mas ao
+cadastrar/associar no Sankhya ele não reconhece corretamente a estrutura (ex.: falha ao listar
+subreports para upload).
+
+**Antes de entregar qualquer `.jrxml` para uso no Sankhya:**
+- Remover todo `<!-- ... -->` do arquivo (inclusive comentários multilinha)
+- Remover toda linha em branco (linha vazia ou só com espaços)
+
+```bash
+python3 -c "
+import re
+with open('relatorio.jrxml', encoding='utf-8') as f:
+    content = f.read()
+content = re.sub(r'<!--.*?-->', '', content, flags=re.DOTALL)
+lines = [l for l in content.split('\n') if l.strip() != '']
+content = '\n'.join(lines) + '\n'
+with open('relatorio.jrxml', 'w', encoding='utf-8') as f:
+    f.write(content)
+"
+```
+
+Isso vale tanto para o relatório principal quanto para todo `.jrxml` de subreport.
+
 ## Cabeçalho seguro
 
 ```xml

@@ -143,8 +143,10 @@ Todos com `isForPrompting="false"`.
 - [ ] Parâmetros de data declarados como `java.sql.Timestamp`
 - [ ] Grupos com `ORDER BY` correspondente na query
 - [ ] Subreports: margens `0,0,0,0`, `$P{REPORT_CONNECTION}`, `<returnValue>` declarados
+- [ ] Subreports: `<reportElement key="NomeDoSubreport">` igual ao nome do `.jasper` sem extensão (senão o Sankhya não resolve o subreport — ver `componentes-avancados.md`)
 - [ ] `SUBREPORT_DIR` com separador de diretório ao final (`\\`)
 - [ ] Expressões null-safe para campos opcionais (`isBlankWhenNull` ou ternário)
+- [ ] Nenhum comentário XML (`<!-- -->`) nem linha em branco no `.jrxml` final (quebra o cadastro do relatório no Sankhya — ver `jrxml-core.md`)
 - [ ] `.jasper` compilado e testado no iReport antes de entregar
 
 ---

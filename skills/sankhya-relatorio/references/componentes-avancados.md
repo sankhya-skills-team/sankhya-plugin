@@ -30,7 +30,7 @@ Use quando:
 <detail>
     <band height="31">
         <subreport>
-            <reportElement x="0" y="8" width="802" height="23"/>
+            <reportElement key="NomeSubRelatorio" x="0" y="8" width="802" height="23"/>
 
             <!-- Parâmetros enviados ao subreport -->
             <subreportParameter name="ID">
@@ -56,6 +56,15 @@ Use quando:
     </band>
 </detail>
 ```
+
+**Atenção Sankhya:** o `<reportElement>` do `<subreport>` precisa do atributo
+`key="NomeSubRelatorio"` — igual ao nome do arquivo `.jasper` do subreport, **sem** extensão
+(ex.: se o subreport compila para `RelVendasTipos_Resumo.jasper`, o `key` é
+`"RelVendasTipos_Resumo"`). Sem esse `key`, o Sankhya não consegue resolver/listar o
+subreport na tela de cadastro do relatório e o preenchimento falha com erro do tipo
+`Sub-relatório 'null' referenciado em '<RelatorioPrincipal>' não encontrado.` mesmo com o
+`.jasper` do subreport corretamente compilado e com `subreportExpression`/`SUBREPORT_DIR`
+certos.
 
 ### Subreport (arquivo filho)
 
