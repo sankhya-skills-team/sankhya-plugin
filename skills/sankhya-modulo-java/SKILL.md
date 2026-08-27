@@ -56,11 +56,11 @@ br.com.sankhya.customizacao.
     controller/			← Endpoints REST/serviço (ServiceProvider manual)
 	enums/				← AdicionalEntityNames, StatusXxx, TipoXxx
 	exception/			← Exceções
-    event/				← EventoProgramavelJava 
+    event/				← EventoProgramavelJava
 	dto/				← representar entidade de domínio / transferência de dados
-	job/				← ScheduledAction (org.cuckoo.core) 
+	job/				← ScheduledAction (org.cuckoo.core)
 	regra/				← Ligada a Regra nas Centrais
-	repository/			← Operação de persistência de dados 
+	repository/			← Operação de persistência de dados
 	service/			← Regras de negócio puras de domínio
 	helper/				← Helpers transversais reutilizáveis
 	utils/				← DwfUtils, MessageUtils
