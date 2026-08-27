@@ -12,7 +12,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _brand as B
-from _comum import carregar_dados, parse_personas, resolver_versao
+from _comum import (PERSONAS_CLIENTE_PADRAO, PERSONAS_SANKHYA_PADRAO, carregar_dados,
+                    parse_personas, resolver_versao)
 
 D = carregar_dados(sys.argv)
 
@@ -25,8 +26,8 @@ CHECKLIST           = D.get("checklist_deploy", {}) or {}
 INCLUIR_HOMOLOGACAO = bool(D.get("incluir_homologacao"))
 INCLUIR_ASSINATURAS = bool(D.get("incluir_assinaturas"))
 INCLUIR_DEPLOY      = bool(CHECKLIST.get("pre_requisitos") or CHECKLIST.get("pos_deploy"))
-PERSONAS_SANKHYA    = parse_personas(D.get("personas_sankhya"))
-PERSONAS_CLIENTE    = parse_personas(D.get("personas_cliente"))
+PERSONAS_SANKHYA    = parse_personas(D.get("personas_sankhya")) or PERSONAS_SANKHYA_PADRAO
+PERSONAS_CLIENTE    = parse_personas(D.get("personas_cliente")) or PERSONAS_CLIENTE_PADRAO
 
 
 def h(s):

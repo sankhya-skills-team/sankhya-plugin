@@ -15,7 +15,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _brand as B
-from _comum import carregar_dados, garantir, parse_personas, resolver_versao
+from _comum import (PERSONAS_CLIENTE_PADRAO, PERSONAS_SANKHYA_PADRAO, carregar_dados,
+                    garantir, parse_personas, resolver_versao)
 
 garantir("docx", "python-docx")
 
@@ -430,12 +431,8 @@ if D.get("incluir_assinaturas", True):
     p_cd.paragraph_format.space_before = Pt(36)
     p_cd.paragraph_format.space_after = Pt(24)
 
-    sankhya = parse_personas(D.get("personas_sankhya")) or [
-        {"nome": "", "funcao": "Consultor"},
-        {"nome": "", "funcao": "Gerente de Projetos – Sankhya"}]
-    cliente = parse_personas(D.get("personas_cliente")) or [
-        {"nome": "", "funcao": "Líder do Projeto"},
-        {"nome": "", "funcao": "Solicitante"}]
+    sankhya = parse_personas(D.get("personas_sankhya")) or PERSONAS_SANKHYA_PADRAO
+    cliente = parse_personas(D.get("personas_cliente")) or PERSONAS_CLIENTE_PADRAO
 
     pares = max(len(sankhya), len(cliente))
     tab_s = doc.add_table(rows=pares, cols=3)

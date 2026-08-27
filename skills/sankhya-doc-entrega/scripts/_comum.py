@@ -13,6 +13,14 @@ from datetime import date
 
 HISTORICO = ".historico-entregas.json"
 
+# Papeis usados quando o dados.json nao informa personas. Ficam aqui, e nao em
+# cada gerador, porque os dois formatos tem de assinar igual: com a lista vazia
+# o DOCX usava estes papeis e o HTML desenhava uma linha sem rotulo nenhum.
+PERSONAS_SANKHYA_PADRAO = [{"nome": "", "funcao": "Consultor"},
+                           {"nome": "", "funcao": "Gerente de Projetos – Sankhya"}]
+PERSONAS_CLIENTE_PADRAO = [{"nome": "", "funcao": "Líder do Projeto"},
+                           {"nome": "", "funcao": "Solicitante"}]
+
 
 # ── Entrada ────────────────────────────────────────────────────────
 
