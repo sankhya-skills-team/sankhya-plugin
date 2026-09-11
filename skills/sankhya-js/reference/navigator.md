@@ -175,3 +175,19 @@ Driven pelo parametro MGE `global.notifica.alteracao.dataset` (`:6`). Quando ati
 12. **`_keepDeepCopyAnswer=true` pula o popup de deep copy**. Se ha entity nova nao-respondida (`answered == 'N'`), `hasUnansweredDeepCopy()` detecta e reabre o popup. Mas a checagem usa `forEach` com `return true` — que NAO sai do forEach. A funcao sempre retorna `false`, entao novas entities adicionadas apos a primeira resposta nao disparam o popup ate o usuario limpar a config manualmente.
 
 13. **`sk-hide-question-remove` pula a confirmacao, mas nao a regra de negocio**. Se o dataset tem `beforeDelete` que normalmente exibe confirm, ele continua executando — o atributo so afeta a question default do framework.
+
+14. **Forcar refresh de uma grid/aba nativa a partir de codigo externo (evento Java, popup)**. Quando um `EventoProgramavelJava` grava dados via JAPE puro em registros que aparecem numa grid nativa (ex.: aba Financeiro da Central de Vendas), a grid nao reflete os novos valores sozinha — nem trocar de aba/face (form <-> grid) forca refresh. So o clique no botao nativo "Atualizar" (`ng-click="refresh()"` no HTML do navigator) funciona.
+
+   `app.reloadApp(resourceId, pkObj)` (ver `application.md`, gotcha 14) NAO serve — fecha o app e reabre, navegando pra fora da tela atual.
+
+   Solução validada em producao: localizar o elemento da diretiva `sk-navigator` daquela grid (inspecionar no DevTools pra achar o wrapper funcional — ex. `sk-grade-financeiro sk-navigator` na Central de Vendas; tag customizada, nao classe CSS) e chamar a MESMA funcao que o botao nativo chama:
+
+   ```js
+   var elNav = document.querySelector('sk-grade-financeiro sk-navigator'); // ajustar seletor por tela
+   var navScope = angular.element(elNav).isolateScope(); // isolateScope() -- sk-navigator usa binding '='
+   navScope.$apply(function() { navScope.refresh(); });  // $apply obrigatorio: codigo roda fora do digest cycle
+   ```
+
+   `$apply` e necessario porque esse codigo normalmente roda de fora do Angular (ex.: `onclick` de um popup HTML injetado via `MessageUtils.showInfo`, nao via `ng-click`).
+
+   **Como validar antes de acoplar em codigo:** reproduzir o cenario real (editar valor, salvar, deixar os dados "sujos" na tela) e rodar o snippet no console ANTES de testar qualquer coisa. Testar com valores ja corretos na tela da falso positivo — nao prova que o refresh funcionou.

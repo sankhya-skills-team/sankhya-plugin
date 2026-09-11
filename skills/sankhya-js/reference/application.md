@@ -143,7 +143,7 @@ app.isMinRequiredVersion('4.35.0');  // compara com window.top.SYSVERSION
 ```javascript
 app.openApp('br.com.sankhya.com.mov', { NUNOTA: { $: 123, type: 'I' } });
 app.closeApp();                   // fecha a propria; ou closeApp(outroResourceId)
-app.reloadApp(resourceId, pkObj); // recarrega
+app.reloadApp(resourceId, pkObj); // recarrega -- FECHA e REABRE o app (nao e refresh leve, ver aviso abaixo)
 app.openWindow(url, target, specs); // avisa popup bloqueado (exceto electron)
 app.workspaceLogout();
 app.setFrameTitle('Novo titulo');
@@ -294,3 +294,5 @@ Ocorrem no construtor do controller, antes de `$scope.loadByPK` ser chamado (`co
 12. **`openWindow` avisa popup bloqueado so em browser**. Em electron, nao avisa (`UserAgentUtils.getBrowserInfo().electron` pula o check). Se a integracao abre janelas via `openWindow` e roda tanto no browser quanto em electron, o comportamento diverge.
 
 13. **`_callLoadByPkWhitoutPk` usa snake-case errado de proposito**. O atributo e `load-by-pk-whitout-pk` (typo historico "whitout" em vez de "without"). Nao corrigir — e contrato com telas existentes.
+
+14. **`reloadApp(resourceId, pkObj)` NAO e um refresh leve — fecha o app e reabre**. Testado em producao (Central de Vendas): chamar `reloadApp` com o MESMO `resourceId`/PK da tela ja aberta (querendo so re-buscar dados atualizados de uma entidade que mudou no backend) fechou a tela atual e navegou para o Portal, tentando reabrir o registro. Nao usar como substituto de "atualizar dados de uma grid/aba sem sair da tela". Para isso, ver [[sankhya-refresh-grid-nativo-via-navigator]] em `navigator.md` — reproduzir o clique do botao nativo "Atualizar" via `isolateScope().refresh()` no `sk-navigator` daquela grid especifica.

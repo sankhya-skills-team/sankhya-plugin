@@ -55,7 +55,29 @@ O PopUpBuilder lê os bytes do arquivo HTML estático. Se o sistema operacional 
 
 No JS, strings usadas no DOM podem usar acentos normalmente — só o HTML estático é afetado.
 
-### 3. build.gradle — incluir todos os tipos de arquivo
+### 3. Não envolver o conteúdo em `.modal-body`/`.modal-footer` de novo
+
+O `htmlFile` já é injetado **dentro** do `.modal-body` real do Sankhya (que já vem com `width`/`min-height` do CSS default do builder, além de `sk-scroll-container`). Envolver o próprio conteúdo em `<div class="modal-body">`/`<div class="modal-footer">` duplica essas classes uma dentro da outra — o `width` do CSS default aplica duas vezes e estoura a largura.
+
+```html
+<!-- ❌ ERRADO — duplica .modal-body, causa scrollbar horizontal/vertical mesmo com conteúdo curto -->
+<div class="modal-body">
+    <p>Mensagem</p>
+</div>
+<div class="modal-footer">
+    <button ...>OK</button>
+</div>
+
+<!-- ✅ CORRETO — HTML solto, sem reenvolver em classes que o wrapper já aplica -->
+<p>Mensagem</p>
+<div style="text-align:right;">
+    <button ...>OK</button>
+</div>
+```
+
+**Sintoma:** popup com barra de rolagem mesmo ajustando `setWidth`/`setHeight`. **Diagnóstico:** inspecionar o popup no DevTools e copiar o HTML renderizado inteiro (não só o que você escreveu) — só assim dá pra ver o aninhamento. Não adiantar chutar CSS (`margin-left`, overrides de especificidade) sem antes olhar o DOM real.
+
+### 4. build.gradle — incluir todos os tipos de arquivo
 
 O JAR task deve incluir **todos** os recursos do módulo, não apenas `.sql`:
 
@@ -272,6 +294,36 @@ MessageUtils.showInfo(MessageUtils.TITLE_INFORMATION, "msg");
 scope.$dismiss();   /* fecha o popup */
 ServiceProxy.callService('modulo@Servico.acao', {params: {}}, {}).then(fn);
 ```
+
+---
+
+## Forçando Refresh de Grid Nativa a partir do Popup
+
+Cenário: um `EventoProgramavelJava` grava dados via JAPE puro em registros que aparecem numa grid **nativa** do Sankhya (ex.: aba Financeiro da Central de Vendas). A grid não reflete os novos valores sozinha, nem trocar de aba força refresh — só o botão nativo "Atualizar" funciona.
+
+**Não usar `app.reloadApp(resourceId, pkObj)`** — testado e descartado em produção: fecha a tela atual e navega para o Portal em vez de só atualizar os dados.
+
+**Solução validada:** popup com um botão que reproduz a mesma chamada do botão nativo "Atualizar", via `isolateScope()` do `sk-navigator` daquela grid:
+
+```javascript
+/* JS do popup — botao "Atualizar tela" */
+function kmAtualizarGridNativa() {
+    try {
+        var elNav = document.querySelector('sk-grade-financeiro sk-navigator'); /* ajustar seletor por tela */
+        if (!elNav) {
+            console.error('sk-navigator nao encontrado.');
+            return;
+        }
+        var navScope = angular.element(elNav).isolateScope();
+        navScope.$apply(function() { navScope.refresh(); });
+    } catch (e) {
+        console.error('Falha ao atualizar grid:', e);
+    }
+    try { scope.$dismiss(); } catch (e) {}
+}
+```
+
+Detalhes completos (como achar o seletor certo em outra tela, por que `isolateScope()` e não `scope()`, por que `$apply` é obrigatório) estão em `sankhya-js/reference/navigator.md` (gotcha 14) — esse skill é o dono canônico dessa técnica; aqui só o ponto de integração com `PopUpBuilder`.
 
 ---
 
@@ -756,6 +808,7 @@ public void beforeUpdate(PersistenceEvent event) throws Exception {
 - [ ] `getResourceAsStream` usa path `"/{modulo}/popup/PopUpNome.html"` (classpath a partir da raiz do JAR)
 - [ ] Nenhum comentário `//` no arquivo JS — apenas `/* */`
 - [ ] Nenhum caractere acentuado direto no HTML — usar entidades (`&atilde;`, `&ccedil;` etc.)
+- [ ] `htmlFile` NÃO reenvolve o conteúdo em `<div class="modal-body">`/`.modal-footer` (já injeta dentro deles)
 - [ ] CSS usa `border-collapse: separate; border-spacing: 0` para sticky funcionar
 - [ ] `.col-resizer` em cada `<th>` que deve ser redimensionável
 - [ ] `initResizableTable(id)` chamado com `setTimeout(..., 150)` após abertura
