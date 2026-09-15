@@ -93,13 +93,21 @@ e adaptadas para português e para o gênero "documento de entrega".
 
 ## Artefatos Java reconhecidos
 
-| Interface / Classe | Tipo no ERP | Acionamento |
-|---|---|---|
-| `AcaoRotinaJava` | Botão de Ação | Manual — clique do usuário |
-| `EventoProgramavelJava` | Listener / Evento | Automático — INSERT/UPDATE/DELETE |
-| `ScheduledAction` | Ação Agendada | Automático — cron/horário |
-| `Regra` / `RegraNegocioJava` | Regra de Negócio | Automático — ciclo de confirmação de NF |
-| Classes com `CustomModuleLoader` | Padrão External (proxy) | Não geram entrada — viram observação de arquitetura |
+Duas famílias, que convivem no mesmo repositório:
+
+| Addon Studio | Módulo Java | Tipo no ERP | Acionamento |
+|---|---|---|---|
+| `@ActionButton` | `AcaoRotinaJava` | Botão de Ação | Manual — clique do usuário |
+| `@Service` | — | Serviço chamado pela tela HTML5 | Manual — ação do usuário na tela |
+| `@Listener` | `EventoProgramavelJava` | Listener / Evento | Automático — INSERT/UPDATE/DELETE |
+| `@Job` | `ScheduledAction` | Ação Agendada | Automático — cron/horário |
+| `@BusinessRule` | `Regra` / `RegraNegocioJava` | Regra de Negócio | Automático — ciclo de confirmação de NF |
+| — | Classes com `CustomModuleLoader` | Padrão External (proxy) | Não geram entrada — viram observação de arquitetura |
+
+No addon, a unidade documentada do `@Service` é o **serviço de aplicação**, não o arquivo:
+a classe anotada costuma ser uma borda fina que só roteia dezenas de métodos. O
+`datadictionary/` responde o que antes vinha de pergunta ao usuário — `menu.xml` dá o
+caminho de acesso e as permissões por botão, e os XMLs de tabela entram no checklist.
 
 ---
 
