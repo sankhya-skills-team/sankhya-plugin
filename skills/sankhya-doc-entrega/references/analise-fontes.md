@@ -1,6 +1,72 @@
 # Análise de Fontes Java — Referência Completa
 
-## Categorias de Artefatos Reconhecidos
+## Duas famílias de artefato
+
+O mesmo módulo entregue pode vir em **Módulo Java** (classes que implementam as
+interfaces do MGE) ou em **Addon Studio** (classes anotadas). A skill documenta as duas,
+e há projeto com as duas convivendo — o Cotação Analítica da Zanchetta tem `@Service`,
+`@ActionButton` e classes `AcaoRotinaJava` no mesmo repositório.
+
+Descubra qual você tem antes de classificar:
+
+```bash
+grep -rl "@Service\|@ActionButton\|@Listener\|@Job\|@BusinessRule" --include="*.java" .
+grep -rl "AcaoRotinaJava\|EventoProgramavelJava\|ScheduledAction\|RegraNegocioJava" --include="*.java" .
+```
+
+---
+
+## Addon Studio — artefatos anotados
+
+| Anotação | Tipo no ERP | `tipo` | Acionamento |
+|---|---|---|---|
+| `@ActionButton` | Botão de Ação | `acao` | Manual — botão na tela |
+| `@Service` | Serviço chamado pela tela HTML5 | `servico` | Manual — ação do usuário na tela |
+| `@Listener` | Listener de persistência | `evento` | Automático — INSERT/UPDATE/DELETE |
+| `@Job` | Ação agendada | `job` | Automático — agendamento |
+| `@BusinessRule` | Regra de negócio | `regra` | Automático — ciclo da nota |
+
+### Granularidade: por operação de negócio, não por arquivo
+
+`@Service` é a diferença que mais confunde. A classe anotada costuma ser uma **borda
+fina** que só roteia — o `PreFechamentoFreteService` do Fechamento de Frete expõe 27
+métodos de uma linha, cada um delegando para um serviço de aplicação. Documentar
+método a método produz 27 entradas sem sentido funcional; documentar a borda produz uma
+entrada vazia.
+
+A unidade é o **serviço de aplicação**: a classe que carrega a lógica
+(`FechamentoAplicacaoService`, `LiberacaoAplicacaoService`, `CancelamentoAplicacaoService`).
+Cada um vira uma entrada em `funcionalidades`, com `tipo: "servico"`, e os métodos que
+ele expõe viram `passos`. Não existindo essa camada, agrupe as operações da borda por
+domínio e documente cada grupo.
+
+`@ActionButton`, `@Listener`, `@Job` e `@BusinessRule` seguem a regra normal: uma classe,
+uma entrada.
+
+### O que extrair de cada anotação
+
+- **`@Service(serviceName = "...")`** → o nome do bean, que aparece no checklist de
+  deploy; e `transactionType`, que indica se a operação é transacional.
+- **`@ActionButton("Nome Exibido")`** → o rótulo do botão como o usuário o vê.
+- **`@Listener(instanceNames = { "..." })`** → a instância de entidade observada. É o
+  equivalente ao registro manual de Evento Programável, e vem no código, não na tela.
+- **`@Job`** → a periodicidade, quando declarada.
+
+### Metadados do addon: `datadictionary/`
+
+Os XMLs (em **ISO-8859-1**, leia com o encoding certo) declaram o que o módulo Java
+tradicional deixaria para o Construtor de Telas:
+
+- **`menu.xml`** → `<ui description="...">` dá o nome da tela e `<nativeFolder resourceId>`
+  a pasta do menu — juntos formam o `caminho_sistema`. Os `<acesso description="...">`
+  listam as permissões por botão: é a resposta de "quais perfis têm acesso" sem
+  perguntar ao usuário.
+- **`<table name="...">`** em cada XML → as tabelas que o addon cria. Entram no checklist
+  de deploy como pré-requisito.
+
+---
+
+## Módulo Java — artefatos por interface
 
 | Interface / Classe | Tipo no ERP | Acionamento | Configuração |
 |---|---|---|---|
@@ -77,7 +143,7 @@ do `dados.json` (contrato completo no `SKILL.md`):
 ```jsonc
 {
   "titulo": "Gerar Desconto",                  // nome funcional descritivo
-  "tipo": "acao",                              // acao | evento | job | regra
+  "tipo": "acao",                              // acao | servico | evento | job | regra
   "icone": "💰",
   "passos": ["O usuário seleciona o pedido.", "O sistema verifica o limite de desconto."],
   "obs": "Requer status Aberto. Restrito ao perfil Gerencial.",
@@ -90,10 +156,11 @@ do `dados.json` (contrato completo no `SKILL.md`):
 numera).
 
 **Ordenação recomendada:**
-1. Botões de Ação (`AcaoRotinaJava`)
-2. Listeners/Eventos (`EventoProgramavelJava`)
-3. Jobs agendados (`ScheduledAction`)
-4. Regras de negócio (`Regra`, `RegraNegocioJava`)
+1. Botões de Ação (`AcaoRotinaJava`, `@ActionButton`)
+2. Serviços de tela (`@Service`)
+3. Listeners/Eventos (`EventoProgramavelJava`, `@Listener`)
+4. Jobs agendados (`ScheduledAction`, `@Job`)
+5. Regras de negócio (`Regra`, `RegraNegocioJava`, `@BusinessRule`)
 
 ---
 

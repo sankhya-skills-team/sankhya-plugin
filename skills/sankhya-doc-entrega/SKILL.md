@@ -13,8 +13,10 @@ description: >
 # Gerador de Documento de Entrega de Desenvolvimento
 
 Gera `{PASTA_DEMANDA}/Documentacao/Entrega - {NOME_CUSTOMIZACAO}.{html|docx}` a partir
-da análise dos fontes Java de um módulo Sankhya OM (Addon Studio ou Módulo Java
-complementar), no design system Sankhya.
+da análise dos fontes Java de um módulo Sankhya OM, no design system Sankhya. Cobre as
+duas famílias: **Addon Studio** (`@Service`, `@ActionButton`, `@Listener`, `@Job`,
+`@BusinessRule`) e **Módulo Java** (`AcaoRotinaJava`, `EventoProgramavelJava`,
+`ScheduledAction`, `Regra`).
 
 | Formato | Conteúdo |
 |---|---|
@@ -92,16 +94,25 @@ Guarde como `CHANGELOG` (lista de strings). Na primeira geração deixe vazio.
 
 ## Etapa 2 — Análise dos fontes Java
 
-Leia **todos os `.java`** sob `PASTA_FONTES` recursivamente (Glob + Read). Categorize
-cada classe pela interface implementada, conforme `references/analise-fontes.md`:
+Leia **todos os `.java`** sob `PASTA_FONTES` recursivamente (Glob + Read). O módulo pode
+ser **Addon Studio** (classes anotadas) ou **Módulo Java** (classes que implementam as
+interfaces do MGE) — documente as duas famílias, que convivem no mesmo repositório.
+Classifique conforme `references/analise-fontes.md`:
 
-| Interface / classe | `tipo` |
-|---|---|
-| `AcaoRotinaJava` | `acao` |
-| `EventoProgramavelJava` | `evento` |
-| `ScheduledAction` | `job` |
-| `Regra` / `RegraNegocioJava` | `regra` |
-| Classes com `CustomModuleLoader` | External — **não geram entrada**, viram observação de arquitetura |
+| Addon Studio | Módulo Java | `tipo` |
+|---|---|---|
+| `@ActionButton` | `AcaoRotinaJava` | `acao` |
+| `@Service` | — | `servico` |
+| `@Listener` | `EventoProgramavelJava` | `evento` |
+| `@Job` | `ScheduledAction` | `job` |
+| `@BusinessRule` | `Regra` / `RegraNegocioJava` | `regra` |
+| — | Classes com `CustomModuleLoader` | External — **não geram entrada**, viram observação de arquitetura |
+
+**Granularidade do `@Service`:** a classe anotada costuma ser uma borda fina que só
+roteia (dezenas de métodos de uma linha). A entrada em `funcionalidades` é o **serviço de
+aplicação** que carrega a lógica — um por domínio de negócio —, e os métodos que ele
+expõe viram `passos`. Sem essa camada, agrupe as operações da borda por domínio. As
+demais anotações seguem a regra normal: uma classe, uma entrada.
 
 Para cada classe não-External, monte uma entrada em `funcionalidades`:
 
@@ -113,7 +124,7 @@ Para cada classe não-External, monte uma entrada em `funcionalidades`:
 - `limitacoes` — bloqueios `MGEModelException`, restrições (vazio se não houver)
 - `tipo_acesso` — `relatorio` | `tela` | `dashboard` | `""` (dispara aviso de perfis)
 
-**Ordenação:** ações → eventos → jobs → regras.
+**Ordenação:** ações → serviços → eventos → jobs → regras.
 
 **`tipo_acesso`:** título contém "relatório"/"report" ou há `.jrxml` associado →
 `relatorio`; tela adicional → `tela`; dashboard → `dashboard`; senão `""`. Pode ser
@@ -162,10 +173,30 @@ Extraia de cada `.java` o bloco `Configuracao no Sankhya:`:
 Capture o **nome exibido** (string entre aspas na primeira linha) e os pares
 chave-valor. Bloco ausente → campos vazios, complementados no drill-down (3.4).
 
+**No Addon Studio o registro está no código, não na tela do Sankhya.** Em vez do bloco de
+Javadoc, leia as próprias anotações: `@Service(serviceName)` dá o nome do bean,
+`@ActionButton("...")` o rótulo do botão, `@Listener(instanceNames)` a entidade
+observada. Não pergunte ao usuário o que a anotação já responde.
+
+E leia `datadictionary/menu.xml` (**ISO-8859-1**): `<nativeFolder resourceId>` mais
+`<ui description>` formam o `caminho_sistema`, e cada `<acesso description="...">` é uma
+permissão do módulo — a resposta de "quais perfis têm acesso".
+
 ### 3.2 Arquivos de deploy
 
-Glob em: `{PASTA_DEMANDA}/Telas Adicionais/**/*.zip` · `{PASTA_DEMANDA}/Objetos de
-Banco/**/*.sql` · `dist/**/*.jar` · `dist/Dashboards/**/*.zip`.
+O layout depende da família. Rode os dois conjuntos de glob e use o que existir:
+
+| Módulo Java | Addon Studio |
+|---|---|
+| `{PASTA_DEMANDA}/Telas Adicionais/**/*.zip` | `datadictionary/**/*.xml` (tabelas e menu) |
+| `{PASTA_DEMANDA}/Objetos de Banco/**/*.sql` | `dbscripts/**/*.{xml,sql}` |
+| `dist/**/*.jar` | `build/dist/**/*.jar` · `vc/**/*.war` |
+| `dist/Dashboards/**/*.zip` | `dashboards/**/*.zip` |
+
+No addon, cada `<table name="...">` do `datadictionary/` é uma tabela que o módulo cria:
+entra no checklist como pré-requisito. Ignore os JARs de terceiros que vêm junto no
+`build/dist/lib/` (`sdk-sankhya.jar`, `studio-annotations.jar`, `addon-module.jar`) —
+o artefato entregue é o JAR do módulo e o `.war` da tela.
 
 ### 3.3 Parâmetros TSIPAR
 
@@ -186,7 +217,7 @@ Para cada item selecionado:
 | `tela_adicional` | Campos adicionais a documentar? Dependência de outra tela? Qual entrada em `funcionalidades` esta tela representa? |
 | `parametro` | Descrição, tipo (texto/número/data), valor padrão? |
 | `script_sql` | Executar em qual ambiente? (teste / produção / ambos) |
-| `acao` `evento` `job` `regra` | Nome exibido correto? Entidade correta? Quais perfis têm acesso? |
+| `acao` `servico` `evento` `job` `regra` | Nome exibido correto? Entidade correta? Quais perfis têm acesso? (no addon, confirme o que o `menu.xml` já respondeu) |
 | `jar` | Caminho de destino no servidor? (Enter = padrão Sankhya) |
 | `dashboard` / `relatorio` | Nome exibido no Sankhya? Qual entrada em `funcionalidades` representa? |
 
@@ -240,6 +271,21 @@ estrutura nem a ordem.
 
 **O teste 3 só existe quando `perfil` foi identificado no fonte.** Se `perfil` for
 `"não identificado"`, omita-o. Um teste com perfil vazio não é verificável.
+
+**`servico`** — 2 testes fixos + 1 condicional. A operação chega pela tela, então o
+cenário se escreve do ponto de vista de quem opera:
+
+```
+1. nome:     Executar '{titulo}' pela tela com {condicao_valida}
+   esperado: Operação concluída. {resultado_principal}
+2. nome:     Executar '{titulo}' em condição inválida: {condicao_invalida}
+   esperado: Sistema bloqueia com a mensagem: "{mensagem_bloqueio}"
+3. nome:     Usuário sem a permissão '{perfil}' aciona '{titulo}'
+   esperado: Acesso negado ou ação indisponível na tela
+```
+
+**O teste 3 só existe quando a permissão foi identificada** — nos addons ela costuma vir
+do `<acesso>` no `menu.xml`, não do fonte Java. Não identificada, omita.
 
 **`evento`** — 2 testes:
 
@@ -411,7 +457,7 @@ esse clique; é o usuário quem decide o momento.
   "funcionalidades": [
     {
       "titulo": "Calcular Pesagem",
-      "tipo": "acao",                  // acao | evento | job | regra
+      "tipo": "acao",                  // acao | servico | evento | job | regra
       "icone": "⚖️",
       "passos": ["O usuário seleciona o ticket.", "O sistema calcula o peso líquido."],
       "obs": "Requer perfil Balança.",

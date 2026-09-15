@@ -190,6 +190,20 @@ def main():
             "status do teste não aplicado"
         assert html_ev.count("1 imagem anexada") == 2, "contador de evidências errado"
 
+        # ── Addon Studio: o tipo servico tem badge proprio ─────────
+        addon = dict(EXEMPLO, funcionalidades=[
+            dict(EXEMPLO["funcionalidades"][0], titulo="Processar Fechamento",
+                 tipo="servico", icone="🧩"),
+        ])
+        alvo_ad = os.path.join(tmp, "addon", "Documentacao", "Entrega - Frete.html")
+        gerar("gerar_html.py", addon, alvo_ad)
+        html_ad = open(alvo_ad, encoding="utf-8").read()
+        assert "Serviço da Tela" in html_ad, "badge de @Service ausente no HTML"
+        gerar("gerar_docx.py", addon, alvo_ad.replace(".html", ".docx"))
+        doc_ad = Document(alvo_ad.replace(".html", ".docx"))
+        assert any("Serviço da Tela" in p.text for p in doc_ad.paragraphs), \
+            "badge de @Service ausente no DOCX"
+
         alvo_ev_dx = os.path.join(base_ev, "Documentacao", "Entrega - Pesagem.docx")
         gerar("gerar_docx.py", dados_ev, alvo_ev_dx)
         doc_ev = Document(alvo_ev_dx)

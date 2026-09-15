@@ -64,8 +64,11 @@ LOGO_SVG = (
 # ── Metadados por tipo de funcionalidade ───────────────────────────
 # Cores restritas a paleta do design system.
 TIPO_META = {
-    "acao":   {"badge": "Ação Manual",       "cor": SECONDARY,  "icone": "▶"},
-    "evento": {"badge": "Listener / Evento", "cor": PRIMARY,    "icone": "⚡"},
-    "job":    {"badge": "Job Agendado",      "cor": TERTIARY,   "icone": "⏰"},
-    "regra":  {"badge": "Regra de Negócio",  "cor": ON_SURFACE, "icone": "📋"},
+    "acao":    {"badge": "Ação Manual",       "cor": SECONDARY,  "icone": "▶"},
+    "evento":  {"badge": "Listener / Evento", "cor": PRIMARY,    "icone": "⚡"},
+    "job":     {"badge": "Job Agendado",      "cor": TERTIARY,   "icone": "⏰"},
+    "regra":   {"badge": "Regra de Negócio",  "cor": ON_SURFACE, "icone": "📋"},
+    # Addon Studio: operacao de @Service chamada pela tela HTML5. Nao existe no
+    # modulo Java tradicional, onde a mesma acao seria um botao (AcaoRotinaJava).
+    "servico": {"badge": "Serviço da Tela",   "cor": WARNING,    "icone": "🧩"},
 }
