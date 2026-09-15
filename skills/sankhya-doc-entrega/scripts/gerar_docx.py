@@ -2,7 +2,7 @@
 
 Uso: python gerar_docx.py <dados.json>
 Contrato do JSON: ver secao "Contrato dados.json" no SKILL.md.
-Imprime na saida padrao um JSON com {arquivo, versao, backup}.
+Imprime na saida padrao um JSON com {arquivo, versao, backup, evidencias_faltando}.
 
 Regra visual: usa apenas as cores do design system Sankhya e nao aplica
 cor de fundo na pagina — o preenchimento fica restrito a cabecalhos de tabela.
@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _brand as B
 from _comum import (PERSONAS_CLIENTE_PADRAO, PERSONAS_SANKHYA_PADRAO, carregar_dados,
-                    garantir, parse_personas, resolver_versao)
+                    coletar_evidencias, garantir, parse_personas, resolver_versao)
 
 garantir("docx", "python-docx")
 
@@ -35,6 +35,8 @@ FUNCIONALIDADES = D.get("funcionalidades", [])
 CHECKLIST       = D.get("checklist_deploy", {}) or {}
 PRE  = CHECKLIST.get("pre_requisitos") or []
 POS  = CHECKLIST.get("pos_deploy") or []
+
+EVIDENCIAS, EVIDENCIAS_FALTANDO = coletar_evidencias(D)
 
 C_TERTIARY  = RGBColor(*B.rgb(B.TERTIARY))
 C_ON_SURF   = RGBColor(*B.rgb(B.ON_SURFACE))
@@ -386,13 +388,25 @@ if PRE or POS:
     secao_n += 1
 
 # ── 5. Homologacao ─────────────────────────────────────────────────
+
+def resultado_teste(teste):
+    """Marca a caixa do status quando a homologacao ja foi executada."""
+    status = str(teste.get("status", "")).lower()
+    if not status and teste.get("evidencias"):
+        status = "aprovado"
+    return "[%s] Aprovado\n[%s] Reprovado" % ("X" if status == "aprovado" else " ",
+                                              "X" if status == "reprovado" else " ")
+
+
 titulo(doc, "%d. Homologação e Testes" % secao_n)
 testes_por_func = [(f, f.get("testes") or []) for f in FUNCIONALIDADES]
 tem_testes = any(t for _f, t in testes_por_func)
 
 if tem_testes:
     p_i = doc.add_paragraph()
-    run(p_i, "Marque o resultado de cada cenário e anexe as evidências ao final "
+    run(p_i, "As evidências de cada cenário estão nos anexos, ao final do documento."
+             if EVIDENCIAS else
+             "Marque o resultado de cada cenário e anexe as evidências ao final "
              "do documento.", italic=True, size=10, color=C_ON_SURF)
     for func, testes in testes_por_func:
         if not testes:
@@ -406,7 +420,7 @@ if tem_testes:
             linha = tab.rows[i]
             run(linha.cells[0].paragraphs[0], teste.get("nome", ""), color=C_TERTIARY)
             run(linha.cells[1].paragraphs[0], teste.get("esperado", ""), color=C_ON_SURF)
-            run(linha.cells[2].paragraphs[0], "[ ] Aprovado\n[ ] Reprovado",
+            run(linha.cells[2].paragraphs[0], resultado_teste(teste),
                 size=9, color=C_ON_SURF)
 
 for i, rotulo in enumerate(
@@ -417,6 +431,31 @@ for i, rotulo in enumerate(
     if i == 0:
         p.paragraph_format.space_before = ABNT_LINHA
 secao_n += 1
+
+# ── Anexos ─────────────────────────────────────────────────────────
+# As capturas ficam agrupadas no fim, e nao dentro da tabela de cenarios:
+# imagem em celula estoura a largura util da pagina.
+if EVIDENCIAS:
+    titulo(doc, "%d. Anexos – Evidências de Entrega" % secao_n)
+    p_a = doc.add_paragraph()
+    run(p_a, "Capturas do fluxo executado durante a homologação. A legenda de cada "
+             "imagem descreve o que ela mostra.", italic=True, size=10, color=C_ON_SURF)
+
+    n = 0
+    for _func, _teste, itens in EVIDENCIAS:
+        for caminho, legenda in itens:
+            n += 1
+            p_leg = doc.add_paragraph()
+            run(p_leg, "Evidência %02d – %s" % (n, legenda), size=10, color=C_ON_SURF)
+            p_leg.paragraph_format.space_before = Pt(12)
+            p_leg.paragraph_format.space_after = Pt(4)
+            p_leg.paragraph_format.line_spacing = ABNT_TABELA
+
+            p_img = doc.add_paragraph()
+            p_img.add_run().add_picture(caminho, width=UTIL)
+            p_img.paragraph_format.space_after = Pt(6)
+            p_img.paragraph_format.line_spacing = ABNT_TABELA
+    secao_n += 1
 
 # ── Observacoes ────────────────────────────────────────────────────
 titulo(doc, "%d. Observações" % secao_n)
@@ -456,4 +495,5 @@ doc.core_properties.version = VERSAO
 doc.core_properties.title = "Entrega — %s" % D.get("nome_customizacao", "")
 doc.save(ARQUIVO_SAIDA)
 
-print(json.dumps({"arquivo": ARQUIVO_SAIDA, "versao": VERSAO, "backup": BACKUP}))
+print(json.dumps({"arquivo": ARQUIVO_SAIDA, "versao": VERSAO, "backup": BACKUP,
+                  "evidencias_faltando": EVIDENCIAS_FALTANDO}))

@@ -2,10 +2,12 @@
 
 Uso: python gerar_html.py <dados.json>
 Contrato do JSON: ver secao "Contrato dados.json" no SKILL.md.
-Imprime na saida padrao um JSON com {arquivo, versao, backup}.
+Imprime na saida padrao um JSON com {arquivo, versao, backup, evidencias_faltando}.
 """
 
+import base64
 import json
+import mimetypes
 import os
 import sys
 
@@ -13,7 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _brand as B
 from _comum import (PERSONAS_CLIENTE_PADRAO, PERSONAS_SANKHYA_PADRAO, carregar_dados,
-                    parse_personas, resolver_versao)
+                    coletar_evidencias, parse_personas, resolver_versao)
 
 D = carregar_dados(sys.argv)
 
@@ -28,6 +30,9 @@ INCLUIR_ASSINATURAS = bool(D.get("incluir_assinaturas"))
 INCLUIR_DEPLOY      = bool(CHECKLIST.get("pre_requisitos") or CHECKLIST.get("pos_deploy"))
 PERSONAS_SANKHYA    = parse_personas(D.get("personas_sankhya")) or PERSONAS_SANKHYA_PADRAO
 PERSONAS_CLIENTE    = parse_personas(D.get("personas_cliente")) or PERSONAS_CLIENTE_PADRAO
+
+_evidencias, EVIDENCIAS_FALTANDO = coletar_evidencias(D)
+EVIDENCIAS = {id(teste): itens for _f, teste, itens in _evidencias}
 
 
 def h(s):
@@ -88,6 +93,30 @@ def build_func_card(idx, func):
          h(func.get("titulo", "")), meta["cor"], meta["cor"], meta["badge"], blocos)
 
 
+STATUS_TESTE = {"pendente":  ("pendente",  "⏳ Pendente"),
+                "aprovado":  ("aprovado",  "✅ Aprovado"),
+                "reprovado": ("reprovado", "❌ Reprovado")}
+
+
+def build_galeria(itens, tid):
+    """Mesma marcacao que o botao 'Exportar com evidencias' produz no navegador,
+    para que reexportar por cima nao perca nem duplique nada."""
+    partes = []
+    for caminho, legenda in itens:
+        mime = mimetypes.guess_type(caminho)[0] or "image/png"
+        with open(caminho, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode("ascii")
+        nome = os.path.basename(caminho)
+        partes.append(
+            '<div class="evidence-item">'
+            '<img src="data:%s;base64,%s" title="%s" alt="Evidência: %s">'
+            '<button class="remove-img" type="button" onclick="removeImg(this,\'%s\')">✕</button>'
+            '<input type="text" class="evidence-caption" value="%s" '
+            'placeholder="Descreva o que esta imagem mostra...">'
+            '</div>' % (mime, b64, h(nome), h(nome), tid, h(legenda)))
+    return '<div class="evidence-gallery">%s</div>' % "".join(partes)
+
+
 def build_homologacao(funcionalidades):
     saida = ""
     for fi, func in enumerate(funcionalidades, 1):
@@ -98,21 +127,30 @@ def build_homologacao(funcionalidades):
                   % (func.get("icone", ""), h(func.get("titulo", ""))))
         for ti, t in enumerate(testes, 1):
             tid = "hom-fc%d-%d" % (fi, ti)
+            itens = EVIDENCIAS.get(id(t)) or []
+            classe, rotulo = STATUS_TESTE.get(
+                str(t.get("status", "")).lower(),
+                STATUS_TESTE["aprovado"] if itens else STATUS_TESTE["pendente"])
+            galeria = build_galeria(itens, tid) if itens else ""
+            n = len(itens)
+            hint = ("Nenhuma imagem anexada" if n == 0 else
+                    "%d %s" % (n, "imagens anexadas" if n > 1 else "imagem anexada"))
             saida += (
                 '<div class="test-case" id="%s">'
                 '<div class="test-header">'
-                '<button class="status-btn pendente" type="button" onclick="toggleStatus(this)">⏳ Pendente</button>'
+                '<button class="status-btn %s" type="button" onclick="toggleStatus(this)">%s</button>'
                 '<div class="test-desc">'
                 '<div class="test-name">%s</div>'
                 '<div class="test-expected"><strong>Resultado esperado:</strong> %s</div>'
                 '</div></div>'
-                '<div class="test-evidence">'
+                '<div class="test-evidence">%s'
                 '<div class="evidence-row">'
                 '<label class="attach-btn">📎 Adicionar evidência'
                 '<input type="file" accept="image/*" multiple onchange="attachImage(this,\'%s\')"></label>'
-                '<span class="no-evidence" id="%s-hint">Nenhuma imagem anexada</span>'
+                '<span class="no-evidence" id="%s-hint">%s</span>'
                 '</div></div></div>'
-            ) % (tid, h(t.get("nome", "")), h(t.get("esperado", "")), tid, tid)
+            ) % (tid, classe, rotulo, h(t.get("nome", "")), h(t.get("esperado", "")),
+                 galeria, tid, tid, hint)
         saida += "</div>"
     return saida or '<p class="vazio">Nenhum teste de homologação gerado.</p>'
 
@@ -622,4 +660,5 @@ HTML = (
 with open(ARQUIVO_SAIDA, "w", encoding="utf-8") as f:
     f.write(HTML)
 
-print(json.dumps({"arquivo": ARQUIVO_SAIDA, "versao": VERSAO, "backup": BACKUP}))
+print(json.dumps({"arquivo": ARQUIVO_SAIDA, "versao": VERSAO, "backup": BACKUP,
+                  "evidencias_faltando": EVIDENCIAS_FALTANDO}))

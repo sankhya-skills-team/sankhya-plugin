@@ -42,6 +42,9 @@ def coletar(dados):
         for j, teste in enumerate(func.get("testes") or []):
             for campo in CAMPOS_TESTE:
                 add("%s.testes[%d].%s" % (base, j, campo), teste.get(campo))
+            for k, ev in enumerate(teste.get("evidencias") or []):
+                add("%s.testes[%d].evidencias[%d].legenda" % (base, j, k),
+                    ev.get("legenda"))
 
     checklist = dados.get("checklist_deploy") or {}
     for grupo in ("pre_requisitos", "pos_deploy"):

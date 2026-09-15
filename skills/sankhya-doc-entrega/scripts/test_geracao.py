@@ -4,6 +4,7 @@ Gera HTML e DOCX de exemplo em um diretorio temporario e verifica
 versionamento, backup, historico e presenca do logo. Sem framework.
 """
 
+import base64
 import json
 import os
 import re
@@ -57,16 +58,44 @@ EXEMPLO = {
 }
 
 
-def gerar(script, dados, destino):
+# PNG 1x1 valido — o python-docx le o cabecalho da imagem ao embutir.
+PNG_1X1 = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmM"
+    "IQAAAABJRU5ErkJggg==")
+
+
+def executar(script, dados, destino):
     dados = dict(dados, arquivo_saida=destino)
     os.makedirs(os.path.dirname(destino), exist_ok=True)
     entrada = os.path.join(os.path.dirname(destino), "_dados.json")
     with open(entrada, "w", encoding="utf-8") as f:
         json.dump(dados, f, ensure_ascii=False)
-    saida = subprocess.run([sys.executable, os.path.join(AQUI, script), entrada],
-                           capture_output=True, text=True, encoding="utf-8")
+    return subprocess.run([sys.executable, os.path.join(AQUI, script), entrada],
+                          capture_output=True, text=True, encoding="utf-8",
+                          errors="replace")
+
+
+def gerar(script, dados, destino):
+    saida = executar(script, dados, destino)
     assert saida.returncode == 0, "%s falhou:\n%s" % (script, saida.stderr)
     return json.loads(saida.stdout.strip().splitlines()[-1])
+
+
+def com_evidencias(pasta):
+    """Copia do EXEMPLO com uma evidencia no primeiro teste e outra no segundo."""
+    os.makedirs(pasta, exist_ok=True)
+    for nome in ("hom-fc1-1.png", "hom-fc1-2.png"):
+        with open(os.path.join(pasta, nome), "wb") as f:
+            f.write(PNG_1X1)
+    func = dict(EXEMPLO["funcionalidades"][0])
+    func["testes"] = [
+        dict(EXEMPLO["funcionalidades"][0]["testes"][0], status="aprovado",
+             evidencias=[{"arquivo": "hom-fc1-1.png",
+                          "legenda": "Ticket 100% aberto & pesagem gravada."}]),
+        dict(EXEMPLO["funcionalidades"][0]["testes"][1], status="reprovado",
+             evidencias=[{"arquivo": "hom-fc1-2.png", "legenda": "Mensagem de bloqueio."}]),
+    ]
+    return dict(EXEMPLO, funcionalidades=[func])
 
 
 def main():
@@ -146,6 +175,54 @@ def main():
                 larguras = [c.width for c in unicas]
                 assert all(larguras), "tabela %d tem célula sem largura" % n
                 assert sum(larguras) <= util, "tabela %d estoura a faixa útil" % n
+
+        # ── Evidencias embutidas ───────────────────────────────────
+        base_ev = os.path.join(tmp, "ev")
+        dados_ev = com_evidencias(os.path.join(base_ev, "Documentacao", "evidencias"))
+
+        alvo_ev = os.path.join(base_ev, "Documentacao", "Entrega - Pesagem.html")
+        gerar("gerar_html.py", dados_ev, alvo_ev)
+        html_ev = open(alvo_ev, encoding="utf-8").read()
+        assert html_ev.count('<div class="evidence-gallery">') == 2, "galeria não renderizada"
+        assert html_ev.count("data:image/png;base64,") == 2, "imagem não embutida"
+        assert "Ticket 100% aberto &amp; pesagem gravada." in html_ev, "legenda perdida"
+        assert "status-btn aprovado" in html_ev and "status-btn reprovado" in html_ev, \
+            "status do teste não aplicado"
+        assert html_ev.count("1 imagem anexada") == 2, "contador de evidências errado"
+
+        alvo_ev_dx = os.path.join(base_ev, "Documentacao", "Entrega - Pesagem.docx")
+        gerar("gerar_docx.py", dados_ev, alvo_ev_dx)
+        doc_ev = Document(alvo_ev_dx)
+        texto_ev = "\n".join(p.text for p in doc_ev.paragraphs)
+        assert "Anexos – Evidências de Entrega" in texto_ev, "seção de anexos ausente"
+        assert "Evidência 01 – Ticket 100% aberto & pesagem gravada." in texto_ev
+        assert "Evidência 02 – Mensagem de bloqueio." in texto_ev
+        assert len(doc_ev.inline_shapes) == 3, "logo + 2 evidências esperados"
+        # O anexo entra antes de Observações e empurra a numeração dela.
+        assert re.search(r"(\d+)\. Anexos", texto_ev).group(1) == \
+            str(int(re.search(r"(\d+)\. Observações", texto_ev).group(1)) - 1)
+        resultados = [c.text for t in doc_ev.tables for r in t.rows for c in r.cells]
+        assert any("[X] Aprovado" in c for c in resultados), "aprovação não marcada"
+        assert any("[X] Reprovado" in c for c in resultados), "reprovação não marcada"
+
+        # Evidencia ausente avisa, mas o documento sai — inclusive com as
+        # evidencias que sobraram no mesmo teste.
+        faltante = dict(dados_ev)
+        faltante["funcionalidades"] = [dict(dados_ev["funcionalidades"][0])]
+        faltante["funcionalidades"][0]["testes"] = [
+            {"nome": "Cenário sem print", "esperado": "y",
+             "evidencias": [{"arquivo": "nao-existe.png", "legenda": ""},
+                            {"arquivo": "hom-fc1-1.png", "legenda": "A que existe."}]}]
+        alvo_falta = os.path.join(base_ev, "Documentacao", "Entrega - Falta.html")
+        saida = executar("gerar_html.py", faltante, alvo_falta)
+        assert saida.returncode == 0, "evidência ausente derrubou a geração"
+        assert "nao-existe.png" in saida.stderr, "falta não avisada no stderr"
+        relatorio = json.loads(saida.stdout.strip().splitlines()[-1])
+        assert [f["caso"] for f in relatorio["evidencias_faltando"]] == ["hom-fc1-1"], relatorio
+        assert relatorio["evidencias_faltando"][0]["teste"] == "Cenário sem print"
+        html_falta = open(alvo_falta, encoding="utf-8").read()
+        assert html_falta.count("data:image/png;base64,") == 1, "evidência válida perdida"
+        assert os.path.exists(alvo_falta), "documento não gerado"
 
         print("OK — HTML e DOCX gerados, versionados e validados.")
     finally:

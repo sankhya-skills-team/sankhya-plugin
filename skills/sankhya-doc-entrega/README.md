@@ -22,7 +22,24 @@ o SKILL.md não carrega código de template para o contexto.
 | Formato | Conteúdo |
 |---|---|
 | **HTML interativo** (default) | Funcionalidades colapsáveis, checklist de deploy com persistência, homologação com marcação de status e evidências por imagem, histórico de versões, botão "Exportar com evidências" |
-| **DOCX Word** | Documento editável formatado na ABNT NBR 14724: identificação, histórico de versões, manual de uso passo a passo, checklist de deploy em tabela, homologação com coluna de resultado e bloco de assinaturas |
+| **DOCX Word** | Documento editável formatado na ABNT NBR 14724: identificação, histórico de versões, manual de uso passo a passo, checklist de deploy em tabela, homologação com coluna de resultado, anexo com as evidências e bloco de assinaturas |
+
+---
+
+## Evidências de homologação
+
+As capturas entram pelo `dados.json`, em `funcionalidades[].testes[].evidencias`, e
+aparecem nos dois formatos: no HTML como galeria dentro do caso de teste, no DOCX na
+seção "Anexos – Evidências de Entrega", ao final. O `status` do teste marca o resultado.
+
+Evidência declarada e ausente não interrompe nada: o gerador avisa no stderr, devolve a
+lista em `evidencias_faltando` no JSON de saída e emite o documento com o que existe.
+
+Quando o usuário aceita, o agente coleta as capturas ele mesmo. A ferramenta é detectada
+em tempo de execução, nunca presumida: extensão do navegador (`mcp__claude-in-chrome__*`)
+primeiro, por usar a aba já autenticada; Playwright depois, único caminho para Firefox e
+Safari; e o modo manual, em que o usuário tira os prints e o agente só monta o JSON.
+Detalhes em `references/coleta-evidencias.md`.
 
 O DOCX segue a ABNT NBR 14724 em margens (3 cm superior e esquerda, 2 cm inferior e
 direita), corpo de 12 pt, entrelinha 1,5 no texto, espaço simples dentro das tabelas e
@@ -40,6 +57,7 @@ sankhya-doc-entrega/
 │   └── sankhya-logo.png        Logo usado no DOCX
 ├── references/
 │   ├── analise-fontes.md       Categorias de artefatos e extração por tipo de classe
+│   ├── coleta-evidencias.md    Ferramentas, navegadores e protocolo de captura
 │   ├── linguagem.md            Linguagem funcional e marcas de texto gerado por IA
 │   └── design-system.md        Paleta, tipografia, regra HTML × DOCX, logo
 └── scripts/
@@ -124,6 +142,7 @@ python scripts/revisar_texto.py --autoteste   # regras do lint de linguagem
 ```
 
 O primeiro gera HTML e DOCX de exemplo em diretório temporário e valida escape, paleta
-do design system, versionamento, backup, histórico e presença do logo. O segundo confere
+do design system, versionamento, backup, histórico, presença do logo e as evidências
+embutidas nos dois formatos. O segundo confere
 que as seis regras acusam e que campos de identificação e mensagens citadas continuam
 fora do lint.

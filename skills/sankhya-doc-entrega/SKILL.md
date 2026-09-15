@@ -19,7 +19,7 @@ complementar), no design system Sankhya.
 | Formato | Conteúdo |
 |---|---|
 | **HTML** (default) | Capa (só na impressão/PDF), funcionalidades colapsáveis, checklist de deploy com persistência, homologação com marcação de status e evidências por imagem com legenda, botão "Exportar com evidências" e botão "🖨️ Gerar PDF" |
-| **DOCX** | Word editável, formatado na ABNT NBR 14724 — identificação, manual de uso, checklist de deploy, homologação em tabela e bloco de assinaturas |
+| **DOCX** | Word editável, formatado na ABNT NBR 14724 — identificação, manual de uso, checklist de deploy, homologação em tabela, anexo com as evidências e bloco de assinaturas |
 
 Ambos compartilham análise, escopo e histórico de versões. A diferença está apenas na
 renderização final.
@@ -34,7 +34,8 @@ python {SKILL_DIR}/scripts/gerar_html.py <dados.json>   # ou gerar_docx.py
 ```
 
 O script cuida de versionamento, backup, histórico, paleta e logo. Ele imprime
-`{"arquivo": ..., "versao": ..., "backup": ...}`. **Nunca** monte HTML ou DOCX à mão.
+`{"arquivo": ..., "versao": ..., "backup": ..., "evidencias_faltando": [...]}`.
+**Nunca** monte HTML ou DOCX à mão.
 
 ---
 
@@ -45,13 +46,17 @@ Exiba o diretório atual e confirme:
 > "A pasta raiz do projeto é `{cwd}`? Confirme ou informe o caminho correto."
 
 Use a resposta como `PASTA_RAIZ`. Em seguida, use **uma única chamada `AskUserQuestion`**
-com as três perguntas de múltipla escolha:
+com as perguntas de múltipla escolha:
 
 | Pergunta | Opções | Variável |
 |---|---|---|
 | Formato do documento | `HTML interativo` (recomendado) / `DOCX Word` | `FORMATO` |
 | Incluir bloco de homologação? | `Sim` (recomendado) / `Não` | `INCLUIR_HOMOLOGACAO` |
 | Incluir bloco de assinaturas? | `Sim` / `Não` | `INCLUIR_ASSINATURAS` |
+| Coletar as evidências de homologação agora? | `Sim, você coleta pelo navegador` / `Não, eu anexo depois` | `COLETAR_EVIDENCIAS` |
+
+A última pergunta só aparece se `INCLUIR_HOMOLOGACAO` — sem cenários não há o que
+evidenciar. `Sim` dispara a Etapa 6.6.
 
 No DOCX o bloco de homologação vira tabela de cenários com coluna "Resultado" para
 preenchimento manual — mantenha a pergunta nos dois formatos.
@@ -289,7 +294,8 @@ python {SKILL_DIR}/scripts/revisar_texto.py <dados.json>
 ```
 
 Ele varre `objetivo`, `limitacoes_gerais`, `titulo`, `passos`, `obs`,
-`limitacoes`, os `testes` e as descrições do checklist — e trava (código 1) em:
+`limitacoes`, os `testes`, as legendas das evidências e as descrições do checklist —
+e trava (código 1) em:
 
 | Regra | O que acusa |
 |---|---|
@@ -310,6 +316,60 @@ inventada (conferir a contagem contra o fonte), sinônimos alternados para o mes
 conceito, passo sem sujeito e frase final que só repete a anterior.
 
 Regras completas com exemplos: `references/linguagem.md`.
+
+---
+
+## Etapa 6.6 — Coleta de evidências
+
+Só se `COLETAR_EVIDENCIAS`. As capturas entram no documento pelo `dados.json`, nos
+dois formatos: no HTML como galeria dentro do caso de teste, no DOCX como seção
+**Anexos – Evidências de Entrega** no fim.
+
+### Onde capturar
+
+Pergunte **antes** de abrir qualquer navegador, em uma única mensagem:
+
+> 1. Qual a URL da base onde vou capturar?
+> 2. É base de teste ou homologação? Confirme que **não** é produção.
+
+**Não existe URL padrão e você não deduz nenhuma.** Cada colega roda contra o ambiente do
+cliente dele. Se o projeto declarar a URL (`docker-compose.yml`, `.env`, `README.md`,
+`docs/`), ofereça o que achou como sugestão a confirmar; não achou, pergunte e espere.
+Base de produção: não capture, peça a de teste.
+
+### Qual ferramenta
+
+**Detecte antes de propor qualquer coisa** — a skill roda na máquina de outros colegas,
+não nesta:
+
+1. Você tem as tools `mcp__claude-in-chrome__*`? Use a aba já autenticada do usuário.
+   Captura com `computer` / `action: "screenshot"` / `save_to_disk: true`.
+2. Senão, `npx playwright --version` responde? Gere o harness com a engine do navegador
+   dele (`chromium` · `firefox` · `webkit`). Se o projeto já tem harness em `tools/`,
+   reuse-o.
+3. Senão, mostre o comando de instalação e **pergunte** antes de instalar.
+4. Recusou, ou nada disponível → modo manual: o usuário tira os prints, você monta o
+   JSON e escreve as legendas.
+
+A coleta é conveniência. O documento nunca depende dela — sem evidência o bloco de
+homologação sai em branco, do jeito que sempre saiu.
+
+Grave em `{PASTA_DEMANDA}/Documentacao/evidencias/`, um arquivo por caso, nomeado
+`hom-fc{N}-{M}.png` (`N` = posição da funcionalidade, `M` = posição do teste).
+Preencha `evidencias` e `status` de cada teste no `dados.json`.
+
+**Cenário negativo grava dado na base.** Confirme com o usuário antes de disparar
+qualquer ação de escrita, e trabalhe em base de teste.
+
+**Nunca escreva usuário e senha em script, em `dados.json` ou no repositório.** Com a
+extensão, a sessão do navegador já está logada. Com o Playwright, abra em
+`headless: false`, deixe o usuário logar na janela e salve a sessão com `storageState`
+para as capturas seguintes.
+
+Protocolo de captura, matriz de navegadores e detalhes de instalação:
+`references/coleta-evidencias.md`.
+
+Ao final, rode o lint da Etapa 6.5 de novo — as legendas também são texto de entrega.
 
 ---
 
@@ -357,9 +417,15 @@ esse clique; é o usuário quem decide o momento.
       "obs": "Requer perfil Balança.",
       "limitacoes": "Irreversível após o encerramento.",
       "tipo_acesso": "tela",           // relatorio | tela | dashboard | ""
-      "testes": [{ "nome": "...", "esperado": "..." }]
+      "testes": [{
+        "nome": "...",
+        "esperado": "...",
+        "status": "aprovado",          // pendente | aprovado | reprovado; default pendente
+        "evidencias": [{ "arquivo": "hom-fc1-1.png", "legenda": "..." }]
+      }]
     }
   ],
+  "pasta_evidencias": "",              // default: <pasta do documento>/evidencias
   "checklist_deploy": {
     "pre_requisitos": [
       { "tipo": "tela_adicional", "nome": "AD_X", "arquivo": "Metadados_AD_X.zip", "observacao": "" },
@@ -379,6 +445,14 @@ esse clique; é o usuário quem decide o momento.
 Todos os campos são opcionais exceto `arquivo_saida`. `versao` **não** entra no JSON —
 quem decide é o script.
 
+`evidencias[].arquivo` é relativo a `pasta_evidencias`, ou absoluto. Sem `status`, um
+teste com evidência sai como aprovado; sem evidência, pendente.
+
+Arquivo declarado e ausente **não interrompe a geração**: o script avisa no stderr, lista
+o caso em `evidencias_faltando` no JSON de saída e segue com as evidências que existem.
+Falha de captura não é motivo para ficar sem documento — mas **repasse a lista ao usuário
+na Etapa 8**, senão a entrega sai furada sem ninguém perceber.
+
 ### Versionamento
 
 Automático. O script mantém `.historico-entregas.json` na pasta `Documentacao`:
@@ -393,9 +467,13 @@ independentes.
 
 Informe: arquivo gerado · versão · backup da versão anterior (se houve) · lista numerada
 das funcionalidades documentadas · total de testes por funcionalidade (se houve
-homologação).
+homologação) · total de evidências embutidas (se houve coleta).
 
-Se `FORMATO = html` **e** `INCLUIR_HOMOLOGACAO`, exiba também:
+Se o script devolveu `evidencias_faltando`, liste caso a caso o que não entrou no
+documento e pergunte se o usuário quer capturar de novo ou seguir assim.
+
+Se `FORMATO = html` **e** `INCLUIR_HOMOLOGACAO`, exiba também — pulando os passos que a
+coleta da Etapa 6.6 já cobriu:
 
 > **Como usar o bloco de Homologação:**
 >
@@ -418,7 +496,8 @@ python {SKILL_DIR}/scripts/test_geracao.py
 ```
 
 Ele gera HTML e DOCX de exemplo em diretório temporário e valida escape, paleta,
-versionamento, backup, histórico e presença do logo.
+versionamento, backup, histórico, presença do logo e as evidências embutidas nos dois
+formatos.
 
 ## Referências
 
@@ -427,4 +506,5 @@ versionamento, backup, histórico e presença do logo.
 | Categorias de artefatos, extração por tipo de classe, indicadores de permissão | `references/analise-fontes.md` |
 | Linguagem funcional e marcas de texto gerado por IA | `references/linguagem.md` |
 | Paleta, tipografia, regra HTML × DOCX, logo | `references/design-system.md` |
+| Coleta de evidências: ferramentas, navegadores e protocolo | `references/coleta-evidencias.md` |
 | Cores, logo e metadados de tipo (implementação) | `scripts/_brand.py` |

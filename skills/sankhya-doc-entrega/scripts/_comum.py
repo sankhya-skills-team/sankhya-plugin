@@ -46,6 +46,49 @@ def garantir(modulo, pacote=None):
     return __import__(modulo)
 
 
+# ── Evidencias ─────────────────────────────────────────────────────
+
+def coletar_evidencias(dados):
+    """Resolve as evidencias de cada teste em caminhos absolutos.
+
+    Retorna (coletadas, faltando), onde coletadas e
+    [(func, teste, [(caminho, legenda), ...]), ...] na ordem em que aparecem no
+    documento. Arquivo declarado e ausente nao interrompe a geracao: entra em
+    `faltando` e o gerador avisa no stderr e no JSON de saida. Falha de coleta e
+    problema de captura, nao motivo para ficar sem documento.
+    """
+    pasta_padrao = os.path.join(
+        os.path.dirname(os.path.abspath(dados["arquivo_saida"])), "evidencias")
+    base = dados.get("pasta_evidencias") or pasta_padrao
+
+    coletadas, faltando = [], []
+    for fi, func in enumerate(dados.get("funcionalidades", []), 1):
+        for ti, teste in enumerate(func.get("testes") or [], 1):
+            itens = []
+            for ev in teste.get("evidencias") or []:
+                arquivo = ev.get("arquivo", "")
+                if not arquivo:
+                    continue
+                caminho = arquivo if os.path.isabs(arquivo) else os.path.join(base, arquivo)
+                if not os.path.exists(caminho):
+                    faltando.append({"caso": "hom-fc%d-%d" % (fi, ti),
+                                     "teste": teste.get("nome", ""),
+                                     "arquivo": caminho})
+                    continue
+                itens.append((caminho, ev.get("legenda", "")))
+            if itens:
+                coletadas.append((func, teste, itens))
+
+    # O console do Windows fica em cp1252: nome de teste com caractere fora da
+    # pagina de codigo derrubaria o aviso -- e com ele a geracao inteira.
+    if faltando and hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(errors="replace")
+    for f in faltando:
+        sys.stderr.write("AVISO evidencia nao encontrada: %s (%s) -> %s\n"
+                         % (f["caso"], f["teste"], f["arquivo"]))
+    return coletadas, faltando
+
+
 # ── Versionamento ──────────────────────────────────────────────────
 
 def _caminho_historico(pasta):
