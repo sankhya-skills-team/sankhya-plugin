@@ -143,9 +143,3 @@ A plataforma permite anexar arquivos a registros (ordem de serviço, chamado, et
 - [ ] Upload: whitelist + renomeação + content-disposition?
 - [ ] Hash de senha em bcrypt/Argon2?
 - [ ] Dado pessoal (CPF, e-mail) mascarado em log?
-
----
-
-## Fonte
-
-Adaptado de `snk-ai-registry` (Sankhya AI Prompt Registry) — skill `sankhyaeip-security-patterns`.

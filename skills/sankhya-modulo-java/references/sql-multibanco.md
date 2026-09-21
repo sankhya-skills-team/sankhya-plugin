@@ -75,9 +75,3 @@ INSERT de dados de referência deve ser idempotente para sobreviver a reexecuç�
 - SQL Server: `IF NOT EXISTS (...) INSERT ...`
 
 Teste todo script em **base limpa** e em **base já existente**.
-
----
-
-## Fonte
-
-Adaptado de `snk-ai-registry` (Sankhya AI Prompt Registry) — skill `db-migrations` (apenas as partes agnósticas de banco; formato de micromódulo/datadictionary EIP não se aplica ao módulo Java clássico).
