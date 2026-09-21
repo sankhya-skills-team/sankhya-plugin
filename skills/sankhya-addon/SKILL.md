@@ -99,7 +99,7 @@ Identificar o artefato correto e **ler o arquivo de referência antes de impleme
 | **Callback** | Reage a eventos de negócio de documentos comerciais (confirmação, faturamento) — incluindo notas de entrada | `references/callback.md` |
 | **Business Rule** | Validação vinculada à confirmação/faturamento de notas de saída com interação no barramento de regras | `references/business-rules.md` |
 | **Controller / Service** | Endpoint externo, integração ou reutilização entre artefatos. Código novo: `@Controller` (`references/sdk-controller.md`). `@Service` está **deprecated** — `references/service.md` só para legado | `references/sdk-controller.md` |
-| **Job** | Execução periódica, processamento em lote, background | `references/job.md` |
+| **Job** | Execução periódica, processamento em lote, background | `references/job.md` — runtime, fila e concorrência em `references/job-runtime.md` |
 | **Dynamic Form** | Tela de cadastro gerada automaticamente pelo dicionário de dados | `references/dynamic-form.md` |
 | **Tela Personalizada** | Interface customizada com controle total de layout | ver seção abaixo |
 

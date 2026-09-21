@@ -35,8 +35,11 @@ public class Modelo_Job implements ScheduledAction {
 
         } catch (MGEModelException e) {
             Logger.error("Erro de negocio em NomeJob.", e);
+            // relanca: excecao engolida faz a execucao contar como normal na estatistica do job
+            throw new RuntimeException(e);
         } catch (Exception e) {
             Logger.error("Erro inesperado em NomeJob.", e);
+            throw new RuntimeException(e);
         } finally {
             JapeSession.close(hnd);
         }

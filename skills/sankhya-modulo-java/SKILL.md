@@ -331,6 +331,7 @@ Carregar o arquivo ao aprofundar um tópico:
 | `EventoProgramavelJava` — padrões, registro, `ModifyingFields` | Ao criar ou modificar evento CRUD em qualquer entidade | `references/event-java.md` |
 | `AcaoRotinaJava` — `ContextoAcao`, formulário de parâmetros, confirmação | Ao criar ou modificar botão de ação | `references/action-button.md` |
 | `RegraNegocioJava`, `Regra`, `ScheduledAction`, `Job` | Ao criar regra no ciclo de notas ou job agendado | `references/regra-negocio.md` |
+| Runtime do job — erro que some da estatística, fila com claim-first, acordar job dentro da transação, concorrência entre instâncias | Ao criar, revisar ou triar job agendado: job que duplica efeito, que "não processa nada" ou que aparece sempre como sucesso | `references/job-runtime.md` |
 | `JapeFactory`, `DwfUtils`, `EntityFacade`, `JdbcWrapper`, `JapeSession` | Ao lidar com persistência, queries nativas, sessão ou transação | `references/acesso-dados.md` |
 | `NativeSql` assertivo — `getResultSetAsCollection`, `getColumnsAsMap`, `MapUtils`, `IN` clause chunking | Ao escrever queries nativas no `repository/` quando JAPE não resolve | `references/nativesql-assertivo.md` |
 | Component — orquestração, padrões por artefato, tratamento de exceções | Ao criar ou revisar a camada `component/` | `references/component.md` |
