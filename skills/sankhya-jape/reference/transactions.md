@@ -110,18 +110,51 @@ Se `jape.ds.call.before.commit.proc` está setado, cada commit dispara a procedu
 
 ## Listeners de TX
 
-### `TransactionListener` — registrado por sessão
+Existem **três** interfaces chamadas `TransactionListener` no JAPE, cada uma com registro e momento próprios. Nenhuma se registra por `addTransactionListener` — esse método não existe em `JapeSession` nem em `Jape`.
+
+| Interface | Métodos | Como se registra | Quando dispara |
+|---|---|---|---|
+| `br.com.sankhya.jape.core.TransactionListener` | `beforeCommit()`, `onStartTx()` | ThreadLocal `TransactionListener.txListenerName` recebendo o **FQCN em String**; o JAPE instancia por reflexão | `beforeCommit()` dentro de `beforeCompletion` — **antes** do commit |
+| `br.com.sankhya.jape.event.TransactionListener` | `beforeCommit(TransactionContext)` | o listener de persistência implementa a interface; o `EventDispatcher` o embrulha num `Synchronization` | `beforeCompletion` — **antes** do commit |
+| `br.com.sankhya.jape.core.ITransactionListener` | `beforeCommit(String txId)`, `afterCommit(String txId, int status)` | parâmetro JAPE `global.transaction.listener` | `beforeCompletion` e `afterCompletion` |
+
+### `jape.core.TransactionListener` — por thread, via nome de classe
+
 ```java
-JapeSession.getCurrentSession().addTransactionListener(new TransactionListener() {
-    public void beforeCommit() throws Exception { /* ... */ }
-    public void afterCommit() { /* ... */ }
-    public void afterRollback() { /* ... */ }
-});
+// o valor e o NOME da classe; o JAPE faz Class.newInstance() a cada TX
+TransactionListener.txListenerName.set("br.com.sankhya.meumodulo.MinhaTXListener");
 ```
 
-### `ITransactionListener` — registrado globalmente (via `Jape.getSingleton().addTransactionListener`)
+A classe precisa de construtor público sem argumentos. Falha ao instanciar ou executar vira `IllegalStateException`, que derruba a TX.
 
-Escopo global — dispara em **todas** as TX. Use com moderação.
+### `jape.event.TransactionListener` — no listener de persistência
+
+O `TransactionContext` recebido dá acesso ao que a TX tocou:
+
+```java
+public void beforeCommit(TransactionContext ctx) throws Exception {
+    Collection<EntityPrimaryKey> inseridos = ctx.getInserted();
+    Collection<EntityPrimaryKey> alterados = ctx.getUpdated();
+    Collection<EntityPrimaryKey> excluidos = ctx.getDeleted();
+    ctx.put("chave", valor);                  // escopo do contexto
+    ctx.putGlobalTxProperty("chave", valor);  // escopo da TX inteira
+}
+```
+
+Atenção: o `Synchronization` que o `EventDispatcher` registra tem `afterCompletion` **vazio**. Por essa via não há gancho pós-commit.
+
+### `ITransactionListener` — global e único
+
+É o único com `afterCommit`, mas há **um por instalação**, definido no parâmetro `global.transaction.listener` e já ocupado pelo listener do próprio produto (`SankhyaOMTransactionListener`, no modelcore, que alimenta a fila de logs de persistência). Não é ponto de extensão de addon ou módulo: sobrescrever tira o listener do produto do ar.
+
+### Preciso rodar algo DEPOIS do commit
+
+Não existe API pública para registrar callback pós-commit por sessão. As opções:
+
+- Registrar uma `javax.transaction.Synchronization` própria na transação corrente e agir em `afterCompletion(status)` quando `status == Status.STATUS_COMMITTED` (`3`). É o mecanismo que o próprio JAPE usa internamente.
+- `JapeSession.addCloseListener(Runnable)` **não serve**: ele dispara no fechamento do handle raiz da sessão, antes de o JAPE sequer consultar o status da transação, e o commit em EJB com TX container-managed pode acontecer depois disso.
+
+Fazer o trabalho em `beforeCommit` é a armadilha clássica: naquele instante o dado ainda não está visível para outra conexão, então qualquer coisa que dependa de enxergar o que foi gravado (disparar job, chamar integração, notificar) lê estado antigo.
 
 ## Erros comuns
 
