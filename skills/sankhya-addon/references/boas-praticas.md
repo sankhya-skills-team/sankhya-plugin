@@ -1011,3 +1011,38 @@ O Add-on Studio 2.0 clássico **não tem suporte a testes unitários sem um serv
 - Isole a lógica de negócio pura em métodos sem dependências de infraestrutura — esses podem ser testados com JUnit
 - Valide o restante com testes manuais em ambiente local (Docker + WildFly via `./gradlew deployAddon`)
 
+---
+
+## 27. Códigos de erro
+
+Os códigos `CORE_E#####` que aparecem em mensagens do ERP pertencem ao **produto**: são gerados e catalogados pelo pipeline de build da própria Sankhya, e a descrição de cada um vive no catálogo do Help Center, não no repositório.
+
+**Nunca invente, reserve ou escreva um código `CORE_E*` novo.** Um código inventado não existe no catálogo: a mensagem chega ao usuário parecendo erro nativo e manda o suporte procurar uma documentação que não existe.
+
+Para erro próprio, use o prefixo da demanda — a convenção `[XXX_0000]` da exceção de domínio do projeto.
+
+```java
+// ERRADO - codigo do produto inventado
+throw new MGEModelException("CORE_E99001: saldo insuficiente para o contrato.");
+
+// CERTO - namespace da demanda
+throw new MGEModelException("[FCS_0007] Saldo insuficiente para o contrato.");
+```
+
+**Citar um `CORE_E*` nativo é o uso legítimo.** Quando o código antecipa, contorna ou trata uma validação da plataforma, registre o código em comentário ou Javadoc — é o que liga a regra do addon ao comportamento nativo que ela cobre:
+
+```java
+/**
+ * Antecipa a validacao nativa CORE_E02090 ("Existe Produto de Revenda com ...")
+ * para exibir a lista de produtos antes de o usuario confirmar a nota.
+ */
+```
+
+**`SKError.registry`**, o idioma que aparece no código nativo, existe em `br.com.sankhya.util.troubleshooting`:
+
+```java
+public static Throwable registry(TSLevel level, String codigo, Throwable t)
+```
+
+Método único — não há sobrecarga sem código — e devolve o mesmo `Throwable` recebido, daí a forma `throw (X) SKError.registry(...)` vista no core. `TSLevel` tem apenas `ERROR` e `WARNING`. Registrar exige um código, e o código teria de ser do produto: por isso o caminho para erro de addon é a exceção de domínio com prefixo próprio, não `SKError`.
+
