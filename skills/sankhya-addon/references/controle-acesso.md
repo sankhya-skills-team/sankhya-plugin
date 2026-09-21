@@ -20,7 +20,7 @@ O core do Sankhya fornece automaticamente permissões **padrão** para qualquer 
 
 1. **Defesa em profundidade** — verifique no frontend (UX) e no backend (segurança). Inclui o CONSULTAR padrão para evitar acesso direto por URL.
 2. **Fail-closed** — em caso de erro na verificação, **negue** o acesso.
-3. **Bypass do SUP** — o superusuário (SUP) tem acesso total sem registro explícito.
+3. **Bypass do SUP é resolvido dentro do manager** — o superusuário (`CODUSU = 0`) tem acesso total sem registro explícito, e o próprio `MGEAuthorizationManager` trata isso. Não é preciso guard externo. Ver "Armadilhas documentadas".
 4. **Consistência do RESOURCE_ID** — o mesmo ID de recurso em todas as camadas.
 5. **Prefixo de módulo no RESOURCE_ID** — ao verificar via `MGEAuthorizationManager` (backend) ou `SnkApplication.hasAccess` (frontend), o RESOURCE_ID deve ser qualificado com o prefixo do módulo: `{context-root}.{id}`.
 
@@ -78,13 +78,10 @@ public class Permissao{Dominio}Service {
 
     public Permissao{Dominio}Service() {
         this.reader = (resourceId, acronym) -> {
-            AuthenticationInfo authInfo = AuthenticationInfo.getCurrent();
-            if (authInfo.isSUP()) return true; // BYPASS DO SUP
-
-            BigDecimal codUsu = authInfo.getUserID();
+            BigDecimal codUsu = AuthenticationInfo.getCurrent().getUserID();
             MGEAuthorizationManager.MGEResourceAuthorization auth =
                 MGEAuthorizationManager.getMGEResourceAuthorization(resourceId, codUsu);
-            return auth.hasAuthorization(acronym);
+            return auth.hasAuthorization(acronym); // SUP já retorna true aqui dentro
         };
     }
 
@@ -102,8 +99,33 @@ public class Permissao{Dominio}Service {
 
 ### Armadilhas documentadas
 
-- **SUP — bypass obrigatório:** o SUP **não tem** registros explícitos. `getMGEResourceAuthorization` retorna `null` para o SUP. Sempre cheque `isSUP()` **antes** de consultar o manager, senão dá NPE.
-- **Classe interna:** `MGEResourceAuthorization` é classe interna de `MGEAuthorizationManager`.
+> Comportamento abaixo verificado no bytecode de `mge-modelcore` 4.35 (`MGEAuthorizationManager` e `MGEAuthorizationManager$MGEResourceAuthorization`).
+
+- **SUP não precisa de guard externo.** `getMGEResourceAuthorization` **sempre** instancia um `MGEResourceAuthorization`; quando `CODUSU` vale `0`, marca `isSup = true` e retorna imediatamente. `hasAuthorization` começa com `if (isSup) return true;`. Ou seja: o método **não retorna `null` para o SUP** e checar `AuthenticationInfo.isSUP()` antes é redundante — serve no máximo para evitar a consulta, nunca para evitar NPE.
+- **Nulo é erro de programação, não "sem acesso".** `resourceId` vazio/nulo e `codUsu` nulo **lançam exceção** (registrada via `SKError.registry(TSLevel.ERROR, ...)`) em vez de retornar `null` ou `false`. Trate como bug de chamada, não como acesso negado.
+- **Sigla inexistente retorna `false`.** `hasAuthorization` busca a sigla no mapa de domínios; sigla não encontrada nega o acesso. Concede quando a permissão direta está ligada **ou** quando o domínio de grupo do usuário a concede.
+- **Tela em modo flow não usa a máscara do usuário.** Antes de ler as permissões, o manager consulta `TelaNativaFlowUtil.ehModoFlow(resourceId)`; sendo modo flow, os acessos são preenchidos por `TelaNativaFlowUtil.fillAuthorization(...)`. Divergência de permissão nessas telas se investiga no modelador, não na permissão do usuário.
+- **Classe interna:** `MGEResourceAuthorization` é classe interna estática de `MGEAuthorizationManager`. `hasAnyAuthorization()` responde se o usuário tem qualquer acesso no recurso.
+
+### Siglas padrão do core
+
+Constantes públicas `SIGLA_*` de `MGEAuthorizationManager` (valores lidos da 4.35):
+
+| Sigla | Constante | Índice do domínio |
+|---|---|---|
+| `I` | `SIGLA_INCLUIR` | 1 |
+| `A` | `SIGLA_ALTERAR` | 2 |
+| `E` | `SIGLA_EXCLUIR` | 3 |
+| `C` | `SIGLA_CONSULTAR` | 4 |
+| `F` | `SIGLA_CONFIGURAR` | 5 |
+| `N` | `SIGLA_CONFIGURAR_NUMERACAO` | 6 |
+| `D` | `SIGLA_DUPLICAR` | 7 |
+| `U` | `SIGLA_FILTRO_AVANCADO` | 8 |
+| `G` | `SIGLA_CONFIGURAR_GRID` | — (fora dos domínios numerados) |
+
+Use as constantes em vez da string literal. Para a permissão especial, a sigla é a que você declarou no `acronym` do `<acesso>`.
+
+**Layout da máscara de acesso:** `QTD_DOMINIOS_PADRAO = 10` domínios de `TAMANHO_DOMINIO = 3` posições cada. Dentro de cada domínio, os offsets são `OFFSET_PERMISSAO = 0`, `OFFSET_REPASSAR = 1`, `OFFSET_GRUPO = 2` — "repassar" é o direito de conceder aquela permissão a outro usuário. Não leia a máscara na mão: use `hasAuthorization`.
 
 ---
 
@@ -163,9 +185,3 @@ export function MeuComponente() {
 ```
 
 > **Componentes do Design System:** em componentes como `EzButton`, a prop de desabilitar costuma se chamar `isDisabled`, não `disabled`. Cheque a API do componente.
-
----
-
-## Fonte
-
-Adaptado de `snk-ai-registry` (Sankhya AI Prompt Registry) — skill `access-control`.
