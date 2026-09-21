@@ -99,6 +99,7 @@ Quando o contexto exigir profundidade, leia apenas o que for relevante:
 - Regras "NUNCA faça" e armadilhas: [reference/gotchas.md](reference/gotchas.md)
 - Catálogo completo de APIs (JapeSession, NativeSql, EntityFacade, EntityQuery, EntitySaver, DynamicVO, ProcedureCaller): [reference/api-cheatsheet.md](reference/api-cheatsheet.md)
 - Transações (TXBody, autônomas, fake, sem TX, deadlock retry): [reference/transactions.md](reference/transactions.md)
+- Gerenciamento de recursos — ordem do `finally` com recursos aninhados, posse (quem abre fecha), posicional × nomeado em laço, `CallableStatement`, estado em `TXBlockRedoable`, sintomas de vazamento: [reference/resource-management.md](reference/resource-management.md)
 - Catálogo de macros portáveis Oracle vs SQL Server: [reference/macros.md](reference/macros.md)
 - Padrões de Criteria e EntityQuery fluente: [reference/queries.md](reference/queries.md)
 - Cache L2 de leitura em memória (`InMemoryDataSet`, invalidação por tabela observada): [reference/inmemory-dataset.md](reference/inmemory-dataset.md)
