@@ -1,8 +1,8 @@
 # sankhya-js — Índice de Referências
 
-Biblioteca AngularJS/Material Design usada para construção de telas personalizadas **HTML5/xhtml5** no portal Sankhya (abordagem legada, anterior ao Design System). Componentes com prefixo `sk-`, organizados em módulos `snk.*`.
+Biblioteca AngularJS/Material Design usada para construção de telas personalizadas **HTML5/xhtml5** no portal Sankhya. **É a abordagem padrão para telas personalizadas**, inclusive em projetos novos. Componentes com prefixo `sk-`, organizados em módulos `snk.*`.
 
-> **Atenção:** esta abordagem é distinta do **Design System** (`ez-` / `snk-` web components). Para saber qual usar, verificar `SKILL.md` seção "Abordagens para Telas Personalizadas".
+> **Atenção:** esta abordagem é distinta do **Design System** (`ez-` / `snk-` web components), que só se aplica quando o projeto já tem pipeline Node e o usuário pede explicitamente. Ver `SKILL.md` seção "Telas Personalizadas — Pergunta Obrigatória".
 
 **URL Base da documentação:** `http://webrush.dev.sankhya.com.br/master/docs-sankhya-js/` (rede interna Sankhya — inacessível externamente)
 

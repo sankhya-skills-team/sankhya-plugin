@@ -91,14 +91,14 @@ Problema
 
 ### Abordagens para Telas Personalizadas
 
-Ao desenvolver interfaces no portal Sankhya, existem três abordagens distintas. Sempre perguntar ao usuário qual está utilizando antes de gerar código ou buscar documentação:
+Ao desenvolver interfaces no portal Sankhya, existem duas abordagens distintas. Sempre perguntar ao usuário qual está utilizando antes de gerar código ou buscar documentação:
 
 | Abordagem | Descrição | Referência |
 |---|---|---|
-| **Design System** (nova) | Web components `ez-` e `snk-`, com DataUnit e integração nativa ao ERP. Abordagem recomendada para novos projetos. | `references/design-system.md` |
-| **HTML5 / xhtml5** | Telas customizadas com AngularJS e biblioteca sankhya-js (directives `sk-`, módulos `snk.*`). | `references/telas-personalizadas.md` e `references/sankhya-js.md` |
+| **HTML5 / xhtml5** (padrão) | Telas customizadas com AngularJS e biblioteca sankhya-js (directives `sk-`, módulos `snk.*`). Abordagem padrão para novos projetos; não exige pipeline Node. | `references/telas-personalizadas.md` e `references/sankhya-js.md` |
+| **Design System** | Web components `ez-` e `snk-`, com DataUnit e integração nativa ao ERP. Usar somente quando o projeto já tiver pipeline Node configurado e o usuário pedir explicitamente. | `references/design-system.md` |
 
-> Quando o usuário mencionar "tela personalizada", perguntar antes de qualquer implementação: **"Você está usando Design System (ez-/snk- web components) ou HTML5/xhtml5 (AngularJS/sankhya-js)?"**
+> Quando o usuário mencionar "tela personalizada", perguntar antes de qualquer implementação: **"Você está usando HTML5/xhtml5 (AngularJS/sankhya-js) ou Design System (ez-/snk- web components)?"** Sem resposta clara, assumir sankhya-js.
 
 ---
 
@@ -499,7 +499,7 @@ Carregar quando necessário para aprofundar tópicos específicos:
 | Formulários Dinâmicos (DynamicForm) | `references/dynamic-form.md` |
 | Telas Personalizadas (UI / xhtml5) | `references/telas-personalizadas.md` |
 | **sankhya-js — API completa AngularJS (directives sk-, módulos snk.*, 242 URLs)** | `references/sankhya-js.md` |
-| **Design System — componentes ez-, snk-, layout, API Java e utilitários (207 URLs)** | `references/design-system.md` |
+| **Design System — um arquivo por componente ez-/snk-, layout, core, API Java e setup (209 páginas, snapshot 2026-09-28)** | `references/design-system.md` → `references/design-system/guia.md` |
 | Action Button (@ActionButton, formulários, ContextoAcao) | `references/action-button.md` |
 | Regras de Negócio (@BusinessRule, ContextoRegra, liberação de limites) | `references/business-rules.md` |
 | Listeners (@Listener, PersistenceEventAdapter, eventos CRUD) | `references/listeners.md` |
@@ -525,7 +525,7 @@ Consultar quando necessário confirmar comportamento da plataforma ou validar pa
 - https://developer.sankhya.com.br/docs/jobs-agendados-com-job
 - https://developer.sankhya.com.br/docs/guia-de-boas-praticas
 - https://developer.sankhya.com.br/recipes
-- https://gilded-nasturtium-6b64dd.netlify.app/ (Design System — componentes ez-, snk-, layout, utilitários TypeScript e API Java BFF; ver mapa completo em `references/design-system.md`)
+- https://gilded-nasturtium-6b64dd.netlify.app/ (Design System — componentes ez-, snk-, layout, utilitários TypeScript e API Java BFF; snapshot local em `references/design-system/`, índice em `references/design-system/INDICE.md`)
 
 ---
 

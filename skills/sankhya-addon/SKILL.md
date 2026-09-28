@@ -172,20 +172,19 @@ Identificar o artefato correto e **ler o arquivo de referência antes de impleme
 
 Quando o usuário mencionar "tela personalizada", perguntar **antes de qualquer implementação**:
 
-> "Você está usando **Design System** (web components `ez-`/`snk-`) ou **HTML5/xhtml5** (AngularJS/sankhya-js)?"
+> "Você está usando **HTML5/xhtml5** (AngularJS/sankhya-js) ou **Design System** (web components `ez-`/`snk-`)?"
 
 | Abordagem | Quando usar | Referências |
 |---|---|---|
-| **Design System** | Projetos novos — recomendado | `references/design-system.md` → sub-refs abaixo |
-| **HTML5 / xhtml5** | Projetos legados com AngularJS | `references/telas-personalizadas.md` + `references/sankhya-js.md` → sub-refs abaixo |
+| **HTML5 / xhtml5 (sankhya-js)** | **Padrão** — projetos novos e existentes. Não exige pipeline Node | `references/telas-personalizadas.md` + `references/sankhya-js.md` → sub-refs abaixo |
+| **Design System** | Somente quando o projeto já tem pipeline Node (npm) configurado **e** o usuário pedir Design System explicitamente | `references/design-system.md` → sub-refs abaixo |
+
+Sem resposta clara do usuário, assumir **sankhya-js**.
 
 ### Sub-referências Design System
-- Componentes `ez-`: `references/design-system-ez-components.md`, `references/design-system-ez-components-b.md`
-- Componentes `snk-`: `references/design-system-snk-components.md`
-- Layout: `references/design-system-layout.md`
-- Utilitários: `references/design-system-utilities.md`
-- API Java: `references/design-system-api-java.md`
-- URLs completas: `sankhya-ds-url-map.md`
+- **Primeiro:** `references/design-system/guia.md` (setup, regras HTML × React, receita `snk-*`, armadilhas da doc oficial)
+- Índice de arquivos: `references/design-system/INDICE.md` — um arquivo por componente em `references/design-system/componentes/` (`ez-*`, `snk-*`); leia só o do componente em uso
+- Layout/tokens: `references/design-system/layout/` · Core (`@sankhyalabs/core`): `references/design-system/core/` · API Java: `references/design-system/api-java/` · Setup: `references/design-system/setup/`
 
 ### Sub-referências sankhya-js
 - Core: `references/sankhya-js-snk-core.md`

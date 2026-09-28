@@ -131,7 +131,7 @@ Use as constantes em vez da string literal. Para a permissão especial, a sigla 
 
 ## Camada 3: Frontend React/TypeScript
 
-Aplica quando a tela é nativa V3 (React + Design System Sankhya). Ver também os refs `sankhya-js-*`.
+Aplica quando a tela é nativa V3 (React + Design System Sankhya). Ver também `references/design-system/componentes/snk-application.md` (`hasAccess`, `getAllAccess`, `getResourceID`) e `references/design-system/guia.md`.
 
 ### Armadilhas críticas da API de permissão
 

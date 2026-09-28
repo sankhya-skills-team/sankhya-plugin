@@ -1,39 +1,34 @@
 # Sankhya Design System — Índice
 
-O Sankhya Design System é a biblioteca de componentes web para construção de telas personalizadas no portal Sankhya W. Utiliza web components com dois prefixos:
+Biblioteca de web components (React 18 + pipeline Node) para telas no Sankhya Om. Dois prefixos:
 
-- **`ez-`** — componentes genéricos de UI (design system base)
-- **`snk-`** — componentes específicos do ERP Sankhya, integrados com entidades e serviços
+- **`ez-`** — UI genérica (`@sankhyalabs/ezui`)
+- **`snk-`** — blocos acoplados ao ERP: dicionário, DataUnit, serviços (`@sankhyalabs/sankhyablocks`)
 
-**Fonte online:** https://gilded-nasturtium-6b64dd.netlify.app/docs/components
-
----
-
-## Sub-arquivos por categoria
-
-| Arquivo | O que contém |
-|---|---|
-| `references/design-system-ez-components.md` | Componentes `ez-` de A a L: actions-button, alert, avatar, badge, breadcrumb, button, calendar, card-item, chart, check, chip, combo-box, date-input, dialog, double-list, dropdown, filter-input, form, grid, icon, list, list-item |
-| `references/design-system-ez-components-b.md` | Componentes `ez-` de M a Z: modal, multi-selection-list, number-input, pagination, popover, popup, radio-button, rich-text, search, skeleton, spinner, split-panel, tabselector, tag, text-input, tile, time-input, toast, tooltip, tree, upload |
-| `references/design-system-layout.md` | Layout e fundação: Acorde tokens (cores, bordas, espaçamentos, tipografia), Box, Content, Flexbox System, Grid System, Icons, Labels, Margin, Padding, Text, Title |
-| `references/design-system-snk-components.md` | Componentes `snk-`: application, attach, crud, data-unit, entity-list, filter-bar, form, grid, pesquisa, simple-crud, simple-form-config, taskbar e outros |
-| `references/design-system-utilities.md` | Utilitários TypeScript: DataUnit, DataUnitAction, ServiceUtils, HttpProvider, DateUtils, StringUtils, NumberUtils, ArrayUtils, enums (Action, DataType, SelectionMode), interfaces (FieldDescriptor, Filter, Record) |
-| `references/design-system-api-java.md` | API Java BFF: IDataUnitInterceptor, IDataUnitCrudListener, ICustomFilterBarResolver, IDataExporterInterceptor, ITotalsResolver, BootModuleListener |
+> **Não é o padrão.** Telas personalizadas usam **sankhya-js** por padrão. Design System só quando o projeto já tem pipeline Node **e** o usuário pediu explicitamente. Ver `SKILL.md`, seção "Telas Personalizadas — Pergunta Obrigatória".
 
 ---
 
 ## Como usar
 
-1. Identifique o componente ou API necessária
-2. Leia o sub-arquivo correspondente para detalhes de propriedades, eventos, métodos e exemplos
-3. Para confirmar informações ou verificar atualizações, consulte a URL do componente via WebFetch (ver protocolo no SKILL.md)
+1. **Sempre leia primeiro `references/design-system/guia.md`**: setup correto, regras HTML × React, receita de tela `snk-*`, DataUnit e as armadilhas da doc oficial.
+2. Localize o componente/classe em `references/design-system/INDICE.md` e leia **só** o arquivo dele. Cada arquivo traz a doc oficial completa: exemplos React, tabelas de Properties (com o atributo HTML), Events, Methods, Slots e CSS Variables.
+3. Prefira os exemplos de código às frases da prosa quando divergirem, e confira a seção 5 do guia antes de copiar qualquer exemplo.
+
+| Pasta | Conteúdo |
+|---|---|
+| `design-system/componentes/` | Um arquivo por componente: `ez-*.md` (70) e `snk-*.md` (19) |
+| `design-system/layout/` | Classes de layout (flex, grid, box, content, margin, padding, text, title, labels, icons) e tokens Acorde (`acorde-*.md`; `acorde-tokens.md` é **depreciado**) |
+| `design-system/setup/` | `configure.md`, `overview.md`, `collaborate.md`, `onboarding-bff.md` |
+| `design-system/core/` | TypeDoc de `@sankhyalabs/core`: `classes/`, `interfaces/`, `enumerations/`, `functions/`, `type-aliases/`, `variables/`, `namespaces/`; guias de DataUnit em `core/guias/` |
+| `design-system/api-java/` | `sankhya-bff` (5 interfaces) e `sanmodule` (`BootModuleListener`) |
 
 ---
 
-## Protocolo de atualização (Design System)
+## Atualização do snapshot
 
-O Design System é hospedado no Netlify e acessível externamente. Ao consultar um componente:
+Os arquivos em `design-system/` (exceto `guia.md`) são **gerados**. Não edite à mão e não os atualize via WebFetch durante uma tarefa: o HTML estático do site não traz os exemplos de código (eles são renderizados por JS), e sobrescrever o arquivo local apagaria conteúdo correto.
 
-1. Tente buscar a URL correspondente via WebFetch
-2. Se bem-sucedido: use o conteúdo ao vivo; se diferente do arquivo local, atualize
-3. Se falhar: use o sub-arquivo local como fallback
+Para atualizar, rode `scripts/atualizar-design-system/` (instruções no `README.md` da pasta) e revise o `guia.md` contra o diff.
+
+Fonte online: https://gilded-nasturtium-6b64dd.netlify.app/docs/components/components-doc/ — cada arquivo gerado começa com a URL da página de origem.
