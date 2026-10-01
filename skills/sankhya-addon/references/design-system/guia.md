@@ -34,7 +34,7 @@ Fonte Roboto (`<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@
 
 Variáveis do `.env` do starter (onboarding): `SKW_URL` (servidor SankhyaW), `VITE_APP_APP_DESCRIPTION`, `VITE_APP_MODULE_NAME`, `VITE_APP_RESOURCE_ID` (é o resourceID usado por `hasAccess`, ver `references/controle-acesso.md`); `.env.production`: `BASE_PATH`. Login local em `public/workspacemock/workspace.js` (SUP sem senha por padrão) — **nunca** commitar credencial real ali.
 
-> O onboarding cobre telas dentro de módulos Sankhya (desacoplado ou BFF, pipeline GitLab, deploy via gulp). **A doc não explica como empacotar uma tela DS num addon de parceiro** — ver o agente `sankhya-frontend-design-system` (seção "Como o resultado é empacotado no addon" e "ALERTA #2").
+> O onboarding cobre telas dentro de módulos Sankhya (desacoplado ou BFF, pipeline GitLab, deploy via gulp). **A doc não explica como empacotar uma tela DS num addon de parceiro.** O plugin Gradle do Addon Studio tem fluxo nativo (flag `STUDIO_FEATURE_ENABLE_DS`, `gerarTela`, `compileDS`, tag `uiDesignSystem`): ver `setup/addon-studio-plugin.md`. Problemas de runtime em addon: agente `sankhya-frontend-design-system`, "ALERTA #2".
 
 ---
 

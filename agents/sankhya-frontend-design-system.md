@@ -70,7 +70,7 @@ Cuidados validados em campo:
 
 ## Referências
 
-Snapshot da doc oficial (com tabelas completas de props/eventos/métodos e exemplos) na skill `sankhya-addon`: leia primeiro `${CLAUDE_PLUGIN_ROOT}/skills/sankhya-addon/references/design-system/guia.md`; depois localize o arquivo do componente em `references/design-system/INDICE.md` (um arquivo por componente em `references/design-system/componentes/`). Online: https://gilded-nasturtium-6b64dd.netlify.app/docs/components/components-doc/ (os exemplos de código só aparecem com JS; WebFetch pega prosa e tabelas).
+Snapshot da doc oficial (com tabelas completas de props/eventos/métodos e exemplos) na skill `sankhya-addon`: leia primeiro `${CLAUDE_PLUGIN_ROOT}/skills/sankhya-addon/references/design-system/guia.md`; depois localize o arquivo do componente em `references/design-system/INDICE.md` (um arquivo por componente em `references/design-system/componentes/`). Online: https://gilded-nasturtium-6b64dd.netlify.app/docs/components/components-doc/.
 
 ## Integração com o backend
 
@@ -80,7 +80,15 @@ Snapshot da doc oficial (com tabelas completas de props/eventos/métodos e exemp
 
 ## Como o resultado é empacotado no addon
 
-O DS **não** é servido como arquivo solto: o build Node produz **bundle estático** (JS/CSS com os chunks `ez-*`/`snk-*` e o app React). Esse bundle é copiado para o webapp do addon (`addon-exemplo/vc/src/main/webapp/...`), que o Studio empacota no **WAR** (`vc/.../addon-...-web.war`) e o Gradle (`plataformaMinima`, `appKey`) embute no addon. A tela entra no menu como `<ui id=".." url="/$ctx/<pasta>/index.html" .../>` apontando para o **HTML do bundle buildado** (que carrega os JS que chamam `defineCustomElements`), **nunca** para um HTML com tags `ez-`/`snk-` cruas. Sem o passo de build Node antes do empacotamento, o WAR vai conter componentes não registrados = tela branca em produção.
+O DS **não** é servido como arquivo solto: o build Node produz **bundle estático** (JS/CSS com os chunks `ez-*`/`snk-*` e o app React). O plugin Gradle do Addon Studio (2.x) já tem o pipeline **nativo** — leia `${CLAUDE_PLUGIN_ROOT}/skills/sankhya-addon/references/design-system/setup/addon-studio-plugin.md` antes de mexer em build/menu. Resumo:
+
+- feature beta: `STUDIO_FEATURE_ENABLE_DS=true` (sem ela, nada de DS roda no build);
+- tela nasce com `./gradlew gerarTela -Ptela=NomeTela` em `frontend/NomeTela/` (starter React/Vite embutido no plugin);
+- task nativa `compileDS` (encadeada ao `buildWar` do `vc`) roda `npm install --force` + `npm run build` em cada `frontend/<Tela>` e copia para `labsApps/<Tela>/build` — precisa de `sh` no PATH (Git Bash no Windows);
+- menu: `<uiDesignSystem id="NomeTela" url="/$ctx/NomeTela.xhtml5" description="..."/>`;
+- `BASE_PATH` do `.env.production`: `/<contexto-addon>/labsApps/<Tela>/build/`.
+
+Não copie o bundle à mão para `vc/src/main/webapp` nem registre com `<ui url=".../index.html">` quando o plugin oferece esse fluxo. **Nunca** aponte o menu para HTML com tags `ez-`/`snk-` cruas: sem o build Node antes do empacotamento, o WAR leva componentes não registrados = tela branca em produção.
 
 ## ALERTA #2 — DS em ADDON renderiza mas QUEBRA em runtime (contexto/sessão). LEIA se for addon
 
@@ -100,7 +108,7 @@ Pipeline Node OK + custom elements registrados = a tela **renderiza** (grid/form
    ```
    O BFF responde com `Set-Cookie JSESSIONID` do contexto; o graphql seguinte passa a 200. `token` vem de `window.mgeSession || URLSearchParams.get("mgeSession") || window.parent.mgeSession`. Hardcodes a confirmar por ambiente: o módulo BFF (`mgefin-bff`) e o launcher (`DynaformLauncher.xhtml5`).
 
-4. **Artefatos de deploy do labsApps** — o workspace espera, ao lado do `build/index.html`: `labsApps/<Tela>/package.json` (raiz da tela) e `build/module_structure.json` (`npm ls --depth=0 --json`). Gere no pipeline Gradle (task tipo `dsTelas`) e amarre ao `deployAddon`/`buildWar`. OBS: `compileDS` já é task nativa do plugin `addonstudio` — **não redefina**, crie agregadora própria e pendure nela.
+4. **Artefatos de deploy do labsApps** — o workspace espera, ao lado do `build/index.html`: `labsApps/<Tela>/package.json` (raiz da tela) e `build/module_structure.json` (`npm ls --depth=0 --json`). O `vite.config.ts` do starter já gera o `module_structure.json`; confira se o `package.json` chega ao `labsApps/<Tela>/` depois do `compileDS` e, se faltar, crie task própria pendurada nela. OBS: `compileDS` já é task nativa do plugin `addonstudio` — **não redefina**.
 
 5. **Diagnóstico:** o 500 do graphql **não loga stacktrace** previsível (cai em `QueryLogginInstrumentation`/`JDBCSpyService.getMgeSession`). Confirme via `curl` no `/{bff}/graphql?mgeSession=TOKEN` com e sem `-H "Cookie: JSESSIONID=TOKEN"`: sem cookie = 500, com cookie = 200 → prova que é registro de sessão no BFF, não o app.
 

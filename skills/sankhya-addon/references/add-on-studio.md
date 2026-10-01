@@ -44,6 +44,16 @@ dependencies {
 }
 ```
 
+### Libs que o runtime já fornece ao addon
+
+O `jboss-deployment-structure.xml` gerado no EAR do addon exporta como `deployment.<lib>` praticamente todo o `sankhyaw.ear/lib` (verificado na 4.35): `jsch` (0.1.55, pacote `com.jcraft.jsch`), `sancrypt`, `cryptacular`, `commons-*`, `httpclient`, `jackson-*`, `gson`, `poi`, `pdfbox`, `bcprov-jdk14`, `javax.mail` etc. Para essas, declare `compileOnly` com a **mesma versão** do runtime — não empacote outra cópia (conflito de classe no mesmo pacote). Lista exata: `standalone/deployments/<addon>.ear/META-INF/jboss-deployment-structure.xml` de um addon já deployado. Lib que o runtime não tem: `implementation` (vai para `lib/` do EAR).
+
+Fork mantido do JSch (`com.github.mwiede:jsch`) usa o **mesmo pacote** `com.jcraft.jsch` do 0.1.55 exportado: empacotá-lo tende a conflitar. O 0.1.55 não suporta `ed25519` e servidores OpenSSH 8.8+ recusam `ssh-rsa` (SHA-1) por padrão — teste contra o servidor real cedo.
+
+### Criptografia reversível (ex.: senha de SFTP)
+
+Os utilitários nativos não servem: `com.sankhya.util.SymmetricKeyAES` (sanutil) lança `UnsupportedOperationException("Rotina descontinuada por questões de segurança.")`; `com.sankhya.util.Crypter` usa `PBEWithMD5AndDES` com chave fixa no próprio jar. Use `javax.crypto` (JDK) com `AES/GCM/NoPadding`, IV aleatório por valor gravado junto do cifrado.
+
 ## Antipadrões
 
 - **Código monolítico:** evite um único módulo com toda a lógica do add-on

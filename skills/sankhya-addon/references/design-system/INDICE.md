@@ -1,8 +1,5 @@
 # Índice gerado — Design System (snapshot 2026-09-28)
 
-Gerado por `scripts/atualizar-design-system/`. Não editar à mão.
-
-
 ## Componentes ez- (UI genérica, `@sankhyalabs/ezui`)
 
 | Arquivo | Título | Resumo |
@@ -127,6 +124,7 @@ Gerado por `scripts/atualizar-design-system/`. Não editar à mão.
 
 | Arquivo | Título | Resumo |
 |---|---|---|
+| `setup/addon-studio-plugin.md` | DS em addon (plugin Gradle) | Fluxo nativo do Addon Studio para tela DS: flag `STUDIO_FEATURE_ENABLE_DS`, `gerarTela`, `compileDS`, menu `uiDesignSystem`, `BASE_PATH` labsApps. Escrito à mão, não é doc oficial. |
 | `setup/collaborate.md` | Como colaborar | Um design é construido com a colaboração de todos os times que utilizam essa ferramenta, com esse pensamento criamos três fluxos para… |
 | `setup/configure.md` | Configurando | Recomendamos a utilização do [NVM](https://github.com/coreybutler/nvm-windows) para gerenciar versões do node |
 | `setup/onboarding-bff.md` | Onboarding | A primeira decisão que devemos tomar ao criar uma nova tela utilizando o Design System é onde criá-la. |

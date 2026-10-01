@@ -25,10 +25,8 @@ Biblioteca de web components (React 18 + pipeline Node) para telas no Sankhya Om
 
 ---
 
-## Atualização do snapshot
+## Origem do snapshot
 
-Os arquivos em `design-system/` (exceto `guia.md`) são **gerados**. Não edite à mão e não os atualize via WebFetch durante uma tarefa: o HTML estático do site não traz os exemplos de código (eles são renderizados por JS), e sobrescrever o arquivo local apagaria conteúdo correto.
-
-Para atualizar, rode `scripts/atualizar-design-system/` (instruções no `README.md` da pasta) e revise o `guia.md` contra o diff.
+Os arquivos em `design-system/` são snapshot da doc oficial, exceto `guia.md` e `setup/addon-studio-plugin.md` (escritos à mão).
 
 Fonte online: https://gilded-nasturtium-6b64dd.netlify.app/docs/components/components-doc/ — cada arquivo gerado começa com a URL da página de origem.
