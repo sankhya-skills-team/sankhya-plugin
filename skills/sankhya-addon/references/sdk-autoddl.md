@@ -123,6 +123,9 @@ public class InstanciaCustomizadaUsuarios {
 - Use prefixos exclusivos para tabelas e entidades (ex: `SGT_`, `LOG_`)
 - Nunca use o prefixo `AD_` — reservado pelo sistema
 - Sempre revise os scripts DDL gerados antes de aplicar em produção
+- Não há valor padrão de campo nas anotações: preencha no `beforeInsert` de um `@Listener` (ex.: `ATIVO = 'S'`)
+- Use wrappers (`Boolean`, `Integer`) em colunas que podem ficar nulas: com primitivo, ler registro com `NULL` falha com "Can not set boolean field ... to null value"
+- Ao trocar de autoDD para XML manual (ou o contrário), rode `clean`: o XML gerado antes em `model/buildGradle/studioGenerated/datadictionary` causa "Tabela duplicada"
 
 ---
 

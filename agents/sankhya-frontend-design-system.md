@@ -82,17 +82,18 @@ Snapshot da doc oficial (com tabelas completas de props/eventos/métodos e exemp
 
 O DS **não** é servido como arquivo solto: o build Node produz **bundle estático** (JS/CSS com os chunks `ez-*`/`snk-*` e o app React). O plugin Gradle do Addon Studio (2.x) já tem o pipeline **nativo** — leia `${CLAUDE_PLUGIN_ROOT}/skills/sankhya-addon/references/design-system/setup/addon-studio-plugin.md` antes de mexer em build/menu. Resumo:
 
+- contexto do addon (`rootProject.name`) **sem hífen**, decidido antes de criar o addon (exigência dos blocos `snk-*`);
 - feature beta: `STUDIO_FEATURE_ENABLE_DS=true` (sem ela, nada de DS roda no build);
 - tela nasce com `./gradlew gerarTela -Ptela=NomeTela` em `frontend/NomeTela/` (starter React/Vite embutido no plugin);
-- task nativa `compileDS` (encadeada ao `buildWar` do `vc`) roda `npm install --force` + `npm run build` em cada `frontend/<Tela>` e copia para `labsApps/<Tela>/build` — precisa de `sh` no PATH (Git Bash no Windows);
-- menu: `<uiDesignSystem id="NomeTela" url="/$ctx/NomeTela.xhtml5" description="..."/>`;
-- `BASE_PATH` do `.env.production`: `/<contexto-addon>/labsApps/<Tela>/build/`.
+- task nativa `compileDS` **não** roda sozinha no `deployAddon`: use `./gradlew :vc:compileDS deployAddon` (precisa de `sh` no PATH; Git Bash no Windows);
+- menu: `<uiDesignSystem id="NomeTela" url="/$ctx/NomeTela.xhtml5" description="..." resourceId="br.com.<empresa>.<contexto>.NomeTela"/>` (o `resourceId` também nomeia o JSON da filter bar);
+- `BASE_PATH` do `.env.production`: `/<contexto>/labsApps/<Tela>/build/`.
 
 Não copie o bundle à mão para `vc/src/main/webapp` nem registre com `<ui url=".../index.html">` quando o plugin oferece esse fluxo. **Nunca** aponte o menu para HTML com tags `ez-`/`snk-` cruas: sem o build Node antes do empacotamento, o WAR leva componentes não registrados = tela branca em produção.
 
 ## ALERTA #2 — DS em ADDON renderiza mas QUEBRA em runtime (contexto/sessão). LEIA se for addon
 
-Pipeline Node OK + custom elements registrados = a tela **renderiza** (grid/form aparecem), mas em **addon** ela ainda quebra em runtime por falta de **contexto do host** e **sessão do BFF**. Sintomas e correções validados em campo (addon-exemplo, `snk-crud` sobre AD_):
+Pipeline Node OK + custom elements registrados = a tela **renderiza** (grid/form aparecem), mas em **addon** ela ainda quebra em runtime por falta de **contexto do host** e de **GraphQL no próprio contexto**. Sintomas e correções validados em campo (`snk-crud` sobre AD_):
 
 1. **`labsApps/undefined/build/messages/appmessages.js` 404** → `snk-application` monta o path com `window["APPLICATION_NAME"]`, que não existe no iframe do addon. **Fix:** no `index.html`, antes do bundle: `window.APPLICATION_NAME = "<NomeDaTela>"` (igual ao segmento do path do labsApps). O 404 do appmessages em si é inofensivo (tem catch), mas o nome é exigido.
 
@@ -101,18 +102,17 @@ Pipeline Node OK + custom elements registrados = a tela **renderiza** (grid/form
    if (typeof window.utxt!=="function" && window.parent && typeof window.parent.utxt==="function") window.utxt = window.parent.utxt;
    ```
 
-3. **GraphQL 500 `Sessão MGE não iniciada` (cold start)** — O BLOQUEIO PRINCIPAL. O addon é servido do **seu** contexto (`/addon-exemplo/labsApps/...`) mas o `snk-application` consome o **BFF do core** (`/${getModuleName()}/graphql`, default **`mgefin-bff`**). Cold, esse BFF ainda não registrou a sessão MGE no contexto dele → 500. "Resolve" abrindo uma tela do módulo (ex.: Mov. Financeira) antes, porque o launcher `.xhtml5` do BFF registra a sessão e seta o cookie `JSESSIONID` scoped ao contexto. Isso é o risco "addon labsApps × BFF de core" — **não é cookie/token/Vite do seu lado** (token e cookie chegam certos; o `fetch` do graphql é same-origin default-credentials).
-   **Fix (warm-up automático):** ANTES de montar o `<SnkApplication>` (gateando o render com um `useState`), dispare:
-   ```js
-   await fetch(`/mgefin-bff/DynaformLauncher.xhtml5?mgeSession=${token}`, { credentials: "include" });
-   ```
-   O BFF responde com `Set-Cookie JSESSIONID` do contexto; o graphql seguinte passa a 200. `token` vem de `window.mgeSession || URLSearchParams.get("mgeSession") || window.parent.mgeSession`. Hardcodes a confirmar por ambiente: o módulo BFF (`mgefin-bff`) e o launcher (`DynaformLauncher.xhtml5`).
+3. **GraphQL no contexto do addon** (ver `setup/addon-studio-plugin.md`). Com os dois itens abaixo o GraphQL roda no próprio contexto e **não** há warm-up de sessão de BFF:
+   - 500 `Sessão MGE não iniciada` → `web.xml` sem `SankhyaGraphQLServlet`; o `snk-application` cai no BFF do core. **Fix:** backup do `web.xml`, recriar pelo plugin, reaplicar customizações.
+   - `ClassNotFoundException ... BFFDataUnitDatasetAdapter` → falta a classe `br.com.sankhya.bff.<contexto>.BFFDataUnitDatasetAdapter` no `model`, ou o contexto tem hífen (não forma pacote). **Fix:** criar a classe; contexto sem hífen.
 
-4. **Artefatos de deploy do labsApps** — o workspace espera, ao lado do `build/index.html`: `labsApps/<Tela>/package.json` (raiz da tela) e `build/module_structure.json` (`npm ls --depth=0 --json`). O `vite.config.ts` do starter já gera o `module_structure.json`; confira se o `package.json` chega ao `labsApps/<Tela>/` depois do `compileDS` e, se faltar, crie task própria pendurada nela. OBS: `compileDS` já é task nativa do plugin `addonstudio` — **não redefina**.
+> Ordem em addon: `APPLICATION_NAME` + bridge `utxt` no `index.html`, `web.xml` com GraphQL, contexto sem hífen + adapter. `ez-*` puro (sem `snk-application`) não depende do GraphQL.
 
-5. **Diagnóstico:** o 500 do graphql **não loga stacktrace** previsível (cai em `QueryLogginInstrumentation`/`JDBCSpyService.getMgeSession`). Confirme via `curl` no `/{bff}/graphql?mgeSession=TOKEN` com e sem `-H "Cookie: JSESSIONID=TOKEN"`: sem cookie = 500, com cookie = 200 → prova que é registro de sessão no BFF, não o app.
+## Tela no padrão das telas nativas (referência: Movimentação Financeira, `mgefin-bff`)
 
-> Ordem de montagem em addon: (1) setar `APPLICATION_NAME` + bridge `utxt` no `index.html`; (2) warm-up do BFF; (3) só então montar `SnkApplication`. `ez-*` puro (sem `snk-application`/graphql) normalmente NÃO precisa de 2/3. Tudo isso é **workaround** do gap addon×BFF — o ideal de plataforma é servir/registrar a tela DS no contexto do BFF.
+- Estrutura: `SnkApplication > SnkDataUnit className="ez-size-height--full ez-size-width--full" > SnkCrud`. Sem contêiner, título ou botão fora da barra; sem a altura no `SnkDataUnit` a grade não ocupa a tela.
+- Botão extra na barra: `taskbarManager.getButtons` acrescentando `{ name, hint, iconName }` só nas barras de registro em foco (as que já têm `UPDATE` ou `PREVIOUS`); senão aparece também na barra do "Cadastrar". Clique em `onActionClick`, comparando com o nome em **camelCase** (o `snk-taskbar` normaliza `MEU_BOTAO` → `meuBotao`).
+- Campo senha: o `snk-form` ignora `UIType=PASSWORD`. Formulário: `onFormItemsReady`, com `detail.items` = `Map<campo, { elem }>` (o tipo declarado `Array<HTMLElement>` está errado), e `password = true` no `ez-text-input` dentro de `elem`. Grade: `addGridCustomRender` alterando `currentRender.textContent` (string devolvida é tratada como HTML; texto puro não renderiza).
 
 ## DOC desatualizada (não caia nessa)
 
@@ -120,7 +120,9 @@ Pipeline Node OK + custom elements registrados = a tela **renderiza** (grid/form
 
 ## Filter bar do snk-crud só aparece com filtro configurado
 
-`snk-grid` só mostra a filter bar (e o chip "+ Filtros") se a config de filtros vier NÃO-vazia do servidor (`_showSnkFilterBar`). Entidade AD_ nova nasce sem filtro → barra escondida. Configurar server-side (tela clássica) é o caminho suportado; seed via `ConfigStorage.saveFilterBarConfig` é possível mas usa chunk interno (frágil a upgrade) e precisa do resourceID que o snk-crud realmente usa.
+`snk-grid` só renderiza o cabeçalho com a filter bar (chips e "+ Filtros") se a config vier com itens. Sem ela o cabeçalho some e a barra superior fica colada na grade. `<filters>` do dicionário **não** alimentam a filter bar do DS.
+
+Os itens vêm de `WEB-INF/resources/filter-config/<resourceId>.json`, lido do **classpath** (`items` com `id`, `label`, `type` `BINARY_SELECT`/`TEXT`/`NUMBER`/`PERIOD`/`SEARCH`/`MULTI_LIST`, `filterType` `QUICK_FILTER`/`OTHER_FILTERS`, `props.expression`). Modelo: os JSON do `mgefin-bff.ear` no Wildfly. Em addon, grave em `model/src/main/resources/WEB-INF/resources/filter-config/`: o EAR gerado pelo plugin não declara o WAR como `resource-root`, então o arquivo em `vc/src/main/webapp/WEB-INF/resources` não é encontrado.
 
 ## Protocolo de gravação e símbolos
 

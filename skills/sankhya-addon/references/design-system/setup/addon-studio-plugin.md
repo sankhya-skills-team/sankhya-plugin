@@ -1,71 +1,78 @@
-# Design System em addon — o que o plugin Gradle do Addon Studio faz
+# Design System em addon — plugin Gradle do Addon Studio (2.x)
 
-Levantado por inspeção do bytecode do `br.com.sankhya.studio:gradle-plugin:2.20.0` (classes `GerarTela`, `CompileDS`, `CommonWebPlugin`, `FeatureFlag`) em 2026-10-01. Não há doc oficial disso: confira a versão do plugin do projeto antes de confiar (`~/.gradle/caches/modules-2/files-2.1/br.com.sankhya.studio/gradle-plugin/`).
+Caminho nativo de empacotar tela DS em addon. Não copie bundle à mão para `vc/src/main/webapp`.
 
-> Este é o caminho **nativo** de empacotar tela DS em addon. Prefira-o a copiar bundle à mão para `vc/src/main/webapp`.
+Levantado por inspeção do `br.com.sankhya.studio:gradle-plugin:2.20.0` e validado em campo (2026-10). Não é doc oficial: confira a versão do plugin do projeto (`~/.gradle/caches/modules-2/files-2.1/br.com.sankhya.studio/gradle-plugin/`) antes de confiar.
 
-## 1. Feature flag (beta)
+> **Decida o contexto antes de criar o addon:** `rootProject.name` sem hífen (ex.: `addonexemplo`, não `addon-exemplo`). Os blocos `snk-*` exigem um pacote Java com o nome do contexto (ver Pré-requisitos), e trocar depois exige o roteiro de renomeação no fim deste arquivo.
 
-Tudo de DS no plugin depende de `FeaturesBeta.ENABLE_DS`. A flag é lida com prefixo `STUDIO_FEATURE_`:
+## Feature flag
 
-```sh
-STUDIO_FEATURE_ENABLE_DS=true   # variável de ambiente
-```
+Tudo de DS depende de `STUDIO_FEATURE_ENABLE_DS=true` (variável de ambiente). Sem ela, `gerarTela` gera tela html5 legada e `compileDS` não roda.
 
-Sem a flag: `gerarTela` gera tela html5 legada e a task `compileDS` fica desabilitada (o build não compila o frontend).
-
-## 2. Gerar a tela — `gerarTela`
+## Gerar a tela
 
 ```sh
 ./gradlew gerarTela -Ptela=NomeTela
 ```
 
-Com a flag ligada:
+Extrai o `react-app-starter` embutido no plugin em `frontend/NomeTela/`. Resíduos do starter a limpar: `name` do `package.json`, `gulpfile.ts` (fluxo de módulo nativo, não serve no addon), telas `DemoSnk*`, store `useCartStore`, `StrictMode` no `index.tsx`.
 
-- extrai `models/react-app-starter.zip` (embutido no jar do plugin) em `frontend/NomeTela/`;
-- substitui `:name` (contexto do addon) no `vite.config.ts`, `ReactStarter` no `package.json` e `:name`/`:tela` no `.env.production`.
-
-O starter extraído ainda traz resíduos que o plugin **não** troca: `name: "@sankhyalabs/react-starter"` no `package.json`, `APPNAME = "ReactStarter"` e `../../local.properties` no `gulpfile.ts` (gulp é do fluxo de módulo nativo, não do addon), telas `DemoSnk*` e store `useCartStore` de exemplo. Limpe ao começar.
-
-Sem a flag, gera `vc/src/main/webapp/html5/NomeTela/` (`.html/.js/.css` + `launcher/.include/.body`).
-
-## 3. Registro no menu — `uiDesignSystem`
-
-O `metadados.xsd` tem a tag `uiDesignSystem` (mesmo tipo `ui`: `id`, `url`, `description`, `resourceId`, `license`, `publicAccess`, `<acesso>`). A mensagem que o `gerarTela` imprime monta:
+## Menu
 
 ```xml
-<uiDesignSystem id="NomeTela" url="/$ctx/NomeTela.xhtml5" description="Descrição"/>
+<uiDesignSystem id="NomeTela" url="/$ctx/NomeTela.xhtml5" description="Descrição"
+                resourceId="br.com.<empresa>.<contexto>.NomeTela"/>
 ```
 
-O nome da tag na mensagem vem de variável (`uiDesignSystem` com a flag, `ui` sem) — confirmado no XSD, a montagem exata da string foi lida do bytecode.
+## Build e deploy
 
-## 4. Build — task `compileDS`
+`compileDS` **não** é dependência do `deployAddon`. Sem chamá-la, o WAR sai sem `labsApps/` e a tela não abre:
 
-Registrada pelo `CommonWebPlugin` no módulo `vc`, encadeada ao `buildWar`. Para cada pasta em `frontend/` (ou só a de `-Ptela`, se informada):
-
-1. verifica versões de `node` e `npm`;
-2. `npm install --force` e `npm run build` dentro de `frontend/<Tela>`;
-3. copia `frontend/<Tela>/build` para `studioGenerated/resources/labsApps/<Tela>/build` (apaga `buildDS` antes).
-
-Os comandos rodam via `sh -c` — **no Windows é preciso `sh` (Git Bash) no PATH** do processo Gradle.
-
-`compileDS` é nativa: **não redefina**. Se precisar de passo extra, crie task própria e pendure nela.
-
-## 5. Caminho publicado e `.env`
-
-`.env.production` do starter:
-
-```properties
-BASE_PATH="/<contexto-addon>/labsApps/<Tela>/build/"
-VITE_OUTPUT_DIR=buildDS
+```sh
+./gradlew :vc:compileDS deployAddon     # Windows: .\gradlew.bat (precisa de sh/Git Bash no PATH)
 ```
 
-O `vite.config.ts` do starter, no `closeBundle`, grava `VITE_BUILD_DATE` no `.env.production`, copia `ez-design/dist/default` para `build/static/ez-design/default/`, gera `build/module_structure.json` (`npm ls --depth=0 --json`), remove `build/workspacemock` e copia `build/` para `VITE_OUTPUT_DIR`.
+`compileDS` roda `npm install --force` + `npm run build` em cada `frontend/<Tela>` e copia o `build/` para `vc/buildGradle/studioGenerated/resources/labsApps/<Tela>/build`.
 
-Proxy do dev server (`npm run dev`): `^/mge*/*` e `^/<contexto-addon>/*` para `SKW_URL`.
+**WAR crescendo a cada deploy:** tanto o `closeBundle` do `vite.config.ts` (cópia para `buildDS`) quanto o `compileDS` copiam por cima da saída anterior, acumulando chunks com hash. Corrija nos dois pontos:
 
-## 6. O que continua valendo
+```ts
+// vite.config.ts, antes de copiar build/ para VITE_OUTPUT_DIR
+fs.rmSync(env.VITE_OUTPUT_DIR, { recursive: true, force: true });
+```
 
-Os problemas de runtime do ALERTA #2 do agente `sankhya-frontend-design-system` (`APPLICATION_NAME`, bridge `utxt`, warm-up do BFF) não são resolvidos pelo plugin — aplique-os do mesmo jeito.
+```groovy
+// vc/build.gradle — compileDS é registrada depois da avaliação do vc: use matching, não named
+tasks.matching { it.name == 'compileDS' }.configureEach {
+    doFirst {
+        def labsApps = layout.projectDirectory.dir('buildGradle/studioGenerated/resources/labsApps')
+        def tela = providers.gradleProperty('tela').orNull
+        // com -Ptela só essa tela é recompilada: apagar labsApps inteiro tiraria as outras do WAR
+        delete(tela ? labsApps.dir(tela) : labsApps)
+    }
+}
+```
 
-`.env` e `.env.*` do frontend podem ter `SKW_URL`/credenciais: garanta que estão no `.gitignore` do addon (o starter não protege o `.env` da raiz do projeto).
+Coloque `buildDS` no `.gitignore` do frontend.
+
+## Pré-requisitos do addon para `snk-*`
+
+- **`web.xml` com `SankhyaGraphQLServlet` (`/graphql`)** e o `SankhyaGraphQLServletContextListener`. Template antigo vem sem: faça backup de `vc/src/main/webapp/WEB-INF/web.xml`, apague-o, deixe o plugin recriar do template atual e reaplique as customizações que o backup tinha (filtros, servlets, `context-param`). Sem o servlet, o `snk-application` cai no BFF do core e o GraphQL responde 500 `Sessão MGE não iniciada`.
+- **Contexto (`rootProject.name`) sem hífen.** Os blocos `snk-*` pedem ao servidor `br.com.sankhya.bff.<contexto>.BFFDataUnitDatasetAdapter`. Sem ela (ou com hífen no contexto, que não forma pacote válido) o erro é `ClassNotFoundException ... BFFDataUnitDatasetAdapter`. Crie no `model` essa classe vazia:
+
+  ```java
+  package br.com.sankhya.bff.<contexto>;
+  public class BFFDataUnitDatasetAdapter extends br.com.sankhya.modelcore.dataset.DataUnitDatasetAdapter {
+      public BFFDataUnitDatasetAdapter() throws Exception { super(); }
+  }
+  ```
+- Chamada de serviço do próprio addon pelo front: `callServiceBroker("<contexto>@<Servico>SP.metodo", { request: {...} })`. Sem o prefixo vai para `/mge`. Resposta de `@Controller` do SDK chega em `responseBody.body`.
+
+## Renomear o contexto depois do primeiro deploy
+
+1. Trocar `rootProject.name`, `BASE_PATH` do `.env.production`, proxy do `vite.config.ts`, prefixo `<contexto>@` das chamadas e o pacote do `BFFDataUnitDatasetAdapter`.
+2. `UPDATE <tabela> SET DOMAIN = '<novo>' WHERE DOMAIN = '<antigo>'` nas tabelas do dicionário com coluna `DOMAIN`. Sem isso: "A tabela X já existe no Addon <antigo>".
+   - **Só em base de desenvolvimento**, com backup dessas tabelas antes e tudo numa transação única. Em base de cliente, não renomeie: crie addon novo.
+   - Tabelas (levantadas no schema 4.31; as `*_RP_*`, `*_MP` e `BKP_*` são cópias, ignore): `TDDADB`, `TDDTAB`, `TDDTABI18N`, `TDDCAM`, `TDDCAMI18N`, `TDDINS`, `TDDINSI18N`, `TDDOPC`, `TDDOPCI18N`, `TDDPCO`, `TDDLIG`, `TDDLGC`, `TDDIAC`, `TDDI18N`, `TRDCON`, `TRDCONI18N`, `TRDEVE`, `TRDFCO`, `TRDPCO`, `TRDSCP`. Confira na sua versão quais tabelas têm coluna `DOMAIN` (MCP `search_columns("DOMAIN")`).
+3. Remover o EAR antigo de `standalone/deployments`, rodar `clean` e **reiniciar o Wildfly**: o core guarda referência ao classloader do EAR removido (`ClassNotFoundException ... from [Module "deployment.<antigo>.ear"]`).

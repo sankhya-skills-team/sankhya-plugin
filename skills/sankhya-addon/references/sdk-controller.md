@@ -210,9 +210,13 @@ public class CriarPedidoResponse {
     "serviceName": "PedidoControllerSP.criar",
     "status": "1",
     "transactionId": "CB0F625A72C214CF8449F0B18E1FA81A",
-    "responseBody": { "numeroPedido": 987654, "valorTotal": 551.00, "status": "PENDENTE" }
+    "responseBody": {
+        "body": { "numeroPedido": 987654, "valorTotal": 551.00, "status": "PENDENTE" }
+    }
 }
 ```
+
+> O DTO retornado chega embrulhado em `responseBody.body` (observado no SDK 2.20). No front com `callServiceBroker`, leia `resposta.body`.
 
 ### Response de erro (`status: "0"`)
 ```json

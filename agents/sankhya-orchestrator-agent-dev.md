@@ -56,7 +56,7 @@ Plano de build estruturado: **abordagem do projeto (addon/módulo + justificativ
 - **Convenções de deploy que o código precisa respeitar (senão não sobe):**
   - Telas html5 customizadas: registrar no `menu.xml` com `<ui id="..." url="/$ctx/<pasta>/<tela>.html5" description="..."/>`. `$ctx` resolve o contexto; a pasta é relativa ao webapp.
   - Dashboards: JSP em `vc/src/main/webapp/dashboard/jsp/<nome>.jsp` + XML em `dashboards/<dash>.xml` (`gadgetSS`/`html5component` com `entryPoint="dashboard/jsp/<nome>.jsp"` e `moduleContext=<contexto>`) + `<dashboard id=".." file=".." description=".."/>` no menu.
-  - `moduleContext` = contexto do webapp = `rootProject.name` do `settings.gradle` (ex.: `addon-exemplo`), NÃO o id do menu.
+  - `moduleContext` = contexto do webapp = `rootProject.name` do `settings.gradle` (ex.: `addonexemplo`; sem hífen, exigência dos blocos `snk-*` do DS), NÃO o id do menu.
   - `@Service`/`@ActionButton`/`@Job` só são expostos/criados **no deploy**; basta a classe anotada existir com o nome certo.
 - **Encoding:** nunca editar `.java/.xml` com Edit/Write (gravam UTF-8 e corrompem acento); usar python/iconv latin-1. Auditar com `file --mime-encoding` e `grep U+FFFD` ao fim de cada onda.
 - **Job financeiro de risco** (idempotente, destrutivo) deve nascer **desabilitado por parâmetro** (ex.: `EXEMPLO_JOB_DESC_ATIVO`), nunca ativo por padrão.
