@@ -2,7 +2,8 @@
 
 Skill para Claude Code que gera o **documento de entrega de desenvolvimento** de projetos
 Java Sankhya OM — Addon Studio ou Módulo Java complementar. Dois formatos, à escolha do
-usuário: **HTML interativo** ou **DOCX Word**, ambos no design system Sankhya.
+usuário: **HTML interativo** ou **DOCX Word**, ambos no modelo DS "Evidências de Entrega
+de Customização v.4", com cores e tipografia do guia Padrão Sankhya 2026.
 
 ---
 
@@ -21,16 +22,20 @@ o SKILL.md não carrega código de template para o contexto.
 
 | Formato | Conteúdo |
 |---|---|
-| **HTML interativo** (default) | Funcionalidades colapsáveis, checklist de deploy com persistência, homologação com marcação de status e evidências por imagem, histórico de versões, botão "Exportar com evidências" |
-| **DOCX Word** | Documento editável formatado na ABNT NBR 14724: identificação, histórico de versões, manual de uso passo a passo, checklist de deploy em tabela, homologação com coluna de resultado, anexo com as evidências e bloco de assinaturas |
+| **HTML interativo** (default) | Estrutura do modelo v.4 com capa e contracapa. Funcionalidades colapsáveis, homologação com marcação de status e evidências por imagem, checklist de deploy com persistência, botões "Exportar com evidências" e "Gerar PDF" |
+| **DOCX Word** | Preenchido sobre o template v.4 (`assets/modelo-entrega-v4.docx`): capa, controle do documento, sumário, seções 01 a 08, assinaturas e contracapa. Evidências e checklist de deploy em 07 Anexos |
+
+Seções dos dois formatos: Controle do documento · 01 Identificação · 02 Objetivo · 03
+Descrição das Personalizações · 04 Manual de Uso · 05 Homologação e Testes · 06
+Treinamento e Suporte · 07 Anexos · 08 Prazo de Garantia · Assinaturas.
 
 ---
 
 ## Evidências de homologação
 
 As capturas entram pelo `dados.json`, em `funcionalidades[].testes[].evidencias`, e
-aparecem nos dois formatos: no HTML como galeria dentro do caso de teste, no DOCX na
-seção "Anexos – Evidências de Entrega", ao final. O `status` do teste marca o resultado.
+aparecem nos dois formatos: no HTML como galeria dentro do caso de teste, no DOCX em
+"07 Anexos › Capturas de tela". O `status` do teste marca o resultado.
 
 Evidência declarada e ausente não interrompe nada: o gerador avisa no stderr, devolve a
 lista em `evidencias_faltando` no JSON de saída e emite o documento com o que existe.
@@ -41,10 +46,9 @@ primeiro, por usar a aba já autenticada; Playwright depois, único caminho para
 Safari; e o modo manual, em que o usuário tira os prints e o agente só monta o JSON.
 Detalhes em `references/coleta-evidencias.md`.
 
-O DOCX segue a ABNT NBR 14724 em margens (3 cm superior e esquerda, 2 cm inferior e
-direita), corpo de 12 pt, entrelinha 1,5 no texto, espaço simples dentro das tabelas e
-títulos separados por uma entrelinha antes e depois. O HTML não segue a norma: é
-documento de tela, não de impressão.
+O DOCX não carrega formatação no código: margens, fontes, estilos, cabeçalho e rodapé
+vêm do template. Campo não informado mantém o placeholder `< ... >` do modelo, para
+preenchimento manual no Word.
 
 ---
 
@@ -54,15 +58,17 @@ documento de tela, não de impressão.
 sankhya-doc-entrega/
 ├── SKILL.md                    Fluxo, perguntas e contrato do dados.json
 ├── assets/
-│   └── sankhya-logo.png        Logo usado no DOCX
+│   ├── modelo-entrega-v4.docx  Template DS v.4 preenchido pelo gerar_docx.py
+│   ├── capa-fundo.jpg          Fundo da capa (HTML), extraído do template
+│   └── contracapa-fundo.jpg    Fundo da contracapa (HTML), extraído do template
 ├── references/
 │   ├── analise-fontes.md       Categorias de artefatos e extração por tipo de classe
 │   ├── coleta-evidencias.md    Ferramentas, navegadores e protocolo de captura
 │   ├── linguagem.md            Linguagem funcional e marcas de texto gerado por IA
-│   └── design-system.md        Paleta, tipografia, regra HTML × DOCX, logo
+│   └── design-system.md        Paleta, tipografia, regra HTML × DOCX, template
 └── scripts/
-    ├── _brand.py               Cores, logo (SVG + PNG) e metadados de tipo
-    ├── _comum.py               Entrada, versionamento, histórico, personas
+    ├── _brand.py               Cores, tipografia, logo SVG e metadados de tipo
+    ├── _comum.py               Entrada, versionamento, histórico, assinaturas
     ├── gerar_html.py           dados.json → .html
     ├── gerar_docx.py           dados.json → .docx
     ├── ler_escopo.py           Extrai texto de .md/.txt/.docx/.pdf
@@ -150,7 +156,7 @@ python scripts/revisar_texto.py --autoteste   # regras do lint de linguagem
 ```
 
 O primeiro gera HTML e DOCX de exemplo em diretório temporário e valida escape, paleta
-do design system, versionamento, backup, histórico, presença do logo e as evidências
-embutidas nos dois formatos. O segundo confere
+do Padrão 2026, versionamento, backup, histórico, o preenchimento do modelo v.4 e as
+evidências embutidas nos dois formatos. O segundo confere
 que as seis regras acusam e que campos de identificação e mensagens citadas continuam
 fora do lint.

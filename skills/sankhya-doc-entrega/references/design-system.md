@@ -1,8 +1,13 @@
 # Design System Sankhya — aplicação nos documentos de entrega
 
-Tokens extraídos de `sankhya.com.br`. A implementação vive em
-`scripts/_brand.py` — **é a fonte única**. Este arquivo explica as decisões;
-não duplique valores em outros lugares.
+Duas fontes oficiais da DS:
+
+- **Estrutura:** "DSTECH - Modelo de Evidências de Entrega de Customização v.4", guardado
+  como `assets/modelo-entrega-v4.docx`.
+- **Cores e tipografia:** guia "Modelo de Documento Padrão Sankhya 2026".
+
+A implementação vive em `scripts/_brand.py`, que **é a fonte única** para o HTML. Este
+arquivo explica as decisões. Não duplique valores em outros lugares.
 
 ---
 
@@ -10,45 +15,34 @@ não duplique valores em outros lugares.
 
 | Token | Hex | Uso |
 |---|---|---|
-| `primary` | `#4ADE80` | Destaque, bordas de seção, badges de versão, botão de exportar, numeração de passos |
-| `secondary` | `#0EA5E9` | Badge do tipo `acao` (botão de ação) |
-| `tertiary` | `#243143` | Sidebar, títulos, cabeçalhos de tabela, texto de destaque |
-| `surface` | `#F0FAF0` | Fundo de página — **somente HTML** |
-| `on-surface` | `#4B5563` | Texto corrido |
+| Navy 900 | `#0C1927` | Fundo escuro mais profundo (capas) |
+| Navy 700 | `#212F41` | Texto principal, títulos, cabeçalho de tabela |
+| Slate | `#343C50` | Subtítulos de terceiro nível |
+| Verde Sankhya | `#00D666` | Destaques sobre fundo escuro, linhas e números |
+| Verde apoio | `#00CD5E` | Títulos finos, marcadores e rótulos sobre fundo claro |
+| Cinza | `#888888` | Legendas, cabeçalho, rodapé e placeholders |
+| Cinza claro | `#F3F3F3` | Fundos de nota, linhas alternadas, coluna de rótulo |
 
-Duas cores semânticas **não** vêm do design system do site e existem só para
-status de homologação e blocos de alerta:
-
-| Token | Hex | Uso |
-|---|---|---|
-| `danger` | `#DC2626` | Teste reprovado, bloco de limitação, grupo de pré-requisitos |
-| `warning` | `#D97706` | Bloco de observação, grupo de pós-deploy |
-
-## Cores por tipo de funcionalidade
-
-Restritas à paleta — nada de cor inventada por tipo.
-
-| Tipo | Cor | Badge |
-|---|---|---|
-| `acao` | `secondary` | Ação Manual |
-| `evento` | `primary` | Listener / Evento |
-| `job` | `tertiary` | Job Agendado |
-| `regra` | `on-surface` | Regra de Negócio |
+O guia não tem cor semântica. `danger` (`#DC2626`) e `warning` (`#D97706`) existem só no
+HTML, para o status reprovado/pendente dos testes de homologação.
 
 ## Tipografia
 
-`Work Sans` com fallback `Segoe UI, Arial, sans-serif`. O HTML importa a fonte
-do Google Fonts; sem internet o fallback assume sem quebrar o layout. O DOCX
-declara `Work Sans` e o Word resolve o fallback sozinho.
+Work Sans em todos os elementos. O DOCX leva a fonte embutida no template. O HTML importa
+do Google Fonts, com fallback `Segoe UI, Arial`.
 
-Escala: 16px corpo (1.5) · 14px secundário (1.43) · 12px micro (1.33) ·
-20px título de seção · 18px título do documento.
+| Elemento | Fonte | Tamanho | Cor |
+|---|---|---|---|
+| Título de abertura, linha 1 | Work Sans Light, caixa alta | 24 pt | Verde apoio |
+| Título de abertura, linha 2 | Work Sans SemiBold, caixa alta | 24 pt | Navy 700 |
+| Título 1 | Work Sans SemiBold, caixa alta | 17 pt | Navy 700 |
+| Título 2 | Work Sans SemiBold | 12,5 pt | Navy 700 |
+| Título 3 | Work Sans SemiBold | 10,5 pt | Slate |
+| Texto | Work Sans | 10,5 pt | Navy 700 |
+| Legenda, rodapé | Work Sans | 7–8 pt | Cinza |
 
-## Raios e sombras
-
-Raios do design system: `sm 2px · md 3px · lg 4px · xl 5px · full 9999px`.
-Cartões usam `xl`; badges e pílulas usam `full`.
-Sombras: `0 1px 2px rgba(10,12,18,.05)` e `0 2px 6px rgba(0,0,0,.05)`.
+No HTML os pontos viram px (× 4/3), calculados em `gerar_html.py` a partir de
+`_brand.PT_*`.
 
 ---
 
@@ -56,21 +50,17 @@ Sombras: `0 1px 2px rgba(10,12,18,.05)` e `0 2px 6px rgba(0,0,0,.05)`.
 
 | | HTML | DOCX |
 |---|---|---|
-| Design system | Completo — fundo `surface`, sidebar `tertiary`, sombras, raios | Apenas as **cores** |
-| Fundo de página | `#F0FAF0` | **Branco. Nunca colorir a página.** |
-| Preenchimento | Livre | Restrito a cabeçalhos de tabela (`tertiary`, texto branco) |
-| Bordas | CSS | Borda inferior `primary` sob títulos de seção nível 2 |
+| Fonte da formatação | CSS gerado de `_brand.py` | Estilos do template (`SkCapaLinha*`, `SkTitulo*`, `Heading1/2`, `SkRotulo`, `SkTabela`, `SkLegenda`, `ListParagraph`) |
+| Capa e contracapa | Fundos JPG do modelo (`assets/capa-fundo.jpg`, `contracapa-fundo.jpg`), no topo e no fim da tela e como página inteira no PDF | As do template, sem alteração |
+| Cabeçalho e rodapé | Não tem (documento de tela) | Os do template, intactos. O bloco Elaborador/Aprovador é o controle do próprio modelo DS, não da entrega |
+| Blocos repetidos | Gerados em HTML | Cópias dos elementos do template (caixa OBSERVAÇÃO, tabela do histórico, listas) |
+
+O DOCX não define cor, fonte nem margem no código. Formatação nova entra no template,
+não no script.
 
 ## Logo
 
-Um único ativo, duas formas de consumo — ambas em `scripts/_brand.py`:
-
-- **HTML** — `B.LOGO_SVG`, SVG inline. A wordmark usa `currentColor`, então
-  herda a cor do container: branca na sidebar escura, `tertiary` sobre fundo
-  claro. Sem arquivo externo, sem caminho para quebrar.
-- **DOCX** — `B.LOGO_PNG`, aponta para `assets/sankhya-logo.png` resolvido a
-  partir de `__file__`. Inserido com 4 cm de largura no topo do documento.
-
-O PNG foi rasterizado do mesmo SVG (744×168, wordmark `#243143`, símbolo
-`#66CB66`). Para regerar após mudança de marca: renderize o SVG com
-`svglib` + `reportlab` e substitua o arquivo em `assets/`.
+- **HTML:** `B.LOGO_SVG`, SVG inline. A wordmark usa `currentColor` e herda a cor do
+  container: branca na sidebar e na contracapa. O fundo da capa já traz a logo e não
+  recebe outra por cima.
+- **DOCX:** a do template (capa no fundo, contracapa e cabeçalho como imagem).

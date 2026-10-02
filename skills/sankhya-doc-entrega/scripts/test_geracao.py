@@ -1,7 +1,8 @@
 """Auto-teste dos geradores. Executar: python scripts/test_geracao.py
 
 Gera HTML e DOCX de exemplo em um diretorio temporario e verifica
-versionamento, backup, historico e presenca do logo. Sem framework.
+versionamento, backup, historico e o preenchimento do modelo DS v.4.
+Sem framework.
 """
 
 import base64
@@ -21,18 +22,21 @@ EXEMPLO = {
     "nome_customizacao": "Pesagem de Entrada",
     "caminho_sistema": "Menu › Beneficiamento › BEN — Pesagem de Entrada",
     "responsavel_tecnico": "Dev A → Dev B (a partir da v1.1)",
+    "email_responsavel": "dev.b@sankhya.com.br",
+    "solicitante_sankhya": "Ana Paula Souza",
+    "modulo_area": "Beneficiamento",
+    "cidade": "Uberlândia",
     "objetivo": "Automatiza o registro de pesagem & libera a nota <fiscal>.",
     "limitacoes_gerais": ["Não reprocessa pesagens já encerradas."],
     "incluir_homologacao": True,
     "incluir_assinaturas": True,
-    "personas_sankhya": ["Ana Paula Souza — Gerente de Projetos"],
-    "personas_cliente": ["Roberto Mendes — Diretor Comercial"],
     "funcionalidades": [{
         "titulo": "Calcular Pesagem",
         "tipo": "acao",
         "icone": "⚖️",
         "passos": ["O usuário seleciona o ticket.", "O sistema calcula o peso líquido."],
         "obs": "Requer perfil Balança.",
+        "dicas": ["Confira a tara antes de calcular."],
         "limitacoes": "Irreversível após o encerramento.",
         "tipo_acesso": "tela",
         "testes": [
@@ -41,6 +45,10 @@ EXEMPLO = {
             {"nome": "Executar com ticket encerrado",
              "esperado": 'Sistema bloqueia com mensagem: "Ticket já encerrado."'},
         ],
+    }, {
+        "titulo": "Encerrar Ticket",
+        "tipo": "evento",
+        "passos": ["O usuário confirma.", "O sistema encerra o ticket."],
     }],
     "checklist_deploy": {
         "pre_requisitos": [
@@ -70,9 +78,11 @@ def executar(script, dados, destino):
     entrada = os.path.join(os.path.dirname(destino), "_dados.json")
     with open(entrada, "w", encoding="utf-8") as f:
         json.dump(dados, f, ensure_ascii=False)
+    # Sem Word: cada DOCX abriria o Office em segundo plano (~5 s). O caminho
+    # com Word foi validado a mao; aqui se testa o fallback.
     return subprocess.run([sys.executable, os.path.join(AQUI, script), entrada],
                           capture_output=True, text=True, encoding="utf-8",
-                          errors="replace")
+                          errors="replace", env=dict(os.environ, DOC_ENTREGA_SEM_WORD="1"))
 
 
 def gerar(script, dados, destino):
@@ -98,146 +108,161 @@ def com_evidencias(pasta):
     return dict(EXEMPLO, funcionalidades=[func])
 
 
+def testar_html(tmp):
+    alvo = os.path.join(tmp, "Documentacao", "Entrega - Pesagem de Entrada.html")
+    r1 = gerar("gerar_html.py", EXEMPLO, alvo)
+    assert r1["versao"] == "1.0" and r1["backup"] is None, r1
+    html = open(alvo, encoding="utf-8").read()
+
+    assert "&lt;fiscal&gt;" in html and "&amp;" in html, "escape HTML quebrado"
+    assert "<svg" in html and "currentColor" in html, "logo SVG ausente"
+    assert "#212F41" in html and "#00CD5E" in html, "paleta do Padrão 2026 ausente"
+    assert "#4ADE80" not in html and "#243143" not in html, "cor antiga remanescente"
+    assert html.count("data:image/jpeg;base64,") == 2, "fundo de capa/contracapa ausente"
+    for trecho in ("Controle do", "01</span>Identificação", "08</span>Prazo de Garantia",
+                   "Treinamento e Suporte", "Dúvidas? Fale com a gente."):
+        assert trecho in html, "seção do modelo v.4 ausente: %s" % trecho
+    assert "Líder do Projeto" in html and "Consultor" in html, "assinaturas padrão ausentes"
+    assert "<td>Dev B</td>" in html, "autor do histórico errado"
+    assert "congelarEstado" in html, "correção do export ausente"
+    assert html.count("pesagem-1.0.0.jar") == 1, "nome do JAR repetido no detalhe"
+    assert re.search(r'name="doc-versao" content="1\.0"', html)
+    # nenhum placeholder de formatação sobrou no CSS
+    assert "%(" not in html.split("<script>")[0], "placeholder %( no HTML/CSS"
+
+    r2 = gerar("gerar_html.py", dict(EXEMPLO, changelog=["Ajuste de tolerância."]), alvo)
+    assert r2["versao"] == "1.1", r2
+    assert r2["backup"] and os.path.exists(r2["backup"]), "backup não criado"
+    html2 = open(alvo, encoding="utf-8").read()
+    assert "Ajuste de tolerância." in html2 and "v1.0" in html2, "histórico não acumulou"
+
+    # Sem homologação a numeração segue corrida: Treinamento vira 05.
+    sem_hom = os.path.join(tmp, "semhom", "Documentacao", "Entrega - X.html")
+    gerar("gerar_html.py", dict(EXEMPLO, incluir_homologacao=False), sem_hom)
+    html_sh = open(sem_hom, encoding="utf-8").read()
+    assert "05</span>Treinamento" in html_sh and "Homologação e Testes" not in html_sh
+
+    # Addon Studio: o tipo servico tem rotulo proprio
+    addon = dict(EXEMPLO, funcionalidades=[
+        dict(EXEMPLO["funcionalidades"][0], titulo="Processar Fechamento", tipo="servico")])
+    alvo_ad = os.path.join(tmp, "addon", "Documentacao", "Entrega - Frete.html")
+    gerar("gerar_html.py", addon, alvo_ad)
+    assert "Serviço da Tela" in open(alvo_ad, encoding="utf-8").read(), "rótulo de @Service"
+
+
+def testar_docx(tmp):
+    from docx import Document
+
+    alvo = os.path.join(tmp, "Documentacao", "Entrega - Pesagem de Entrada.docx")
+    r3 = gerar("gerar_docx.py", EXEMPLO, alvo)
+    assert r3["versao"] == "1.0", r3          # extensao diferente = versao propria
+    r4 = gerar("gerar_docx.py", dict(EXEMPLO, changelog=["Revisão do escopo."]), alvo)
+    assert r4["versao"] == "1.1" and os.path.exists(r4["backup"]), r4
+
+    assert r4["sumario_atualizado"] is False, r4
+    doc = Document(alvo)
+    assert doc.core_properties.version == "1.1"
+    # Sem Word para atualizar o sumario, o arquivo pede a atualizacao ao abrir.
+    assert doc.settings.element.findall(qn_w("updateFields")), "fallback sem updateFields"
+    texto = "\n".join(p.text for p in doc.paragraphs)
+    celulas = [c.text for t in doc.tables for r in t.rows for c in r.cells]
+
+    # Saiu do template DS v.4: capa, estilos e cabeçalho vêm do modelo.
+    assert "Pesagem de Entrada" in texto and "< Nome do projeto >" not in texto, "capa"
+    assert any(s.style_id == "SkCapaLinha1" for s in doc.styles), "estilos do modelo ausentes"
+    cabecalho = "".join(t.text or "" for t in doc.sections[1].header._element.iter(qn_w("t")))
+    assert "DELIVERY SERVICE TECH" in cabecalho.upper(), "cabeçalho do modelo perdido"
+    for valor in ("Parceiro Teste", "DEM-0001", "Ana Paula Souza", "Beneficiamento",
+                  "Dev B — dev.b@sankhya.com.br"):
+        assert valor in celulas, "campo não preenchido: %s" % valor
+    assert "Receitas por Categoria" not in texto, "exemplo do modelo sobrou"
+    assert "O usuário seleciona o ticket." in texto
+    assert "Confira a tara antes de calcular." in texto, "dicas de uso ausentes"
+    assert "Uberlândia, < dia >" in texto, "cidade não preenchida"
+    assert all(any(papel in c for c in celulas) for papel in ("Líder do Projeto", "Consultor")),         "assinaturas padrão"
+    assert "Checklist de deploy" in texto, "checklist fora dos anexos"
+    assert "Executar com ticket encerrado" in celulas, "tabela de cenários ausente"
+
+    # Histórico: mais antiga primeiro, com o autor da versão.
+    hist = next(t for t in doc.tables if t.rows[0].cells[0].text == "VERSÃO")
+    assert [r.cells[0].text for r in hist.rows[1:]] == ["1.0", "1.1"], "ordem do histórico"
+    assert hist.rows[2].cells[2].text == "Dev B", "autor da versão ausente"
+
+    # Cada funcionalidade tem a propria instancia de lista numerada: sem isso
+    # os passos da segunda continuariam a contagem da primeira.
+    num_ids = {p._p.find(".//" + qn_w("numId")).get(qn_w("val"))
+               for p in doc.paragraphs if p.text in ("O usuário seleciona o ticket.",
+                                                     "O usuário confirma.")}
+    assert len(num_ids) == 2, "passos sem reinício de numeração"
+
+    # Sem homologação o capítulo 05 sai inteiro; sem assinaturas, a data também.
+    alvo_sh = os.path.join(tmp, "semhom", "Documentacao", "Entrega - X.docx")
+    gerar("gerar_docx.py", dict(EXEMPLO, incluir_homologacao=False,
+                                incluir_assinaturas=False), alvo_sh)
+    texto_sh = "\n".join(p.text for p in Document(alvo_sh).paragraphs)
+    assert "Homologação e Testes" not in texto_sh and "< Cidade >" not in texto_sh
+
+
+def qn_w(tag):
+    from docx.oxml.ns import qn
+    return qn("w:" + tag)
+
+
+def testar_evidencias(tmp):
+    from docx import Document
+
+    base_ev = os.path.join(tmp, "ev")
+    dados_ev = com_evidencias(os.path.join(base_ev, "Documentacao", "evidencias"))
+
+    alvo_ev = os.path.join(base_ev, "Documentacao", "Entrega - Pesagem.html")
+    gerar("gerar_html.py", dados_ev, alvo_ev)
+    html_ev = open(alvo_ev, encoding="utf-8").read()
+    assert html_ev.count('<div class="evidence-gallery">') == 2, "galeria não renderizada"
+    assert html_ev.count("data:image/png;base64,") == 2, "imagem não embutida"
+    assert "Ticket 100% aberto &amp; pesagem gravada." in html_ev, "legenda perdida"
+    assert "status-btn aprovado" in html_ev and "status-btn reprovado" in html_ev, \
+        "status do teste não aplicado"
+    assert html_ev.count("1 imagem anexada") == 2, "contador de evidências errado"
+
+    alvo_ev_dx = os.path.join(base_ev, "Documentacao", "Entrega - Pesagem.docx")
+    gerar("gerar_docx.py", dados_ev, alvo_ev_dx)
+    doc_ev = Document(alvo_ev_dx)
+    texto_ev = "\n".join(p.text for p in doc_ev.paragraphs)
+    assert "Capturas de tela" in texto_ev, "evidências fora dos anexos"
+    assert "Evidência 01 — Ticket 100% aberto & pesagem gravada." in texto_ev
+    assert "Evidência 02 — Mensagem de bloqueio." in texto_ev
+    assert "< Capturas de tela >" not in texto_ev, "placeholder de anexos sobrou"
+    # Logo da contracapa (inline do modelo) + 2 evidências.
+    assert len(doc_ev.inline_shapes) == 3, "logo + 2 evidências esperados"
+    resultados = [c.text for t in doc_ev.tables for r in t.rows for c in r.cells]
+    assert any("(X) Aprovado" in c for c in resultados), "aprovação não marcada"
+    assert any("(X) Reprovado" in c for c in resultados), "reprovação não marcada"
+
+    # Evidencia ausente avisa, mas o documento sai — inclusive com as
+    # evidencias que sobraram no mesmo teste.
+    faltante = dict(dados_ev)
+    faltante["funcionalidades"] = [dict(dados_ev["funcionalidades"][0])]
+    faltante["funcionalidades"][0]["testes"] = [
+        {"nome": "Cenário sem print", "esperado": "y",
+         "evidencias": [{"arquivo": "nao-existe.png", "legenda": ""},
+                        {"arquivo": "hom-fc1-1.png", "legenda": "A que existe."}]}]
+    alvo_falta = os.path.join(base_ev, "Documentacao", "Entrega - Falta.html")
+    saida = executar("gerar_html.py", faltante, alvo_falta)
+    assert saida.returncode == 0, "evidência ausente derrubou a geração"
+    assert "nao-existe.png" in saida.stderr, "falta não avisada no stderr"
+    relatorio = json.loads(saida.stdout.strip().splitlines()[-1])
+    assert [f["caso"] for f in relatorio["evidencias_faltando"]] == ["hom-fc1-1"], relatorio
+    assert relatorio["evidencias_faltando"][0]["teste"] == "Cenário sem print"
+    html_falta = open(alvo_falta, encoding="utf-8").read()
+    assert html_falta.count("data:image/png;base64,") == 1, "evidência válida perdida"
+
+
 def main():
     tmp = tempfile.mkdtemp(prefix="doc-entrega-")
     try:
-        # ── HTML ───────────────────────────────────────────────────
-        alvo = os.path.join(tmp, "Documentacao", "Entrega - Pesagem de Entrada.html")
-        r1 = gerar("gerar_html.py", EXEMPLO, alvo)
-        assert r1["versao"] == "1.0" and r1["backup"] is None, r1
-        html = open(alvo, encoding="utf-8").read()
-
-        assert "&lt;fiscal&gt;" in html and "&amp;" in html, "escape HTML quebrado"
-        assert "<svg" in html and "currentColor" in html, "logo SVG ausente"
-        assert "#4ADE80" in html and "#243143" in html, "paleta do design system ausente"
-        assert "#6AA84F" not in html and "#1a4d2e" not in html, "cor antiga remanescente"
-        assert html.count("class=\"crumb") == 3, "trilha de navegação incorreta"
-        assert "congelarEstado" in html, "correção do export ausente"
-        assert html.count("pesagem-1.0.0.jar") == 1, "nome do JAR repetido no detalhe"
-        assert "Histórico de versões" in html
-        assert re.search(r'name="doc-versao" content="1\.0"', html)
-        # nenhum placeholder de formatação sobrou no CSS
-        assert "%(" not in html.split("<script>")[0], "placeholder %( no HTML/CSS"
-
-        r2 = gerar("gerar_html.py", dict(EXEMPLO, changelog=["Ajuste de tolerância."]), alvo)
-        assert r2["versao"] == "1.1", r2
-        assert r2["backup"] and os.path.exists(r2["backup"]), "backup não criado"
-        html2 = open(alvo, encoding="utf-8").read()
-        assert "Ajuste de tolerância." in html2 and "v1.0" in html2, "histórico não acumulou"
-
-        # ── DOCX ───────────────────────────────────────────────────
-        alvo_dx = os.path.join(tmp, "Documentacao", "Entrega - Pesagem de Entrada.docx")
-        r3 = gerar("gerar_docx.py", EXEMPLO, alvo_dx)
-        assert r3["versao"] == "1.0", r3          # extensao diferente = versao propria
-        r4 = gerar("gerar_docx.py", dict(EXEMPLO, changelog=["Revisão do escopo."]), alvo_dx)
-        assert r4["versao"] == "1.1" and os.path.exists(r4["backup"]), r4
-
-        from docx import Document
-        doc = Document(alvo_dx)
-        assert doc.core_properties.version == "1.1"
-        texto = "\n".join(p.text for p in doc.paragraphs)
-
-        # ABNT NBR 14724: margens 3/2/3/2 cm e entrelinha 1,5 no corpo.
-        # O Word grava em twips, então a volta em cm não bate no EMU exato.
-        s = doc.sections[0]
-        margens = [m.cm for m in (s.top_margin, s.bottom_margin,
-                                  s.left_margin, s.right_margin)]
-        assert all(abs(m - alvo) < 0.01 for m, alvo in zip(margens, (3, 2, 3, 2))), \
-            "margens fora da ABNT: %s" % margens
-        assert doc.styles["Normal"].paragraph_format.line_spacing == 1.5, "entrelinha fora da ABNT"
-        assert doc.styles["Normal"].font.size.pt == 12, "corpo fora da ABNT"
-        assert all(p.paragraph_format.line_spacing == 1.0
-                   for t in doc.tables for r in t.rows for c in r.cells
-                   for p in c.paragraphs), "tabela deveria usar espaço simples"
-        # A numeração dos passos reinicia a cada funcionalidade.
-        assert texto.count("1. O usuário seleciona o ticket.") == 1
-        assert "Entrega de Desenvolvimento" in texto and "Checklist de Deploy" in texto
-        assert "Homologação e Testes" in texto
-        assert len(doc.inline_shapes) == 1, "logo ausente no DOCX"
-        assert doc.element.body.xml.count('w:fill="243143"') >= 4, "cabeçalhos sem shading"
-
-        # Sem layout fixo o Word ignora as larguras: o autofit entrega a faixa
-        # à coluna de texto mais longo e espreme as outras (a coluna "OK" do
-        # checklist quebrava "[ ]" em duas linhas).
-        secao = doc.sections[0]
-        util = secao.page_width - secao.left_margin - secao.right_margin
-        assert doc.tables, "documento sem tabelas"
-        for n, tabela in enumerate(doc.tables):
-            assert 'w:type="fixed"' in tabela._tbl.tblPr.xml, "tabela %d sem layout fixo" % n
-            for linha in tabela.rows:
-                # Numa linha com merge, cells[] repete a mesma célula em cada
-                # índice que ela cobre; contar duas vezes dobraria a soma.
-                unicas, vistos = [], set()
-                for celula in linha.cells:
-                    if id(celula._tc) not in vistos:
-                        vistos.add(id(celula._tc))
-                        unicas.append(celula)
-                larguras = [c.width for c in unicas]
-                assert all(larguras), "tabela %d tem célula sem largura" % n
-                assert sum(larguras) <= util, "tabela %d estoura a faixa útil" % n
-
-        # ── Evidencias embutidas ───────────────────────────────────
-        base_ev = os.path.join(tmp, "ev")
-        dados_ev = com_evidencias(os.path.join(base_ev, "Documentacao", "evidencias"))
-
-        alvo_ev = os.path.join(base_ev, "Documentacao", "Entrega - Pesagem.html")
-        gerar("gerar_html.py", dados_ev, alvo_ev)
-        html_ev = open(alvo_ev, encoding="utf-8").read()
-        assert html_ev.count('<div class="evidence-gallery">') == 2, "galeria não renderizada"
-        assert html_ev.count("data:image/png;base64,") == 2, "imagem não embutida"
-        assert "Ticket 100% aberto &amp; pesagem gravada." in html_ev, "legenda perdida"
-        assert "status-btn aprovado" in html_ev and "status-btn reprovado" in html_ev, \
-            "status do teste não aplicado"
-        assert html_ev.count("1 imagem anexada") == 2, "contador de evidências errado"
-
-        # ── Addon Studio: o tipo servico tem badge proprio ─────────
-        addon = dict(EXEMPLO, funcionalidades=[
-            dict(EXEMPLO["funcionalidades"][0], titulo="Processar Fechamento",
-                 tipo="servico", icone="🧩"),
-        ])
-        alvo_ad = os.path.join(tmp, "addon", "Documentacao", "Entrega - Frete.html")
-        gerar("gerar_html.py", addon, alvo_ad)
-        html_ad = open(alvo_ad, encoding="utf-8").read()
-        assert "Serviço da Tela" in html_ad, "badge de @Service ausente no HTML"
-        gerar("gerar_docx.py", addon, alvo_ad.replace(".html", ".docx"))
-        doc_ad = Document(alvo_ad.replace(".html", ".docx"))
-        assert any("Serviço da Tela" in p.text for p in doc_ad.paragraphs), \
-            "badge de @Service ausente no DOCX"
-
-        alvo_ev_dx = os.path.join(base_ev, "Documentacao", "Entrega - Pesagem.docx")
-        gerar("gerar_docx.py", dados_ev, alvo_ev_dx)
-        doc_ev = Document(alvo_ev_dx)
-        texto_ev = "\n".join(p.text for p in doc_ev.paragraphs)
-        assert "Anexos – Evidências de Entrega" in texto_ev, "seção de anexos ausente"
-        assert "Evidência 01 – Ticket 100% aberto & pesagem gravada." in texto_ev
-        assert "Evidência 02 – Mensagem de bloqueio." in texto_ev
-        assert len(doc_ev.inline_shapes) == 3, "logo + 2 evidências esperados"
-        # O anexo entra antes de Observações e empurra a numeração dela.
-        assert re.search(r"(\d+)\. Anexos", texto_ev).group(1) == \
-            str(int(re.search(r"(\d+)\. Observações", texto_ev).group(1)) - 1)
-        resultados = [c.text for t in doc_ev.tables for r in t.rows for c in r.cells]
-        assert any("[X] Aprovado" in c for c in resultados), "aprovação não marcada"
-        assert any("[X] Reprovado" in c for c in resultados), "reprovação não marcada"
-
-        # Evidencia ausente avisa, mas o documento sai — inclusive com as
-        # evidencias que sobraram no mesmo teste.
-        faltante = dict(dados_ev)
-        faltante["funcionalidades"] = [dict(dados_ev["funcionalidades"][0])]
-        faltante["funcionalidades"][0]["testes"] = [
-            {"nome": "Cenário sem print", "esperado": "y",
-             "evidencias": [{"arquivo": "nao-existe.png", "legenda": ""},
-                            {"arquivo": "hom-fc1-1.png", "legenda": "A que existe."}]}]
-        alvo_falta = os.path.join(base_ev, "Documentacao", "Entrega - Falta.html")
-        saida = executar("gerar_html.py", faltante, alvo_falta)
-        assert saida.returncode == 0, "evidência ausente derrubou a geração"
-        assert "nao-existe.png" in saida.stderr, "falta não avisada no stderr"
-        relatorio = json.loads(saida.stdout.strip().splitlines()[-1])
-        assert [f["caso"] for f in relatorio["evidencias_faltando"]] == ["hom-fc1-1"], relatorio
-        assert relatorio["evidencias_faltando"][0]["teste"] == "Cenário sem print"
-        html_falta = open(alvo_falta, encoding="utf-8").read()
-        assert html_falta.count("data:image/png;base64,") == 1, "evidência válida perdida"
-        assert os.path.exists(alvo_falta), "documento não gerado"
-
+        testar_html(tmp)
+        testar_docx(tmp)
+        testar_evidencias(tmp)
         print("OK — HTML e DOCX gerados, versionados e validados.")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

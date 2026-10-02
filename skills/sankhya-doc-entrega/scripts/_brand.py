@@ -1,49 +1,45 @@
 """Identidade visual Sankhya — fonte unica de cores, tipografia e logo.
 
-Tokens extraidos do design system de sankhya.com.br. Consumido por
-gerar_html.py e gerar_docx.py. Nao possui dependencias externas.
+Tokens do guia "Modelo de Documento Padrao Sankhya 2026". O DOCX herda tudo
+do template em assets/; quem consome estes valores e o gerar_html.py, para que
+o HTML saia com a mesma cara do Word. Nao possui dependencias externas.
 """
 
 import os
 
-# ── Cores (design system) ──────────────────────────────────────────
-PRIMARY    = "#4ADE80"   # verde de acao/destaque
-SECONDARY  = "#0EA5E9"   # azul informativo
-TERTIARY   = "#243143"   # azul-petroleo — titulos, sidebar, cabecalhos
-SURFACE    = "#F0FAF0"   # fundo de pagina (somente HTML)
-ON_SURFACE = "#4B5563"   # texto corrido
+# ── Cores (guia Padrao 2026) ───────────────────────────────────────
+NAVY_900    = "#0C1927"   # fundo escuro mais profundo (capas)
+NAVY_700    = "#212F41"   # texto principal, titulos, cabecalho de tabela
+SLATE       = "#343C50"   # subtitulos de terceiro nivel
+VERDE       = "#00D666"   # destaques sobre fundo escuro, linhas e numeros
+VERDE_APOIO = "#00CD5E"   # titulos finos, marcadores e rotulos sobre fundo claro
+CINZA       = "#888888"   # legendas, cabecalho e rodape
+CINZA_CLARO = "#F3F3F3"   # fundos de nota, linhas alternadas
 
-# Semanticas — nao existem no design system do site, definidas aqui
-# para status de homologacao (aprovado/reprovado) e blocos de alerta.
+# Semanticas — o guia nao tem; existem so para o status de homologacao do HTML.
 DANGER  = "#DC2626"
 WARNING = "#D97706"
 
-# Versoes sem "#", para APIs que exigem hex puro (python-docx w:shd)
-def hexr(cor):
-    """'#243143' -> '243143'"""
-    return cor.lstrip("#")
-
-def rgb(cor):
-    """'#243143' -> (36, 49, 67)"""
-    c = cor.lstrip("#")
-    return tuple(int(c[i:i + 2], 16) for i in (0, 2, 4))
-
-# ── Tipografia ─────────────────────────────────────────────────────
+# ── Tipografia (guia Padrao 2026, em pt) ───────────────────────────
 FONT_STACK = "'Work Sans','Segoe UI',Arial,sans-serif"
-FONT_DOCX  = "Work Sans"   # fallback do Word resolve se nao instalada
+PT_TITULO_ABERTURA = 24
+PT_TITULO_1 = 17
+PT_TITULO_2 = 12.5
+PT_TITULO_3 = 10.5
+PT_TEXTO    = 10.5
+PT_LEGENDA  = 8
 
-# ── Espacamento e raios (design system) ────────────────────────────
-RADIUS = {"sm": "2px", "md": "3px", "lg": "4px", "xl": "5px", "full": "9999px"}
-SHADOW_SM = "0 1px 2px rgba(10,12,18,.05)"
-SHADOW_MD = "0 2px 6px rgba(0,0,0,.05)"
+# ── Ativos do modelo DS v.4 ────────────────────────────────────────
+_ASSETS = os.path.normpath(os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), os.pardir, "assets"))
+TEMPLATE_DOCX  = os.path.join(_ASSETS, "modelo-entrega-v4.docx")
+# Fundos da capa e da contracapa, extraidos do template, para o HTML.
+CAPA_JPG       = os.path.join(_ASSETS, "capa-fundo.jpg")
+CONTRACAPA_JPG = os.path.join(_ASSETS, "contracapa-fundo.jpg")
 
 # ── Logo ───────────────────────────────────────────────────────────
-LOGO_PNG = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                        os.pardir, "assets", "sankhya-logo.png")
-LOGO_PNG = os.path.normpath(LOGO_PNG)
-
 # SVG inline para o HTML. A wordmark usa currentColor para herdar a cor
-# do container (branca na sidebar escura, tertiary sobre fundo claro).
+# do container (branca na capa escura, navy sobre fundo claro).
 LOGO_SVG = (
     '<svg class="logo" viewBox="0 0 124 28" role="img" aria-label="Sankhya" '
     'fill="none" xmlns="http://www.w3.org/2000/svg">'
@@ -62,13 +58,20 @@ LOGO_SVG = (
 )
 
 # ── Metadados por tipo de funcionalidade ───────────────────────────
-# Cores restritas a paleta do design system.
+# O rotulo vai acima de cada funcionalidade no manual de uso. Cores so do guia.
 TIPO_META = {
-    "acao":    {"badge": "Ação Manual",       "cor": SECONDARY,  "icone": "▶"},
-    "evento":  {"badge": "Listener / Evento", "cor": PRIMARY,    "icone": "⚡"},
-    "job":     {"badge": "Job Agendado",      "cor": TERTIARY,   "icone": "⏰"},
-    "regra":   {"badge": "Regra de Negócio",  "cor": ON_SURFACE, "icone": "📋"},
+    "acao":    {"badge": "Ação Manual",       "cor": VERDE_APOIO, "icone": "▶"},
     # Addon Studio: operacao de @Service chamada pela tela HTML5. Nao existe no
     # modulo Java tradicional, onde a mesma acao seria um botao (AcaoRotinaJava).
-    "servico": {"badge": "Serviço da Tela",   "cor": WARNING,    "icone": "🧩"},
+    "servico": {"badge": "Serviço da Tela",   "cor": VERDE_APOIO, "icone": "🧩"},
+    "evento":  {"badge": "Listener / Evento", "cor": NAVY_700,    "icone": "⚡"},
+    "job":     {"badge": "Job Agendado",      "cor": SLATE,       "icone": "⏰"},
+    "regra":   {"badge": "Regra de Negócio",  "cor": CINZA,       "icone": "📋"},
 }
+
+# Rotulos dos itens do checklist de deploy, usados nos dois formatos.
+LABEL_CHECKLIST = {"tela_adicional": "Tela Adicional", "parametro": "Parâmetro TSIPAR",
+                   "script_sql": "Script DDL", "acao": "Botão de Ação",
+                   "servico": "Serviço", "evento": "Evento", "job": "Job",
+                   "regra": "Regra", "jar": "Deploy JAR", "dashboard": "Dashboard",
+                   "relatorio": "Relatório"}

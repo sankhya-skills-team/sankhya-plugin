@@ -13,13 +13,12 @@ from datetime import date
 
 HISTORICO = ".historico-entregas.json"
 
-# Papeis usados quando o dados.json nao informa personas. Ficam aqui, e nao em
-# cada gerador, porque os dois formatos tem de assinar igual: com a lista vazia
-# o DOCX usava estes papeis e o HTML desenhava uma linha sem rotulo nenhum.
-PERSONAS_SANKHYA_PADRAO = [{"nome": "", "funcao": "Consultor"},
-                           {"nome": "", "funcao": "Gerente de Projetos – Sankhya"}]
-PERSONAS_CLIENTE_PADRAO = [{"nome": "", "funcao": "Líder do Projeto"},
-                           {"nome": "", "funcao": "Solicitante"}]
+# Papeis das assinaturas quando o dados.json nao informa nenhuma: os cinco do
+# modelo DS v.4, na ordem da grade (duas colunas). Ficam aqui, e nao em cada
+# gerador, porque os dois formatos tem de assinar igual.
+ASSINATURAS_PADRAO = [{"nome": "", "funcao": f} for f in (
+    "Líder do Projeto", "Gerente de Projetos — Sankhya", "Desenvolvedor",
+    "Solicitante", "Consultor")]
 
 
 # ── Entrada ────────────────────────────────────────────────────────
@@ -112,11 +111,12 @@ def _gravar_historico(pasta, historico):
         json.dump(historico, f, ensure_ascii=False, indent=2)
 
 
-def resolver_versao(arquivo_saida, changelog):
+def resolver_versao(arquivo_saida, changelog, autor=""):
     """Determina a versao, faz backup do documento anterior e registra o historico.
 
     Retorna (versao, backup_ou_None, lista_historico) onde lista_historico ja
-    inclui a entrada da versao atual, mais recente primeiro.
+    inclui a entrada da versao atual, mais recente primeiro. Entradas gravadas
+    antes da coluna AUTOR nao tem a chave "autor".
     """
     pasta = os.path.dirname(arquivo_saida)
     os.makedirs(pasta, exist_ok=True)
@@ -140,6 +140,7 @@ def resolver_versao(arquivo_saida, changelog):
     entradas.insert(0, {
         "versao": versao,
         "data": date.today().strftime("%d/%m/%Y"),
+        "autor": autor,
         "alteracoes": list(changelog) if changelog else
                       (["Primeira versão do documento."] if versao == "1.0" else []),
     })
@@ -189,3 +190,31 @@ def parse_personas(itens):
         else:
             pessoas.append({"nome": linha, "funcao": ""})
     return pessoas
+
+
+def autor_atual(responsavel):
+    """Quem assina a versao atual: 'Dev A -> Dev B (a partir da v1.1)' vira 'Dev B'."""
+    ultimo = str(responsavel or "").split("→")[-1]
+    return re.sub(r"\s*\(.*\)\s*$", "", ultimo).strip()
+
+
+# Campos do item de checklist exibidos como detalhe: (chave, rotulo, monoespacado).
+# Rotulo None = texto livre, sem prefixo.
+CAMPOS_DETALHE = [
+    ("arquivo", "Arquivo", True), ("entidade", "Entidade", True),
+    ("tipo_sankhya", "Tipo", False), ("classe", "Classe", True),
+    ("perfis", "Perfis", False), ("descricao", None, False),
+    ("tipo_valor", "Tipo", False), ("valor_padrao", "Padrão", True),
+    ("caminho_servidor", "Destino", True), ("observacao", None, False),
+]
+
+
+def nome_item_checklist(item):
+    return item.get("nome_exibicao") or item.get("nome") or item.get("arquivo", "")
+
+
+def detalhes_checklist(item):
+    """[(rotulo, valor, mono)] do item, sem repetir o que ja virou o nome."""
+    nome = nome_item_checklist(item)
+    return [(rotulo, str(item[chave]), mono) for chave, rotulo, mono in CAMPOS_DETALHE
+            if item.get(chave) and item.get(chave) != nome]

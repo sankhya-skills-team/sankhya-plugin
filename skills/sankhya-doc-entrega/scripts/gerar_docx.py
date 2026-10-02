@@ -1,499 +1,574 @@
-"""Gera o documento de entrega em .docx (Word editavel).
+"""Gera o documento de entrega em .docx sobre o modelo DS v.4.
 
 Uso: python gerar_docx.py <dados.json>
 Contrato do JSON: ver secao "Contrato dados.json" no SKILL.md.
-Imprime na saida padrao um JSON com {arquivo, versao, backup, evidencias_faltando}.
+Imprime na saida padrao um JSON com {arquivo, versao, backup, evidencias_faltando,
+sumario_atualizado}.
 
-Regra visual: usa apenas as cores do design system Sankhya e nao aplica
-cor de fundo na pagina — o preenchimento fica restrito a cabecalhos de tabela.
+Nao desenha o documento: abre assets/modelo-entrega-v4.docx (capa, cabecalho,
+rodape, sumario, estilos e fontes do modelo) e preenche os placeholders. Os
+blocos repetidos (funcionalidades, cenarios, checklist, evidencias) sao copias
+dos proprios elementos do modelo, para herdar a formatacao sem redefini-la aqui.
+Campo sem valor no JSON mantem o placeholder "< ... >" do modelo, para
+preenchimento manual no Word.
 """
 
+import copy
 import json
 import os
+import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _brand as B
-from _comum import (PERSONAS_CLIENTE_PADRAO, PERSONAS_SANKHYA_PADRAO, carregar_dados,
-                    coletar_evidencias, garantir, parse_personas, resolver_versao)
+from _comum import (ASSINATURAS_PADRAO, autor_atual, carregar_dados, coletar_evidencias,
+                    detalhes_checklist, garantir, nome_item_checklist, parse_personas,
+                    resolver_versao)
 
 garantir("docx", "python-docx")
 
 from docx import Document
-from docx.oxml import OxmlElement
+from docx.image.image import Image
 from docx.oxml.ns import qn
-from docx.shared import Cm, Pt, RGBColor
+from docx.shared import Cm
 
 D = carregar_dados(sys.argv)
 
 ARQUIVO_SAIDA = D["arquivo_saida"]
-VERSAO, BACKUP, HISTORICO = resolver_versao(ARQUIVO_SAIDA, D.get("changelog"))
+AUTOR = autor_atual(D.get("responsavel_tecnico"))
+VERSAO, BACKUP, HISTORICO = resolver_versao(ARQUIVO_SAIDA, D.get("changelog"), AUTOR)
 DATA_GERACAO = HISTORICO[0]["data"]
 
 FUNCIONALIDADES = D.get("funcionalidades", [])
-CHECKLIST       = D.get("checklist_deploy", {}) or {}
-PRE  = CHECKLIST.get("pre_requisitos") or []
-POS  = CHECKLIST.get("pos_deploy") or []
+CHECKLIST = D.get("checklist_deploy", {}) or {}
+PRE = CHECKLIST.get("pre_requisitos") or []
+POS = CHECKLIST.get("pos_deploy") or []
+HOMOLOGACAO = D.get("homologacao") or {}
+TREINAMENTO = D.get("treinamento") or {}
 
 EVIDENCIAS, EVIDENCIAS_FALTANDO = coletar_evidencias(D)
 
-C_TERTIARY  = RGBColor(*B.rgb(B.TERTIARY))
-C_ON_SURF   = RGBColor(*B.rgb(B.ON_SURFACE))
-C_WHITE     = RGBColor(255, 255, 255)
-HEX_TERTIARY = B.hexr(B.TERTIARY)
+# Faixa util do modelo, em twips (tblW das tabelas de corpo).
+LARGURA_TWIPS = 9298
+LARGURA_IMAGEM = Cm(16.4)
+ALTURA_MAX_IMAGEM = Cm(19)    # print de tela alto nao pode passar da pagina
+NUMID_PASSOS = "4"            # lista numerada "1." do exemplo do modelo
+
+_AVISO_PERFIL = {
+    "relatorio": "É necessário configurar os perfis de usuário que terão acesso ao relatório.",
+    "tela":      "É necessário configurar os perfis de usuário que terão acesso à tela.",
+    "dashboard": "É necessário configurar os perfis de usuário que terão acesso ao dashboard.",
+}
+
+doc = Document(B.TEMPLATE_DOCX)
+CORPO = doc.element.body
 
 
-# ── ABNT NBR 14724 ─────────────────────────────────────────────────
-# 5.1 margens: 3 cm em cima e a esquerda, 2 cm embaixo e a direita.
-# 5.2 espacamento: 1,5 entre linhas no texto; simples em tabelas,
-#     legendas e notas, nestas com corpo menor.
-ABNT_MARGEM_SUP  = Cm(3)
-ABNT_MARGEM_INF  = Cm(2)
-ABNT_MARGEM_ESQ  = Cm(3)
-ABNT_MARGEM_DIR  = Cm(2)
-ABNT_CORPO       = Pt(12)
-ABNT_ENTRELINHA  = 1.5
-ABNT_LINHA       = Pt(18)   # uma entrelinha de 1,5 sobre corpo de 12 pt
-ABNT_TABELA      = 1.0      # espaco simples dentro de tabela
+# ── Localizacao no modelo ──────────────────────────────────────────
 
-ESTILOS_TEXTO = ("Normal", "List Bullet", "List Number")
+def texto(el):
+    return "".join(t.text or "" for t in el.iter(qn("w:t")))
 
 
-def aplicar_abnt_paginas(doc):
-    for secao in doc.sections:
-        secao.top_margin = ABNT_MARGEM_SUP
-        secao.bottom_margin = ABNT_MARGEM_INF
-        secao.left_margin = ABNT_MARGEM_ESQ
-        secao.right_margin = ABNT_MARGEM_DIR
+def estilo(el):
+    st = el.find("./" + qn("w:pPr") + "/" + qn("w:pStyle"))
+    return st.get(qn("w:val")) if st is not None else ""
 
 
-def aplicar_abnt_estilos(doc):
-    for nome in ESTILOS_TEXTO:
-        try:
-            estilo = doc.styles[nome]
-        except KeyError:
-            continue
-        estilo.font.size = ABNT_CORPO
-        pf = estilo.paragraph_format
-        pf.line_spacing = ABNT_ENTRELINHA
-        pf.space_before = Pt(0)
-        pf.space_after = Pt(0)
+def paragrafo(inicio, nome_estilo=None):
+    for el in CORPO.iterchildren(qn("w:p")):
+        if texto(el).startswith(inicio) and (nome_estilo is None or estilo(el) == nome_estilo):
+            return el
+    raise LookupError("modelo sem o paragrafo %r" % inicio)
 
 
-def aplicar_abnt_tabelas(doc):
-    """Espaco simples dentro das tabelas, como manda a norma.
+def tabela(contendo):
+    for el in CORPO.iterchildren(qn("w:tbl")):
+        if contendo in texto(el):
+            return el
+    raise LookupError("modelo sem a tabela com %r" % contendo)
 
-    Roda no fim: as celulas herdam o estilo Normal, que ja esta em 1,5.
-    Mexe so na entrelinha -- o espacamento vertical entre paragrafos ja vem
-    zerado do estilo, e zerar de novo apagaria o vao entre as assinaturas.
+
+def entre(inicio, fim):
+    """Elementos do corpo depois de `inicio` e antes de `fim`."""
+    saida, el = [], inicio.getnext()
+    while el is not None and el is not fim:
+        saida.append(el)
+        el = el.getnext()
+    return saida
+
+
+def remover(*elementos):
+    for el in elementos:
+        el.getparent().remove(el)
+
+
+def inserir_apos(ancora, elementos):
+    for el in elementos:
+        ancora.addnext(el)
+        ancora = el
+    return ancora
+
+
+# ── Texto ──────────────────────────────────────────────────────────
+
+def definir_texto(p, valor, limpar_placeholder=False):
+    """Troca o texto do paragrafo mantendo a formatacao do primeiro run.
+
+    `limpar_placeholder` tira o italico cinza que o modelo usa nos "< ... >".
     """
-    for tabela in doc.tables:
-        for linha in tabela.rows:
-            for celula in linha.cells:
-                for par in celula.paragraphs:
-                    par.paragraph_format.line_spacing = ABNT_TABELA
-
-
-# ── Helpers de formatacao ──────────────────────────────────────────
-
-def sombrear(celula, hex_fill):
-    tcPr = celula._tc.get_or_add_tcPr()
-    shd = OxmlElement("w:shd")
-    shd.set(qn("w:val"), "clear")
-    shd.set(qn("w:color"), "auto")
-    shd.set(qn("w:fill"), hex_fill)
-    tcPr.append(shd)
-
-
-def run(par, texto, bold=None, size=None, color=None, italic=None):
-    r = par.add_run(texto)
-    if bold is not None:
-        r.bold = bold
-    if italic is not None:
-        r.italic = italic
-    if size is not None:
-        r.font.size = Pt(size)
-    if color is not None:
-        r.font.color.rgb = color
-    return r
-
-
-def titulo(doc, texto, nivel=2):
-    p = doc.add_paragraph()
-    run(p, texto, bold=True, size=14 if nivel == 2 else 12, color=C_TERTIARY)
-    # ABNT 5.2: titulo separado do texto anterior e posterior por uma
-    # entrelinha de 1,5 -- 18 pt sobre corpo de 12 pt.
-    p.paragraph_format.space_before = ABNT_LINHA
-    p.paragraph_format.space_after = ABNT_LINHA
-    p.paragraph_format.line_spacing = 1.0
-    if nivel == 2:
-        _borda_inferior(p, B.hexr(B.PRIMARY))
+    runs = p.findall(qn("w:r"))
+    for r in runs[1:]:
+        p.remove(r)
+    if runs:
+        run = runs[0]
+    else:
+        run = p.makeelement(qn("w:r"), {})
+        p.append(run)
+    for t in run.findall(qn("w:t")):
+        run.remove(t)
+    if limpar_placeholder:
+        rpr = run.find(qn("w:rPr"))
+        for tag in ("w:i", "w:color"):
+            for el in (rpr.findall(qn(tag)) if rpr is not None else []):
+                rpr.remove(el)
+    t = run.makeelement(qn("w:t"), {})
+    t.text = str(valor)
+    t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+    run.append(t)
     return p
 
 
-def _borda_inferior(par, hex_cor):
-    pPr = par._p.get_or_add_pPr()
-    bordas = OxmlElement("w:pBdr")
-    bottom = OxmlElement("w:bottom")
-    bottom.set(qn("w:val"), "single")
-    bottom.set(qn("w:sz"), "12")
-    bottom.set(qn("w:space"), "2")
-    bottom.set(qn("w:color"), hex_cor)
-    bordas.append(bottom)
-    pPr.append(bordas)
+def definir_ultimo_run(p, valor):
+    """Paragrafo 'Rotulo: valor' do modelo: troca so o valor, no ultimo run."""
+    runs = p.findall(qn("w:r"))
+    for r in runs[2:]:
+        p.remove(r)
+    alvo = runs[1] if len(runs) > 1 else runs[0]
+    for t in alvo.findall(qn("w:t")):
+        alvo.remove(t)
+    t = alvo.makeelement(qn("w:t"), {})
+    t.text = str(valor)
+    t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+    alvo.append(t)
 
 
-def cabecalho_tabela(tabela, colunas):
-    for i, texto in enumerate(colunas):
-        celula = tabela.rows[0].cells[i]
-        sombrear(celula, HEX_TERTIARY)
-        run(celula.paragraphs[0], texto, bold=True, size=10, color=C_WHITE)
+def preencher_celula(tc, linhas):
+    """Uma linha por paragrafo, copiando o formato do primeiro."""
+    linhas = [str(l) for l in (linhas if isinstance(linhas, list) else [linhas])] or [""]
+    pars = tc.findall(qn("w:p"))
+    for p in pars[1:]:
+        tc.remove(p)
+    base = pars[0]
+    definir_texto(base, linhas[0])
+    ancora = base
+    for linha in linhas[1:]:
+        novo = definir_texto(copy.deepcopy(base), linha)
+        ancora.addnext(novo)
+        ancora = novo
 
 
-def linhas(doc, valor, estilo="List Bullet"):
-    """Aceita string (com \\n) ou lista de strings."""
-    itens = valor if isinstance(valor, list) else str(valor or "").split("\n")
-    for item in itens:
-        texto = str(item).strip()
-        if texto:
-            doc.add_paragraph(texto, style=estilo)
+def preencher_chave_valor(tbl, valores):
+    """Tabela rotulo | valor do modelo. Valor vazio mantem o placeholder."""
+    for tr in tbl.findall(qn("w:tr")):
+        celulas = tr.findall(qn("w:tc"))
+        if len(celulas) < 2:
+            continue
+        valor = valores.get(texto(celulas[0]).strip())
+        if valor:
+            preencher_celula(celulas[1], valor)
 
 
-def linhas_numeradas(doc, valor):
-    """Passos numerados no proprio texto, com recuo deslocado.
+def lista(itens):
+    itens = itens if isinstance(itens, list) else str(itens or "").split("\n")
+    return [str(i).strip() for i in itens if str(i).strip()]
 
-    Nao usa o estilo List Number: todos os paragrafos dele compartilham a
-    mesma instancia de numeracao, entao a contagem seguia acumulando de uma
-    funcionalidade para a proxima (2.2 comecava no 7).
+
+# ── Prototipos copiados do modelo ──────────────────────────────────
+# Capturados antes de qualquer remocao: sao a fonte da formatacao dos blocos
+# gerados.
+
+P_H2       = copy.deepcopy(paragrafo("Acesso às novas funcionalidades", "Heading2"))
+P_ROTULO   = copy.deepcopy(paragrafo("Exemplo", "SkRotulo"))
+P_FUNC     = copy.deepcopy(paragrafo("Funcionalidade:"))
+P_PASSO    = copy.deepcopy(paragrafo("Acesse o menu Financeiro"))
+P_MARCADOR = copy.deepcopy(paragrafo("Utilize filtros"))
+T_CAIXA    = copy.deepcopy(tabela("OBSERVAÇÃO"))
+T_DADOS    = copy.deepcopy(tabela("DESCRIÇÃO DA ALTERAÇÃO"))
+
+
+def rotulo(valor):
+    return definir_texto(copy.deepcopy(P_ROTULO), valor)
+
+
+def subtitulo(valor):
+    return definir_texto(copy.deepcopy(P_H2), valor)
+
+
+def marcadores(itens):
+    return [definir_texto(copy.deepcopy(P_MARCADOR), i, limpar_placeholder=True)
+            for i in lista(itens)]
+
+
+def nova_numeracao():
+    """Instancia de lista que recomeca em 1: sem ela os passos de uma
+    funcionalidade continuariam a contagem da anterior."""
+    numbering = doc.part.numbering_part.element
+    abstrato = None
+    for num in numbering.findall(qn("w:num")):
+        if num.get(qn("w:numId")) == NUMID_PASSOS:
+            abstrato = num.find(qn("w:abstractNumId")).get(qn("w:val"))
+    novo_id = str(max(int(n.get(qn("w:numId"))) for n in numbering.findall(qn("w:num"))) + 1)
+    num = numbering.makeelement(qn("w:num"), {qn("w:numId"): novo_id})
+    abs_el = num.makeelement(qn("w:abstractNumId"), {qn("w:val"): abstrato})
+    override = num.makeelement(qn("w:lvlOverride"), {qn("w:ilvl"): "0"})
+    override.append(override.makeelement(qn("w:startOverride"), {qn("w:val"): "1"}))
+    num.extend([abs_el, override])
+    numbering.append(num)
+    return novo_id
+
+
+def passos_numerados(itens):
+    num_id = nova_numeracao()
+    saida = []
+    for item in lista(itens):
+        p = definir_texto(copy.deepcopy(P_PASSO), item)
+        p.find(".//" + qn("w:numId")).set(qn("w:val"), num_id)
+        saida.append(p)
+    return saida
+
+
+def caixa_observacao(valor):
+    """Caixa OBSERVACAO do modelo (borda verde, fundo cinza)."""
+    tbl = copy.deepcopy(T_CAIXA)
+    p = tbl.find(".//" + qn("w:p"))
+    definir_ultimo_run(p, valor)
+    return tbl
+
+
+def tabela_dados(colunas, linhas):
+    """Tabela no formato do historico de versoes: cabecalho navy e linhas
+    alternando branco e cinza, copiadas das duas linhas de dados do modelo.
+
+    colunas = [(titulo, fracao_da_largura)]; linhas = [[str | [str]]].
     """
-    itens = valor if isinstance(valor, list) else str(valor or "").split("\n")
-    itens = [str(i).strip() for i in itens if str(i).strip()]
-    for n, texto in enumerate(itens, 1):
-        p = doc.add_paragraph()
-        p.paragraph_format.left_indent = Cm(0.75)
-        p.paragraph_format.first_line_indent = Cm(-0.75)
-        run(p, "%d. " % n, bold=True, color=C_TERTIARY)
-        run(p, texto)
+    tbl = copy.deepcopy(T_DADOS)
+    trs = tbl.findall(qn("w:tr"))
+    cabecalho, pares = trs[0], (trs[1], trs[2])
+    for tr in trs:
+        tbl.remove(tr)
+    larguras = [int(LARGURA_TWIPS * f) for _t, f in colunas]
+
+    grid = tbl.find(qn("w:tblGrid"))
+    for gc in list(grid):
+        grid.remove(gc)
+    for w in larguras:
+        grid.append(grid.makeelement(qn("w:gridCol"), {qn("w:w"): str(w)}))
+
+    def linha(modelo, valores):
+        tr = copy.deepcopy(modelo)
+        proto = tr.findall(qn("w:tc"))[0]
+        for tc in tr.findall(qn("w:tc")):
+            tr.remove(tc)
+        for w, valor in zip(larguras, valores):
+            tc = copy.deepcopy(proto)
+            tc.find(".//" + qn("w:tcW")).set(qn("w:w"), str(w))
+            preencher_celula(tc, valor)
+            tr.append(tc)
+        return tr
+
+    tbl.append(linha(cabecalho, [t.upper() for t, _f in colunas]))
+    for i, valores in enumerate(linhas):
+        tbl.append(linha(pares[i % 2], valores))
+    return tbl
 
 
-def layout_fixo(tabela):
-    """Faz o Word respeitar as larguras declaradas.
+# ── Capa e controle do documento ───────────────────────────────────
 
-    Sem w:tblLayout fixed o Word roda o autofit e ignora tanto
-    table.autofit=False quanto os valores de columns[i].width. O autofit
-    entrega a faixa a coluna de texto mais longo e espreme as outras ate a
-    largura de um caractere.
-    """
-    layout = OxmlElement("w:tblLayout")
-    layout.set(qn("w:type"), "fixed")
-    tabela._tbl.tblPr.append(layout)
+definir_texto(paragrafo("< Nome do projeto >", "SkCapaLinha2"),
+              D.get("nome_customizacao") or "< Nome do projeto >")
+
+for tc in tabela("< Nome do cliente >").iter(qn("w:tc")):
+    rotulo_capa, p_valor = texto(tc.findall(qn("w:p"))[0]), tc.findall(qn("w:p"))[1]
+    valor = {"CLIENTE": D.get("parceiro"), "VERSÃO": VERSAO, "DATA": DATA_GERACAO,
+             "RESPONSÁVEL": AUTOR}.get(rotulo_capa)
+    if valor:
+        definir_texto(p_valor, valor)
+
+email = D.get("email_responsavel", "")
+preencher_chave_valor(tabela("TIPO DE DOCUMENTO"), {
+    "CLIENTE": D.get("parceiro"),
+    "PROJETO": D.get("nome_customizacao"),
+    "VERSÃO": VERSAO,
+    "DATA": DATA_GERACAO,
+    "RESPONSÁVEL": " — ".join(v for v in (AUTOR, email) if v),
+})
+
+# Historico: mais antiga primeiro, como no modelo.
+hist_modelo = tabela("DESCRIÇÃO DA ALTERAÇÃO")
+hist_modelo.addprevious(tabela_dados(
+    [("Versão", 0.118), ("Data", 0.172), ("Autor", 0.248), ("Descrição da alteração", 0.462)],
+    [[e["versao"], e["data"], e.get("autor", ""), e.get("alteracoes") or ["—"]]
+     for e in reversed(HISTORICO)]))
+remover(hist_modelo)
+
+# ── 01 Identificacao ───────────────────────────────────────────────
+
+preencher_chave_valor(tabela("Número da solicitação"), {
+    "Parceiro / Cliente": D.get("parceiro"),
+    "Número da solicitação": D.get("id_demanda"),
+    "Desenvolvedor": D.get("responsavel_tecnico"),
+    "Solicitante da demanda (Sankhya)": D.get("solicitante_sankhya"),
+    "Solicitante ou responsável pela demanda (Parceiro)": D.get("solicitante_parceiro"),
+})
+
+# ── 03 Descricao das personalizacoes ───────────────────────────────
+# Observacoes e anexos tecnicos sao opcionais por natureza: sem valor saem
+# como "—", e nao como placeholder pendente.
+
+preencher_chave_valor(tabela("Módulo / Área"), {
+    "Descrição da customização": D.get("objetivo"),
+    "Módulo / Área": D.get("modulo_area"),
+    "Observações": D.get("observacoes") or "—",
+    "Anexos técnicos": D.get("anexos_tecnicos") or "—",
+})
+
+# ── 04 Manual de uso ───────────────────────────────────────────────
+
+if D.get("caminho_sistema"):
+    definir_ultimo_run(paragrafo("Caminho no sistema:"), " " + D["caminho_sistema"])
+if D.get("permissoes"):
+    definir_ultimo_run(paragrafo("Permissões necessárias:"), " " + D["permissoes"])
 
 
-def aplicar_larguras(tabela, fracoes):
-    """Distribui a faixa util entre as colunas, em fracoes que somam 1.
-
-    A largura precisa estar em cada celula de cada linha: so em
-    columns[i].width o Word ignora.
-    """
-    tabela.autofit = False
-    layout_fixo(tabela)
-    larguras = [int(UTIL * f) for f in fracoes]
-    for c, largura in enumerate(larguras):
-        tabela.columns[c].width = largura
-    for linha in tabela.rows:
-        for c, largura in enumerate(larguras):
-            linha.cells[c].width = largura
-
-
-def celula_assinatura(celula, papel, ultima=False):
-    # Borda inferior em vez de underscores: acompanha a largura da celula
-    # em qualquer fonte, sem estourar para a linha seguinte.
-    p1 = celula.paragraphs[0]
-    p1.paragraph_format.space_after = Pt(0)
-    _borda_inferior(p1, "808080")
-    p2 = celula.add_paragraph()
-    p2.paragraph_format.space_after = Pt(0)
-    run(p2, "Nome:", bold=True)
-    p3 = celula.add_paragraph()
-    p3.paragraph_format.space_after = Pt(0) if ultima else Pt(36)
-    run(p3, papel, color=C_ON_SURF)
-
-
-# ── Documento ──────────────────────────────────────────────────────
-
-doc = Document()
-for estilo in doc.styles:
-    if hasattr(estilo, "font"):
-        estilo.font.name = B.FONT_DOCX
-aplicar_abnt_paginas(doc)
-aplicar_abnt_estilos(doc)
-
-_secao = doc.sections[0]
-UTIL = _secao.page_width - _secao.left_margin - _secao.right_margin
-
-# Cabecalho com logo
-if os.path.exists(B.LOGO_PNG):
-    p_logo = doc.add_paragraph()
-    p_logo.paragraph_format.space_after = ABNT_LINHA
-    p_logo.add_run().add_picture(B.LOGO_PNG, width=Cm(4.0))
-
-p_tit = doc.add_paragraph()
-run(p_tit, "Entrega de Desenvolvimento", bold=True, size=18, color=C_TERTIARY)
-p_sub = doc.add_paragraph()
-run(p_sub, D.get("nome_customizacao", ""), size=13, color=C_ON_SURF)
-run(p_sub, "   v%s" % VERSAO, bold=True, size=13, color=RGBColor(*B.rgb(B.PRIMARY)))
-p_sub.paragraph_format.space_after = ABNT_LINHA
-
-# ── Identificacao ──────────────────────────────────────────────────
-dados_id = [
-    ("Parceiro", D.get("parceiro", "")),
-    ("ID Demanda", D.get("id_demanda") or "—"),
-    ("Responsável Técnico", D.get("responsavel_tecnico", "")),
-    ("Versão da Customização", VERSAO),
-    ("Data de Geração", DATA_GERACAO),
-    ("Caminho no Sistema", D.get("caminho_sistema", "")),
-]
-tab_id = doc.add_table(rows=1 + len(dados_id), cols=2)
-tab_id.style = "Table Grid"
-aplicar_larguras(tab_id, (0.34, 0.66))
-celula_cab = tab_id.rows[0].cells[0].merge(tab_id.rows[0].cells[1])
-sombrear(celula_cab, HEX_TERTIARY)
-run(celula_cab.paragraphs[0], "Identificação", bold=True, size=11, color=C_WHITE)
-for i, (rotulo, valor) in enumerate(dados_id, 1):
-    linha = tab_id.rows[i]
-    run(linha.cells[0].paragraphs[0], rotulo, bold=True, color=C_TERTIARY)
-    run(linha.cells[1].paragraphs[0], str(valor), color=C_ON_SURF)
-
-# ── Historico de versoes ───────────────────────────────────────────
-titulo(doc, "Histórico de versões", nivel=3)
-tab_h = doc.add_table(rows=1 + len(HISTORICO), cols=3)
-tab_h.style = "Table Grid"
-aplicar_larguras(tab_h, (0.13, 0.19, 0.68))
-cabecalho_tabela(tab_h, ["Versão", "Data", "Alterações"])
-for i, entrada in enumerate(HISTORICO, 1):
-    linha = tab_h.rows[i]
-    run(linha.cells[0].paragraphs[0], "v" + entrada["versao"], bold=True, color=C_TERTIARY)
-    run(linha.cells[1].paragraphs[0], entrada["data"], color=C_ON_SURF)
-    alteracoes = entrada.get("alteracoes") or ["—"]
-    celula = linha.cells[2]
-    run(celula.paragraphs[0], alteracoes[0], color=C_ON_SURF)
-    for extra in alteracoes[1:]:
-        run(celula.add_paragraph(), extra, color=C_ON_SURF)
-
-# ── 1. Objetivos ───────────────────────────────────────────────────
-titulo(doc, "1. Objetivos")
-doc.add_paragraph(D.get("objetivo", ""))
-
-# ── 2. Manual de uso ───────────────────────────────────────────────
-titulo(doc, "2. Manual de Uso das Customizações")
-p_c = doc.add_paragraph()
-run(p_c, "Caminho no sistema: ", bold=True, color=C_TERTIARY)
-run(p_c, D.get("caminho_sistema", ""), color=C_ON_SURF)
-
-for i, func in enumerate(FUNCIONALIDADES, 1):
+def bloco_funcionalidade(func):
     meta = B.TIPO_META.get(func.get("tipo"), B.TIPO_META["acao"])
-    titulo(doc, "2.%d %s" % (i, func.get("titulo", "")), nivel=3)
-    p_t = doc.add_paragraph()
-    run(p_t, meta["badge"], bold=True, size=9, color=RGBColor(*B.rgb(meta["cor"])))
-    p_p = doc.add_paragraph()
-    p_p.paragraph_format.space_before = ABNT_LINHA
-    run(p_p, "Passo a passo:", bold=True, color=C_TERTIARY)
-    linhas_numeradas(doc, func.get("passos", []))
-    if func.get("obs"):
-        p_o = doc.add_paragraph()
-        p_o.paragraph_format.space_before = ABNT_LINHA
-        run(p_o, "Observações: ", bold=True, color=C_TERTIARY)
-        run(p_o, str(func["obs"]), color=C_ON_SURF)
-    if func.get("limitacoes"):
-        p_l = doc.add_paragraph()
-        p_l.paragraph_format.space_before = ABNT_LINHA
-        run(p_l, "Limitações: ", bold=True, color=C_TERTIARY)
-        run(p_l, str(func["limitacoes"]), color=C_ON_SURF)
+    p_func = copy.deepcopy(P_FUNC)
+    # "Funcionalidade:" | " <titulo>. " | "Passo a passo:" -- troca so o meio.
+    p_func.findall(qn("w:r"))[1].find(qn("w:t")).text = " %s. " % func.get("titulo", "")
+    blocos = [rotulo(meta["badge"]), p_func] + passos_numerados(func.get("passos"))
 
-# ── 3. Limitacoes conhecidas ───────────────────────────────────────
-titulo(doc, "3. Limitações Conhecidas")
-lims = D.get("limitacoes_gerais") or []
-if lims:
-    linhas(doc, lims)
-else:
-    run(doc.add_paragraph(), "Nenhuma limitação global identificada.",
-        italic=True, color=C_ON_SURF)
-
-secao_n = 4
-
-# ── 4. Checklist de deploy ─────────────────────────────────────────
-LABEL_TIPO = {"tela_adicional": "Tela Adicional", "parametro": "Parâmetro TSIPAR",
-              "script_sql": "Script DDL", "acao": "Botão de Ação", "evento": "Evento",
-              "job": "Job", "regra": "Regra", "jar": "Deploy JAR",
-              "dashboard": "Dashboard", "relatorio": "Relatório"}
-CAMPOS_DETALHE = [("arquivo", "Arquivo"), ("entidade", "Entidade"),
-                  ("tipo_sankhya", "Tipo"), ("classe", "Classe"),
-                  ("perfis", "Perfis"), ("descricao", None),
-                  ("tipo_valor", "Tipo"), ("valor_padrao", "Padrão"),
-                  ("caminho_servidor", "Destino"), ("observacao", None)]
+    obs = " ".join(v for v in (str(func.get("obs") or "").strip(),
+                                _AVISO_PERFIL.get(func.get("tipo_acesso", ""), "")) if v)
+    if obs:
+        blocos.append(caixa_observacao(obs))
+    if lista(func.get("dicas")):
+        blocos += [rotulo("Dicas de uso")] + marcadores(func["dicas"])
+    if lista(func.get("limitacoes")):
+        blocos += [rotulo("Limitações")] + marcadores(func["limitacoes"])
+    return blocos
 
 
-# OK estreita o bastante para "[  ]", Detalhes com o resto: e a coluna que
-# carrega FQN de classe e lista de arquivos.
-LARGURAS_CHECKLIST = (0.07, 0.17, 0.28, 0.48)
+como_usar = paragrafo("Como utilizar as customizações", "Heading2")
+limitacoes_h2 = paragrafo("Limitações conhecidas", "Heading2")
+remover(*entre(como_usar, limitacoes_h2))
+ancora = como_usar
+for func in FUNCIONALIDADES:
+    ancora = inserir_apos(ancora, bloco_funcionalidade(func))
 
+homologacao_h1 = paragrafo("Homologação e Testes", "Heading1")
+remover(*entre(limitacoes_h2, homologacao_h1))
+inserir_apos(limitacoes_h2, marcadores(D.get("limitacoes_gerais"))
+             or marcadores(["Nenhuma limitação global identificada."]))
 
-def escrever_detalhes(celula, item):
-    """Um par chave-valor por linha.
+# ── 05 Homologacao ─────────────────────────────────────────────────
 
-    Antes tudo ia emendado com " | " numa linha so, e a coluna virava um
-    bloco denso que ninguem le no meio de um checklist.
-    """
-    nome = item.get("nome_exibicao") or item.get("nome") or item.get("arquivo", "")
-    pares = []
-    for chave, rotulo in CAMPOS_DETALHE:
-        valor = item.get(chave)
-        # Sem nome proprio, o arquivo virou o titulo: nao repetir no detalhe.
-        if valor and valor != nome:
-            pares.append((rotulo, str(valor)))
+MARCA_RESULTADO = {"aprovado":  "(X) Aprovado    ( ) Reprovado — com pendências abaixo",
+                   "reprovado": "( ) Aprovado    (X) Reprovado — com pendências abaixo"}
 
-    for i, (rotulo, valor) in enumerate(pares):
-        par = celula.paragraphs[0] if i == 0 else celula.add_paragraph()
-        if rotulo:
-            run(par, "%s: " % rotulo, bold=True, size=8, color=C_TERTIARY)
-        run(par, valor, size=8, color=C_ON_SURF)
-
-
-def tabela_checklist(doc, itens):
-    tab = doc.add_table(rows=1 + len(itens), cols=4)
-    tab.style = "Table Grid"
-    aplicar_larguras(tab, LARGURAS_CHECKLIST)
-    cabecalho_tabela(tab, ["OK", "Tipo", "Item", "Detalhes"])
-    for i, item in enumerate(itens, 1):
-        linha = tab.rows[i]
-        run(linha.cells[0].paragraphs[0], "[  ]", size=10, color=C_ON_SURF)
-        run(linha.cells[1].paragraphs[0],
-            LABEL_TIPO.get(item.get("tipo", ""), item.get("tipo", "")),
-            size=8, color=C_ON_SURF)
-        nome = item.get("nome_exibicao") or item.get("nome") or item.get("arquivo", "")
-        run(linha.cells[2].paragraphs[0], str(nome), bold=True, size=10, color=C_TERTIARY)
-        escrever_detalhes(linha.cells[3], item)
-
-
-if PRE or POS:
-    titulo(doc, "%d. Checklist de Deploy" % secao_n)
-    if PRE:
-        titulo(doc, "%d.1 Pré-requisitos — fazer ANTES do deploy" % secao_n, nivel=3)
-        tabela_checklist(doc, PRE)
-    if POS:
-        titulo(doc, "%d.%d Pós-deploy — configurar APÓS o JAR no servidor"
-               % (secao_n, 2 if PRE else 1), nivel=3)
-        tabela_checklist(doc, POS)
-    secao_n += 1
-
-# ── 5. Homologacao ─────────────────────────────────────────────────
 
 def resultado_teste(teste):
-    """Marca a caixa do status quando a homologacao ja foi executada."""
+    """Marca o status quando a homologacao ja foi executada."""
     status = str(teste.get("status", "")).lower()
     if not status and teste.get("evidencias"):
         status = "aprovado"
-    return "[%s] Aprovado\n[%s] Reprovado" % ("X" if status == "aprovado" else " ",
-                                              "X" if status == "reprovado" else " ")
+    return ["(%s) Aprovado" % ("X" if status == "aprovado" else " "),
+            "(%s) Reprovado" % ("X" if status == "reprovado" else " ")]
 
 
-titulo(doc, "%d. Homologação e Testes" % secao_n)
-testes_por_func = [(f, f.get("testes") or []) for f in FUNCIONALIDADES]
-tem_testes = any(t for _f, t in testes_por_func)
+treinamento_h1 = paragrafo("Treinamento e Suporte", "Heading1")
+if not D.get("incluir_homologacao", True):
+    remover(homologacao_h1, *entre(homologacao_h1, treinamento_h1))
+else:
+    tab_hom = tabela("Data da homologação")
+    preencher_chave_valor(tab_hom, {
+        "Responsável pelos testes no cliente": HOMOLOGACAO.get("responsavel"),
+        "Data da homologação": HOMOLOGACAO.get("data"),
+        "Resultado": MARCA_RESULTADO.get(str(HOMOLOGACAO.get("resultado", "")).lower()),
+    })
+    ancora = tab_hom
+    for func in FUNCIONALIDADES:
+        testes = func.get("testes") or []
+        if testes:
+            ancora = inserir_apos(ancora, [
+                rotulo(func.get("titulo", "")),
+                tabela_dados([("Cenário", 0.36), ("Resultado esperado", 0.42),
+                              ("Resultado", 0.22)],
+                             [[t.get("nome", ""), t.get("esperado", ""), resultado_teste(t)]
+                              for t in testes])])
+    if HOMOLOGACAO.get("pendencias"):
+        definir_texto(paragrafo("< Descrever eventuais pendências"),
+                      HOMOLOGACAO["pendencias"], limpar_placeholder=True)
 
-if tem_testes:
-    p_i = doc.add_paragraph()
-    run(p_i, "As evidências de cada cenário estão nos anexos, ao final do documento."
-             if EVIDENCIAS else
-             "Marque o resultado de cada cenário e anexe as evidências ao final "
-             "do documento.", italic=True, size=10, color=C_ON_SURF)
-    for func, testes in testes_por_func:
-        if not testes:
-            continue
-        titulo(doc, func.get("titulo", ""), nivel=3)
-        tab = doc.add_table(rows=1 + len(testes), cols=3)
-        tab.style = "Table Grid"
-        aplicar_larguras(tab, (0.36, 0.42, 0.22))
-        cabecalho_tabela(tab, ["Cenário", "Resultado esperado", "Resultado"])
-        for i, teste in enumerate(testes, 1):
-            linha = tab.rows[i]
-            run(linha.cells[0].paragraphs[0], teste.get("nome", ""), color=C_TERTIARY)
-            run(linha.cells[1].paragraphs[0], teste.get("esperado", ""), color=C_ON_SURF)
-            run(linha.cells[2].paragraphs[0], resultado_teste(teste),
-                size=9, color=C_ON_SURF)
+# ── 06 Treinamento e suporte ───────────────────────────────────────
 
-for i, rotulo in enumerate(
-        ("Responsável pelos testes no cliente: ______________________________",
-         "Data da homologação: ____/____/________",
-         "Resultado geral: [  ] Aprovado    [  ] Reprovado (pendências abaixo)")):
-    p = doc.add_paragraph(rotulo)
-    if i == 0:
-        p.paragraph_format.space_before = ABNT_LINHA
-secao_n += 1
+preencher_chave_valor(tabela("Público treinado"), {
+    "Treinamento realizado em": TREINAMENTO.get("data"),
+    "Público treinado": TREINAMENTO.get("publico"),
+    "Material complementar": TREINAMENTO.get("material"),
+    "Contato para suporte": TREINAMENTO.get("contato"),
+})
 
-# ── Anexos ─────────────────────────────────────────────────────────
-# As capturas ficam agrupadas no fim, e nao dentro da tabela de cenarios:
-# imagem em celula estoura a largura util da pagina.
-if EVIDENCIAS:
-    titulo(doc, "%d. Anexos – Evidências de Entrega" % secao_n)
-    p_a = doc.add_paragraph()
-    run(p_a, "Capturas do fluxo executado durante a homologação. A legenda de cada "
-             "imagem descreve o que ela mostra.", italic=True, size=10, color=C_ON_SURF)
+# ── 07 Anexos ──────────────────────────────────────────────────────
+# Sem evidencias nem checklist, os placeholders do modelo ficam para o
+# preenchimento manual.
 
-    n = 0
-    for _func, _teste, itens in EVIDENCIAS:
-        for caminho, legenda in itens:
-            n += 1
-            p_leg = doc.add_paragraph()
-            run(p_leg, "Evidência %02d – %s" % (n, legenda), size=10, color=C_ON_SURF)
-            p_leg.paragraph_format.space_before = Pt(12)
-            p_leg.paragraph_format.space_after = Pt(4)
-            p_leg.paragraph_format.line_spacing = ABNT_TABELA
 
-            p_img = doc.add_paragraph()
-            p_img.add_run().add_picture(caminho, width=UTIL)
-            p_img.paragraph_format.space_after = Pt(6)
-            p_img.paragraph_format.line_spacing = ABNT_TABELA
-    secao_n += 1
+def imagem(caminho):
+    """Paragrafo com a imagem na largura util, limitada em altura."""
+    img = Image.from_file(caminho)
+    largura = LARGURA_IMAGEM
+    if img.px_height * largura / img.px_width > ALTURA_MAX_IMAGEM:
+        largura = int(ALTURA_MAX_IMAGEM * img.px_width / img.px_height)
+    p = doc.add_paragraph()
+    p.add_run().add_picture(caminho, width=largura)
+    el = p._p
+    el.getparent().remove(el)
+    return el
 
-# ── Observacoes ────────────────────────────────────────────────────
-titulo(doc, "%d. Observações" % secao_n)
-doc.add_paragraph(
-    "Por se tratar de uma personalização o Service Desk não atua nos casos de dúvidas "
-    "ou incidentes; qualquer alteração ou suporte deverá ser negociada como horas "
-    "adicionais com a Unidade para o atendimento.")
+
+ESTILO_LEGENDA = next(s for s in doc.styles if s.style_id == "SkLegenda")
+
+
+def legenda(valor):
+    p = doc.add_paragraph(valor, style=ESTILO_LEGENDA)._p
+    p.getparent().remove(p)
+    return p
+
+
+def tabela_checklist(itens):
+    return tabela_dados(
+        [("OK", 0.07), ("Tipo", 0.17), ("Item", 0.28), ("Detalhes", 0.48)],
+        [["( )", B.LABEL_CHECKLIST.get(i.get("tipo", ""), i.get("tipo", "")),
+          nome_item_checklist(i),
+          ["%s: %s" % (r, v) if r else v for r, v, _m in detalhes_checklist(i)] or [""]]
+         for i in itens])
+
+
+anexos_h1 = paragrafo("Anexos", "Heading1")
+garantia_h1 = paragrafo("Prazo de Garantia", "Heading1")
+if EVIDENCIAS or PRE or POS:
+    remover(*entre(anexos_h1, garantia_h1))
+    blocos = []
+    if EVIDENCIAS:
+        blocos.append(subtitulo("Capturas de tela"))
+        n = 0
+        for _func, _teste, itens in EVIDENCIAS:
+            for caminho, texto_legenda in itens:
+                n += 1
+                blocos += [imagem(caminho),
+                           legenda("Evidência %02d — %s" % (n, texto_legenda))]
+    if PRE or POS:
+        blocos.append(subtitulo("Checklist de deploy"))
+        if PRE:
+            blocos += [rotulo("Pré-requisitos — antes do deploy"), tabela_checklist(PRE)]
+        if POS:
+            blocos += [rotulo("Pós-deploy — após o JAR no servidor"), tabela_checklist(POS)]
+    inserir_apos(anexos_h1, blocos)
 
 # ── Assinaturas ────────────────────────────────────────────────────
-if D.get("incluir_assinaturas", True):
-    p_cd = doc.add_paragraph("_______________, ____ de ______________ de ______")
-    p_cd.paragraph_format.space_before = Pt(36)
-    p_cd.paragraph_format.space_after = Pt(24)
 
-    sankhya = parse_personas(D.get("personas_sankhya")) or PERSONAS_SANKHYA_PADRAO
-    cliente = parse_personas(D.get("personas_cliente")) or PERSONAS_CLIENTE_PADRAO
+p_local = paragrafo("< Cidade >")
+tab_assin = tabela("Nome:")
+if not D.get("incluir_assinaturas", True):
+    remover(p_local, tab_assin)
+else:
+    # Data e assinaturas abrem pagina propria, como no modelo: no fluxo
+    # normal a grade quebrava e deixava a ultima assinatura sozinha.
+    ppr = p_local.find(qn("w:pPr"))
+    ppr.insert(0, ppr.makeelement(qn("w:pageBreakBefore"), {}))
+    if D.get("cidade"):
+        definir_texto(p_local, texto(p_local).replace("< Cidade >", D["cidade"]))
+    pessoas = parse_personas(D.get("assinaturas")) or ASSINATURAS_PADRAO
+    trs = tab_assin.findall(qn("w:tr"))
+    proto_tr = trs[0]
+    proto_assin, proto_vao = proto_tr.findall(qn("w:tc"))[:2]
+    proto_vazia = trs[-1].findall(qn("w:tc"))[-1]
 
-    pares = max(len(sankhya), len(cliente))
-    tab_s = doc.add_table(rows=pares, cols=3)
-    # A coluna do meio e so o vao entre as duas assinaturas.
-    aplicar_larguras(tab_s, (0.44, 0.12, 0.44))
+    def celula(pessoa):
+        tc = copy.deepcopy(proto_assin)
+        p_nome, p_papel = tc.findall(qn("w:p"))[:2]
+        definir_texto(p_nome, "Nome: %s" % pessoa["nome"] if pessoa["nome"] else "Nome:")
+        definir_texto(p_papel, pessoa["funcao"] or "")
+        return tc
 
-    for i in range(pares):
-        ultima = (i == pares - 1)
-        if i < len(sankhya):
-            p = sankhya[i]
-            celula_assinatura(tab_s.cell(i, 0),
-                              p["funcao"] or p["nome"] or "Sankhya", ultima)
-        if i < len(cliente):
-            p = cliente[i]
-            celula_assinatura(tab_s.cell(i, 2),
-                              p["funcao"] or p["nome"] or "Cliente", ultima)
+    for tr in trs:
+        tab_assin.remove(tr)
+    for i in range(0, len(pessoas), 2):
+        tr = copy.deepcopy(proto_tr)
+        for tc in tr.findall(qn("w:tc")):
+            tr.remove(tc)
+        par = pessoas[i:i + 2]
+        tr.extend([celula(par[0]), copy.deepcopy(proto_vao),
+                   celula(par[1]) if len(par) > 1 else copy.deepcopy(proto_vazia)])
+        tab_assin.append(tr)
 
-aplicar_abnt_tabelas(doc)
+# ── Contracapa ─────────────────────────────────────────────────────
+
+if email:
+    definir_texto(paragrafo("< nome.sobrenome@sankhya.com.br >"), email)
+if D.get("telefone_responsavel"):
+    definir_texto(paragrafo("< (XX) 99999-9999 >"), D["telefone_responsavel"])
+
+# ── Sumario ────────────────────────────────────────────────────────
+# O modelo vem com w:updateFields, que faz o Word perguntar "Deseja atualizar
+# os campos?" a cada abertura. O documento sai sem a flag e, havendo Word na
+# maquina, o proprio Word atualiza o sumario em segundo plano. Sem Word, a flag
+# volta: o aviso e melhor que um sumario com as paginas do modelo.
+
+ATUALIZAR_SUMARIO_PS = r"""
+$w = New-Object -ComObject Word.Application
+$w.Visible = $false; $w.DisplayAlerts = 0
+try {
+  $d = $w.Documents.Open($env:DOC_ENTREGA_ARQUIVO, $false, $false)
+  $d.TablesOfContents | ForEach-Object { $_.Update() }
+  $d.Save(); $d.Close()
+} finally { $w.Quit() }
+"""
+TIMEOUT_WORD_S = 120
+
+
+def definir_atualizar_campos(ligado):
+    settings = doc.settings.element
+    for el in settings.findall(qn("w:updateFields")):
+        settings.remove(el)
+    if ligado:
+        settings.append(settings.makeelement(qn("w:updateFields"), {qn("w:val"): "true"}))
+
+
+def atualizar_sumario_no_word(caminho):
+    """True se o Word atualizou o sumario. So existe no Windows com Office."""
+    if sys.platform != "win32" or os.environ.get("DOC_ENTREGA_SEM_WORD"):
+        return False
+    try:
+        r = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command",
+                            ATUALIZAR_SUMARIO_PS], capture_output=True, timeout=TIMEOUT_WORD_S,
+                           env=dict(os.environ, DOC_ENTREGA_ARQUIVO=os.path.abspath(caminho)))
+        return r.returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
 
 doc.core_properties.version = VERSAO
-doc.core_properties.title = "Entrega — %s" % D.get("nome_customizacao", "")
+doc.core_properties.title = "Evidências de Entrega — %s" % D.get("nome_customizacao", "")
+definir_atualizar_campos(False)
 doc.save(ARQUIVO_SAIDA)
+SUMARIO_ATUALIZADO = atualizar_sumario_no_word(ARQUIVO_SAIDA)
+if not SUMARIO_ATUALIZADO:
+    definir_atualizar_campos(True)
+    doc.save(ARQUIVO_SAIDA)
 
 print(json.dumps({"arquivo": ARQUIVO_SAIDA, "versao": VERSAO, "backup": BACKUP,
-                  "evidencias_faltando": EVIDENCIAS_FALTANDO}))
+                  "evidencias_faltando": EVIDENCIAS_FALTANDO,
+                  "sumario_atualizado": SUMARIO_ATUALIZADO}))

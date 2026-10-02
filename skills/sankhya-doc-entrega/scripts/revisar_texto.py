@@ -30,6 +30,8 @@ def coletar(dados):
             itens.append((caminho, valor))
 
     add("objetivo", dados.get("objetivo"))
+    add("observacoes", dados.get("observacoes"))
+    add("homologacao.pendencias", (dados.get("homologacao") or {}).get("pendencias"))
     for i, lim in enumerate(dados.get("limitacoes_gerais") or []):
         add("limitacoes_gerais[%d]" % i, lim)
 
@@ -37,8 +39,9 @@ def coletar(dados):
         base = "funcionalidades[%d]" % i
         for campo in CAMPOS_FUNCIONALIDADE:
             add("%s.%s" % (base, campo), func.get(campo))
-        for j, passo in enumerate(func.get("passos") or []):
-            add("%s.passos[%d]" % (base, j), passo)
+        for lista in ("passos", "dicas"):
+            for j, item in enumerate(func.get(lista) or []):
+                add("%s.%s[%d]" % (base, lista, j), item)
         for j, teste in enumerate(func.get("testes") or []):
             for campo in CAMPOS_TESTE:
                 add("%s.testes[%d].%s" % (base, j, campo), teste.get(campo))

@@ -18,13 +18,23 @@ duas famílias: **Addon Studio** (`@Service`, `@ActionButton`, `@Listener`, `@Jo
 `@BusinessRule`) e **Módulo Java** (`AcaoRotinaJava`, `EventoProgramavelJava`,
 `ScheduledAction`, `Regra`).
 
+Os dois formatos seguem o **modelo DS "Evidências de Entrega de Customização v.4"**, com
+cores e tipografia do guia "Modelo de Documento Padrão Sankhya 2026":
+
+> Capa · Controle do documento (com histórico de versões) · Sumário · 01 Identificação ·
+> 02 Objetivo · 03 Descrição das Personalizações · 04 Manual de Uso · 05 Homologação e
+> Testes · 06 Treinamento e Suporte · 07 Anexos · 08 Prazo de Garantia · Assinaturas ·
+> Contracapa
+
 | Formato | Conteúdo |
 |---|---|
-| **HTML** (default) | Capa (só na impressão/PDF), funcionalidades colapsáveis, checklist de deploy com persistência, homologação com marcação de status e evidências por imagem com legenda, botão "Exportar com evidências" e botão "🖨️ Gerar PDF" |
-| **DOCX** | Word editável, formatado na ABNT NBR 14724 — identificação, manual de uso, checklist de deploy, homologação em tabela, anexo com as evidências e bloco de assinaturas |
+| **HTML** (default) | Mesma estrutura, com capa e contracapa do modelo. Funcionalidades colapsáveis, homologação com marcação de status e evidências por imagem com legenda, checklist de deploy com persistência (em 07 Anexos), botão "Exportar com evidências" e botão "🖨️ Gerar PDF" |
+| **DOCX** | Preenchido **sobre o próprio template** (`assets/modelo-entrega-v4.docx`): capa, cabeçalho, rodapé, sumário, estilos e fonte Work Sans embutida vêm do modelo. Evidências e checklist de deploy entram em 07 Anexos |
 
 Ambos compartilham análise, escopo e histórico de versões. A diferença está apenas na
-renderização final.
+renderização final. Campo que o `dados.json` não informa sai com o placeholder
+`< ... >` do modelo, para preenchimento manual. É o caso dos dados da homologação e do
+treinamento, que o cliente completa depois.
 
 ## Como funciona
 
@@ -77,12 +87,24 @@ Faça as perguntas abertas em **uma única mensagem numerada** — não uma por 
 > 6. Pasta com os `.java` deste módulo — pode ser relativa à raiz.
 > 7. Documento de escopo funcional (`.docx`, `.pdf`, `.md`)? Responda `não` se não houver.
 > 8. Quem desenvolveu? Se houve passagem de responsabilidade: `Dev A → Dev B (a partir da v1.1)`.
+> 9. E-mail e telefone de contato do responsável (vão para o controle do documento e a contracapa)?
+> 10. Quem solicitou a demanda na Sankhya (GP, analista, CS…) e quem foi o contato no parceiro?
+> 11. Módulo / área do ERP onde fica a customização (ex.: `Financeiro`, `Beneficiamento`)?
+> 12. Cidade para a linha de assinatura? Responda `não` para deixar em branco.
+
+O autor de cada versão no histórico é o último nome da resposta 8 (`Dev B`), sem o
+parêntese.
 
 Antes de prosseguir, **valide que `PASTA_FONTES` existe** (`PASTA_RAIZ + '/' + resposta 6`).
 Se não existir, pergunte de novo em vez de seguir e falhar depois.
 
-Se `INCLUIR_ASSINATURAS`, pergunte também as personas (uma por linha, `Nome — Função`),
-separando Sankhya e Cliente. Aceite lista vazia — o DOCX cai nos papéis padrão.
+Se `INCLUIR_ASSINATURAS`, pergunte também as personas (uma por linha, `Nome — Função`).
+Aceite lista vazia: os dois formatos caem nos cinco papéis do modelo (Líder do Projeto,
+Gerente de Projetos — Sankhya, Desenvolvedor, Solicitante, Consultor).
+
+Se o usuário já tiver os dados de treinamento (data, público, material, contato de
+suporte) ou da homologação (responsável, data, resultado, pendências), registre. Não
+insista: sem eles o modelo sai com os placeholders para o cliente preencher.
 
 Se o documento já existe (regeração), pergunte:
 
@@ -120,7 +142,8 @@ Para cada classe não-External, monte uma entrada em `funcionalidades`:
 - `tipo` — conforme a tabela acima
 - `icone` — emoji representativo do comportamento
 - `passos` — lista de strings, fluxo em linguagem funcional
-- `obs` — pré-condições, perfis, alçadas (vazio se não houver)
+- `obs` — pré-condições, perfis, alçadas (vazio se não houver). Vira a caixa OBSERVAÇÃO
+- `dicas` — lista de dicas de uso para quem opera (vazio se não houver; não invente)
 - `limitacoes` — bloqueios `MGEModelException`, restrições (vazio se não houver)
 - `tipo_acesso` — `relatorio` | `tela` | `dashboard` | `""` (dispara aviso de perfis)
 
@@ -131,7 +154,11 @@ Para cada classe não-External, monte uma entrada em `funcionalidades`:
 complementado no drill-down da Etapa 3.
 
 Monte também `objetivo` (2–3 frases sobre o que o módulo entrega ao negócio) e
-`limitacoes_gerais` (lista de limitações globais).
+`limitacoes_gerais` (lista de limitações globais). O `objetivo` entra em **03 Descrição da
+customização**. A seção 02 Objetivo tem texto fixo do modelo, igual em toda entrega.
+
+Junte as permissões do módulo (perfis, `<acesso>` do `menu.xml`) em `permissoes`, texto
+de uma linha. Vai para "Permissões necessárias" em 04.
 
 **Escreva já no registro certo:** `references/linguagem.md`. Vale tanto para traduzir
 o código em linguagem de negócio quanto para não deixar marca de texto gerado por IA.
@@ -368,8 +395,8 @@ Regras completas com exemplos: `references/linguagem.md`.
 ## Etapa 6.6 — Coleta de evidências
 
 Só se `COLETAR_EVIDENCIAS`. As capturas entram no documento pelo `dados.json`, nos
-dois formatos: no HTML como galeria dentro do caso de teste, no DOCX como seção
-**Anexos – Evidências de Entrega** no fim.
+dois formatos: no HTML como galeria dentro do caso de teste, no DOCX em **07 Anexos ›
+Capturas de tela**, com legenda "Evidência NN — …".
 
 ### Onde capturar
 
@@ -428,6 +455,12 @@ python {SKILL_DIR}/scripts/gerar_html.py /caminho/dados.json
 python {SKILL_DIR}/scripts/gerar_docx.py /caminho/dados.json
 ```
 
+**Sumário do DOCX:** com Word instalado (Windows), o script abre o arquivo em segundo
+plano, atualiza o sumário e salva (`"sumario_atualizado": true`, alguns segundos). Sem
+Word, o arquivo sai marcado para atualizar os campos e o Word pergunta "Deseja atualizar
+os campos?" na abertura. Nesse caso avise o usuário para responder **Sim**. Feche o
+`.docx` antes de regerar: arquivo aberto no Word bloqueia o backup da versão anterior.
+
 Grave o JSON fora da pasta de entrega (use o diretório de scratchpad da sessão) — ele é
 insumo, não artefato de entrega.
 
@@ -446,14 +479,25 @@ esse clique; é o usuário quem decide o momento.
   "id_demanda": "DEM-1234",            // "" se não houver
   "nome_customizacao": "Pesagem de Entrada",
   "caminho_sistema": "Menu › Beneficiamento › BEN — Pesagem de Entrada",
+  "permissoes": "Balança, Supervisor de Recebimento",
   "responsavel_tecnico": "Dev A → Dev B (a partir da v1.1)",
-  "objetivo": "...",
+  "email_responsavel": "dev.b@sankhya.com.br",
+  "telefone_responsavel": "(34) 99999-0000",
+  "solicitante_sankhya": "Ana Paula Souza (GP)",
+  "solicitante_parceiro": "Roberto Mendes",
+  "modulo_area": "Beneficiamento",
+  "observacoes": "",                   // 03 Observações; "" sai como "—"
+  "anexos_tecnicos": "",               // 03 Anexos técnicos; "" sai como "—"
+  "objetivo": "...",                   // 03 Descrição da customização
   "changelog": ["Ajuste na tolerância de peso."],   // [] na primeira geração
   "limitacoes_gerais": ["..."],
   "incluir_homologacao": true,
   "incluir_assinaturas": true,
-  "personas_sankhya": ["Ana Paula Souza — Gerente de Projetos"],
-  "personas_cliente": ["Roberto Mendes — Diretor Comercial"],
+  "assinaturas": ["Roberto Mendes — Líder do Projeto"],   // [] = 5 papéis do modelo
+  "cidade": "Uberlândia",
+  "homologacao": { "responsavel": "", "data": "", "resultado": "", "pendencias": "" },
+                                       // resultado: aprovado | reprovado | ""
+  "treinamento": { "data": "", "publico": "", "material": "", "contato": "" },
   "funcionalidades": [
     {
       "titulo": "Calcular Pesagem",
@@ -461,6 +505,7 @@ esse clique; é o usuário quem decide o momento.
       "icone": "⚖️",
       "passos": ["O usuário seleciona o ticket.", "O sistema calcula o peso líquido."],
       "obs": "Requer perfil Balança.",
+      "dicas": ["Confira a tara antes de calcular."],
       "limitacoes": "Irreversível após o encerramento.",
       "tipo_acesso": "tela",           // relatorio | tela | dashboard | ""
       "testes": [{
@@ -542,8 +587,15 @@ python {SKILL_DIR}/scripts/test_geracao.py
 ```
 
 Ele gera HTML e DOCX de exemplo em diretório temporário e valida escape, paleta,
-versionamento, backup, histórico, presença do logo e as evidências embutidas nos dois
-formatos.
+versionamento, backup, histórico, o preenchimento do modelo v.4 (capa, controle,
+seções, assinaturas) e as evidências embutidas nos dois formatos.
+
+**Modelo novo da DS:** troque `assets/modelo-entrega-v4.docx`. O `gerar_docx.py` acha os
+pontos de preenchimento pelo texto dos rótulos e placeholders do modelo (ex.: tabela com
+"Número da solicitação", parágrafo "< Cidade >"). Se a DS mudar esses textos, o script
+falha com `LookupError` dizendo qual âncora sumiu: ajuste a âncora e rode o auto-teste.
+Os fundos `capa-fundo.jpg` e `contracapa-fundo.jpg` do HTML saem do mesmo modelo
+(`word/media/`).
 
 ## Referências
 
@@ -551,6 +603,6 @@ formatos.
 |---|---|
 | Categorias de artefatos, extração por tipo de classe, indicadores de permissão | `references/analise-fontes.md` |
 | Linguagem funcional e marcas de texto gerado por IA | `references/linguagem.md` |
-| Paleta, tipografia, regra HTML × DOCX, logo | `references/design-system.md` |
+| Paleta, tipografia, regra HTML × DOCX, template | `references/design-system.md` |
 | Coleta de evidências: ferramentas, navegadores e protocolo | `references/coleta-evidencias.md` |
-| Cores, logo e metadados de tipo (implementação) | `scripts/_brand.py` |
+| Cores, tipografia, logo e metadados de tipo (implementação) | `scripts/_brand.py` |
