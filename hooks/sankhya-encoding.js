@@ -20,7 +20,7 @@
 // Gate por tipo de arquivo (igual nos tres modos):
 //   .xml:      so dentro de pasta de artefato Sankhya
 //              (datadictionary/dbscripts/dbquerys/dashboards).
-//   .java/.kt: gate hibrido (basta UM) -> pasta marcadora ancestral
+//   .java:     gate hibrido (basta UM) -> pasta marcadora ancestral
 //              (datadictionary/dbscripts) OU conteudo com marcadores Sankhya.
 // Padrao definido na skill sankhya-addon (instructions/encoding-instructions.md).
 // Nunca bloqueia o fluxo: qualquer erro inesperado -> exit 0.
@@ -29,8 +29,10 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
-// Extensoes que seguem o padrao ISO-8859-1 do Sankhya.
-const EXTENSOES = new Set([".java", ".xml", ".kt"]);
+// Extensoes que seguem o padrao ISO-8859-1 do Sankhya. Kotlin (.kt) fica de
+// fora: o compilador Kotlin le fonte em UTF-8, entao converter para Latin-1
+// corromperia os acentos.
+const EXTENSOES = new Set([".java", ".xml"]);
 // Pastas que marcam a raiz de um projeto Addon Studio.
 const MARCADORES = ["datadictionary", "dbscripts"];
 // Pastas onde XML e SEMPRE artefato Sankhya em Latin-1. Cobre os artefatos
@@ -42,7 +44,7 @@ const PASTAS_XML_SANKHYA = new Set([
   "dashboards",
 ]);
 
-// Marcadores de CONTEUDO Sankhya (.java/.kt): import/package sankhya,
+// Marcadores de CONTEUDO Sankhya (.java): import/package sankhya,
 // anotacoes do Addon Studio, APIs core.
 const RE_CODIGO_SANKHYA =
   /(?:\b(?:import|package)\s+[\w.]*sankhya)|@(?:ActionButton|Listener|Job|BusinessRule|DynamicForm|ServiceDefinition|Crud)\b|\b(?:JapeFactory|JapeSession|JapeWrapper|JapeWrapperFactory|DynamicVO|EntityFacade|MGEModelException|JdbcWrapper|NativeSql|DwfUtils|FluidCreateVO|AcaoRotinaJava|EventoProgramavelJava|RegraNegocioJava)\b/i;

@@ -102,6 +102,64 @@ Deseja re-adicionar esses arquivos ao stage com o conteúdo atual?
 - `1` → executar `git add <arquivo>` para cada arquivo `AM`, depois repetir `git diff --cached`
 - `2` → prosseguir normalmente
 
+#### Verificação de encoding dos arquivos staged
+
+Roda **depois** do `git add`, porque a corrupção pode ocorrer justamente nele (caso
+do `git add` interceptado pelo `rtk`: disco íntegro, blob staged corrompido). O script
+lê o conteúdo do **índice** (`git show :caminho`), nunca o do disco.
+
+Executar na raiz do repositório (o script fica na pasta desta skill):
+```bash
+python <diretório-da-skill>/verifica_encoding_staged.py
+```
+
+Se `python` não existir ou o script falhar ao executar, avisar o usuário que a
+verificação não rodou e seguir para a Etapa 4. Nunca bloquear o fluxo por falha do
+próprio script.
+
+Regras aplicadas pelo script:
+
+| Achado | Severidade |
+|--------|------------|
+| `U+FFFD` no conteúdo staged | ERRO |
+| Encodings misturados no mesmo arquivo | ERRO |
+| Divergência da política em `.java`, `.kt` ou `.xml` Sankhya | ERRO |
+| Divergência da política em outros tipos (só se o `.editorconfig` declarar `charset`) | AVISO |
+| Mojibake (`Ã§`, `Ã£`) | AVISO |
+| Encoding mudou em relação ao HEAD (Latin-1 ↔ UTF-8) | AVISO |
+
+Política: `charset` do `.editorconfig` para o caminho (última seção que casa vence). Sem
+`charset` declarado, valem os padrões do ecossistema: `.java` em ISO-8859-1, `.kt` em
+UTF-8 e `.xml` sob `datadictionary`/`dbscripts`/`dbquerys`/`dashboards` em ISO-8859-1.
+Demais tipos sem `charset` declarado: só as regras de caractere.
+
+- Sem achados (`Encoding OK.`) → seguir para a Etapa 4.
+- Só AVISO → exibir os avisos e pedir confirmação para prosseguir.
+- Com ERRO → parar antes da mensagem de commit:
+
+```
+ATENÇÃO: encoding inconsistente nos arquivos staged.
+
+[lista de achados do script, ERRO primeiro]
+
+O que fazer com os arquivos com ERRO?
+  1 - Cancelar o commit para corrigir
+  2 - Re-adicionar ao stage a partir do disco (se o disco estiver íntegro e o índice corrompido)
+  3 - Prosseguir mesmo assim (não recomendado)
+```
+
+- `1` → encerrar sem commit.
+- `2` → executar `git add <arquivo>` para cada arquivo com ERRO e rodar o script de novo.
+  Se o ERRO persistir, o problema está no disco: tratar como `1`.
+- `3` → prosseguir para a Etapa 4.
+
+Orientação em caso de `U+FFFD` no disco: é perda real, não há conversão que recupere.
+Restaurar o trecho de uma versão limpa do histórico, lendo em bytes via `subprocess`
+(`git show <commit>:arquivo`, **nunca** com redirecionamento `>` do shell, que corrompe
+bytes multibyte neste ambiente), e mapear as palavras pelo contexto.
+
+O script **só avisa**: nunca reconverte arquivo automaticamente.
+
 ### Etapa 4 — Analisar o diff
 
 Identificar os tipos de mudança presentes:
