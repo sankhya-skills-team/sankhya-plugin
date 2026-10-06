@@ -22,6 +22,8 @@
 //              (datadictionary/dbscripts/dbquerys/dashboards).
 //   .java:     gate hibrido (basta UM) -> pasta marcadora ancestral
 //              (datadictionary/dbscripts) OU conteudo com marcadores Sankhya.
+// Excecao: .editorconfig declarando charset utf-8 para o caminho (ex.: pasta
+// Java/test) tira o arquivo do tratamento, em qualquer modo.
 // Padrao definido na skill sankhya-addon (instructions/encoding-instructions.md).
 // Nunca bloqueia o fluxo: qualquer erro inesperado -> exit 0.
 
@@ -106,6 +108,93 @@ function xmlSankhyaPorPasta(inicio) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Politica do projeto via .editorconfig: se o charset declarado para o arquivo
+// for UTF-8 (ex.: pasta de testes), o hook nao toca nele. Sem declaracao,
+// vale o gate padrao abaixo. Cobre *, **, ?, {a,b} e "ultima secao que casa
+// vence"; nao cobre classes [abc] nem {1..3}.
+// ---------------------------------------------------------------------------
+
+const ARQUIVO_EDITORCONFIG = ".editorconfig";
+const CHARSETS_UTF8 = new Set(["utf-8", "utf8"]);
+
+function globParaRegex(glob) {
+  let g = glob.replace(/^\/+/, "");
+  if (!g.includes("/")) g = "**/" + g;
+  let regex = "";
+  for (let i = 0; i < g.length; i++) {
+    if (g.startsWith("**/", i)) {
+      regex += "(?:.*/)?";
+      i += 2;
+    } else if (g.startsWith("**", i)) {
+      regex += ".*";
+      i += 1;
+    } else if (g[i] === "*") {
+      regex += "[^/]*";
+    } else if (g[i] === "?") {
+      regex += "[^/]";
+    } else if (g[i] === "{" && g.indexOf("}", i) > i) {
+      const fim = g.indexOf("}", i);
+      const alternativas = g.slice(i + 1, fim).split(",").map(escaparRegex);
+      regex += "(?:" + alternativas.join("|") + ")";
+      i = fim;
+    } else {
+      regex += escaparRegex(g[i]);
+    }
+  }
+  return new RegExp("^" + regex + "$");
+}
+
+function escaparRegex(texto) {
+  return texto.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Retorna { root, secoes: [{ regex, charset }] } do .editorconfig informado.
+function lerEditorconfig(caminho) {
+  const resultado = { root: false, secoes: [] };
+  let glob = null;
+  for (const bruta of fs.readFileSync(caminho, "utf8").split(/\r?\n/)) {
+    const linha = bruta.trim();
+    const cabecalho = linha.match(/^\[(.+)\]$/);
+    if (cabecalho) {
+      glob = cabecalho[1];
+      continue;
+    }
+    if (glob === null && /^root\s*=\s*true$/i.test(linha)) resultado.root = true;
+    const charset = linha.match(/^charset\s*=\s*(\S+)/i);
+    if (charset && glob !== null) {
+      resultado.secoes.push({ regex: globParaRegex(glob), charset: charset[1].toLowerCase() });
+    }
+  }
+  return resultado;
+}
+
+// Charset declarado pelos .editorconfig que cobrem o arquivo, ou null. Sobe a
+// arvore ate root = true; o arquivo mais proximo e a ultima secao que casa vencem.
+function charsetDeclarado(arquivo) {
+  const encontrados = [];
+  let dir = path.dirname(arquivo);
+  while (true) {
+    const caminho = path.join(dir, ARQUIVO_EDITORCONFIG);
+    if (fs.existsSync(caminho)) {
+      const editorconfig = lerEditorconfig(caminho);
+      encontrados.push({ dir, editorconfig });
+      if (editorconfig.root) break;
+    }
+    const pai = path.dirname(dir);
+    if (pai === dir) break;
+    dir = pai;
+  }
+  let declarado = null;
+  for (const { dir: base, editorconfig } of encontrados.reverse()) {
+    const relativo = path.relative(base, arquivo).split(path.sep).join("/");
+    for (const secao of editorconfig.secoes) {
+      if (secao.regex.test(relativo)) declarado = secao.charset;
+    }
+  }
+  return declarado;
+}
+
 // O conteudo tem marcadores Sankhya? Olha so os primeiros 64KB
 // (suficiente p/ imports/anotacoes; barato em arquivo grande).
 function temConteudoSankhya(conteudo) {
@@ -118,6 +207,7 @@ function temConteudoSankhya(conteudo) {
 function arquivoSankhya(arquivo, conteudo) {
   const ext = path.extname(arquivo).toLowerCase();
   if (!EXTENSOES.has(ext)) return false;
+  if (CHARSETS_UTF8.has(charsetDeclarado(arquivo))) return false;
   if (ext === ".xml") return xmlSankhyaPorPasta(path.dirname(arquivo));
   return (
     ehProjetoSankhya(path.dirname(arquivo)) || temConteudoSankhya(conteudo)

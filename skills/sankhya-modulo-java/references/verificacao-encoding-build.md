@@ -1,13 +1,14 @@
 # Verificação de encoding no build (Gradle)
 
-Barreira que impede gerar o JAR com fonte corrompido. Já vem no projeto modelo
-`modelo-dstech-customizacoes`; este snippet serve para projetos existentes que não a têm.
+Barreira que impede gerar o JAR (ou rodar os testes) com fonte corrompido. Já vem no projeto
+modelo `modelo-dstech-customizacoes`; este snippet serve para projetos existentes que não a têm.
 
 ## Política
 
 | Pasta | Encoding |
 |-------|----------|
 | `<demanda>/Java/src` | ISO-8859-1 |
+| `<demanda>/Java/test` | UTF-8 (o `compileTestJava` compila em UTF-8) |
 | `<demanda>/Kotlin/src` | UTF-8 (o compilador Kotlin lê fonte em UTF-8) |
 
 A task falha o build quando encontra:
@@ -15,17 +16,50 @@ A task falha o build quando encontra:
 - encodings misturados no mesmo arquivo (linhas UTF-8 e ISO-8859-1);
 - encoding diferente do padrão da pasta.
 
+O hook `sankhya-encoding.js` respeita o `.editorconfig`: arquivo com `charset = utf-8` declarado
+(como `Java/test`) não é convertido para ISO-8859-1 pelo Claude Code.
+
 ## Como aplicar
 
 1. Colar o bloco das tasks **depois** da criação das tasks `gerar-jar-<demanda>` (usa `modulesToBuild`).
 2. Colar as funções junto das funções auxiliares do `build.gradle`.
-3. Adicionar `.editorconfig` na raiz (IDE e skill de commit usam a mesma política):
+3. Garantir que os testes compilam em UTF-8, **depois** do `tasks.withType(JavaCompile)` que fixa ISO-8859-1:
+
+```groovy
+tasks.named('compileTestJava') {
+    options.encoding = 'UTF-8'
+}
+```
+
+4. Se o projeto tem `Java/test` por demanda, o `sourceSets.test` precisa agregá-las (como no modelo):
+
+```groovy
+sourceSets {
+    test {
+        java {
+            def dirs = []
+            rootDir.eachDir { dir ->
+                if (!dir.name.startsWith('.') && !excludedRootDirs.contains(dir.name)) {
+                    def javaTestDir = new File(dir, 'Java/test')
+                    if (javaTestDir.exists()) dirs << javaTestDir
+                }
+            }
+            srcDirs = dirs
+        }
+    }
+}
+```
+
+5. Adicionar `.editorconfig` na raiz (IDE, hook e skill de commit usam a mesma política):
 
 ```ini
 root = true
 
 [**/Java/src/**]
 charset = latin1
+
+[**/Java/test/**]
+charset = utf-8
 
 [**/Kotlin/src/**]
 charset = utf-8
@@ -36,7 +70,7 @@ charset = utf-8
 ```groovy
 // ==================================================================
 // VERIFICAÇÃO DE ENCODING — barreira antes de gerar o JAR
-// Java/src em ISO-8859-1, Kotlin/src em UTF-8. Falha o build se houver
+// Java/src em ISO-8859-1; Java/test e Kotlin/src em UTF-8. Falha o build se houver
 // U+FFFD, encodings misturados no mesmo arquivo ou encoding fora do padrão.
 // ==================================================================
 
@@ -46,11 +80,12 @@ def ENCODING_UTF8 = 'UTF-8'
 modulesToBuild.each { moduleName ->
     def verificacao = tasks.register("verificar-encoding-${moduleName}") {
         group = moduleName
-        description = "Verificar encoding dos fontes (Java ISO-8859-1, Kotlin UTF-8)"
+        description = "Verificar encoding dos fontes (Java ISO-8859-1; testes e Kotlin UTF-8)"
 
         doLast {
             def problemas = []
             problemas.addAll(verificarEncodingDaPasta(file("${moduleName}/Java/src"), '**/*.java', ENCODING_LATIN1))
+            problemas.addAll(verificarEncodingDaPasta(file("${moduleName}/Java/test"), '**/*.java', ENCODING_UTF8))
             problemas.addAll(verificarEncodingDaPasta(file("${moduleName}/Kotlin/src"), '**/*.kt', ENCODING_UTF8))
 
             if (!problemas.isEmpty()) {
@@ -59,8 +94,9 @@ modulesToBuild.each { moduleName ->
         }
     }
 
-    // O JAR só é gerado depois da verificação, e a compilação não começa antes dela.
+    // O JAR e os testes só rodam depois da verificação, e a compilação não começa antes dela.
     tasks.named("gerar-jar-${moduleName}") { dependsOn verificacao }
+    tasks.named('compileTestJava') { dependsOn verificacao }
     tasks.matching { it.name == 'compileJava' || it.name == 'compileKotlin' }.configureEach {
         mustRunAfter verificacao
     }
@@ -141,4 +177,4 @@ def ehUtf8Valido(byte[] linha) {
 }
 ```
 
-Rodar isolado: `./gradlew verificar-encoding-<demanda>`. Roda sozinha antes de `gerar-jar-<demanda>`.
+Rodar isolado: `./gradlew verificar-encoding-<demanda>`. Roda sozinha antes de `gerar-jar-<demanda>` e de `compileTestJava`.

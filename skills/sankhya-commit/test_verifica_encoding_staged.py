@@ -150,6 +150,20 @@ class TestePoliticaEditorconfig(TesteBase):
         self.assertEqual([], self.achados())
 
 
+class TesteOrigemDaPolitica(TesteBase):
+    def mensagem(self, caminho):
+        return [a.mensagem for a in self.achados() if a.caminho == caminho][0]
+
+    def test_mensagem_indica_padrao_embutido_sem_editorconfig(self):
+        self.repo.stage('src/Teste.java', TEXTO_ACENTUADO.encode('utf-8'))
+        self.assertIn('padrão embutido', self.mensagem('src/Teste.java'))
+
+    def test_mensagem_indica_editorconfig_quando_declarado(self):
+        self.repo.stage('.editorconfig', EDITORCONFIG_JAVA_LATIN1_KOTLIN_UTF8.encode('utf-8'))
+        self.repo.stage('d/Java/src/Teste.java', TEXTO_ACENTUADO.encode('utf-8'))
+        self.assertIn('.editorconfig', self.mensagem('d/Java/src/Teste.java'))
+
+
 class TesteComparacaoComHead(TesteBase):
     def test_mudanca_de_encoding_vs_head_e_aviso(self):
         self.repo.stage('web/pagina.html', TEXTO_ACENTUADO.encode('latin-1'))

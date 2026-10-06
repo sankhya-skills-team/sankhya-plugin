@@ -36,6 +36,8 @@ LIMITE_ASCII = 127
 BYTE_NULO = b'\x00'
 BYTES_CARACTERE_SUBSTITUICAO = b'\xef\xbf\xbd'
 ARQUIVO_EDITORCONFIG = '.editorconfig'
+ORIGEM_EDITORCONFIG = '.editorconfig'
+ORIGEM_PADRAO_EMBUTIDO = 'padrão embutido, sem charset no .editorconfig'
 
 EXTENSOES_BINARIAS = {
     '.jar', '.zip', '.pdf', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.exe', '.class', '.xls', '.xlsx',
@@ -159,11 +161,14 @@ def charset_padrao(caminho):
 
 
 def charset_esperado(caminho, secoes):
+    """Retorna (charset, origem); a origem diz de onde veio a política na mensagem ao usuário."""
     declarado = None
     for regex, charset in secoes:
         if regex.match(caminho):
             declarado = charset
-    return normalizar_charset(declarado) if declarado else charset_padrao(caminho)
+    if declarado:
+        return normalizar_charset(declarado), ORIGEM_EDITORCONFIG
+    return charset_padrao(caminho), ORIGEM_PADRAO_EMBUTIDO
 
 
 def verificar_caracteres(caminho, conteudo, classe):
@@ -181,12 +186,12 @@ def verificar_caracteres(caminho, conteudo, classe):
 
 
 def verificar_politica(caminho, classe, secoes):
-    esperado = charset_esperado(caminho, secoes)
+    esperado, origem = charset_esperado(caminho, secoes)
     divergente = (esperado == LATIN1 and classe == UTF8) or (esperado == UTF8 and classe == LATIN1)
     if not divergente:
         return []
     severidade = ERRO if eh_tipo_sankhya(caminho) else AVISO
-    return [Achado(severidade, caminho, 'política do projeto espera %s, mas o arquivo está em %s' % (esperado, classe))]
+    return [Achado(severidade, caminho, 'política (%s) espera %s, mas o arquivo está em %s' % (origem, esperado, classe))]
 
 
 def verificar_mudanca_vs_head(raiz, caminho, classe):

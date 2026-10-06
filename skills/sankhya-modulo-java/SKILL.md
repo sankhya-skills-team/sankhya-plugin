@@ -220,7 +220,9 @@ Todas as classes Java criadas devem usar **ISO-8859-1** como encoding do arquivo
 
 Classes **Kotlin** (`Kotlin/src`) ficam em **UTF-8**: o compilador Kotlin lê fontes em UTF-8, então converter para ISO-8859-1 corrompe os acentos.
 
-O projeto modelo verifica isso no build: a task `verificar-encoding-<demanda>` roda antes de `gerar-jar-<demanda>` e falha se houver `U+FFFD`, encodings misturados ou encoding fora do padrão da pasta. Projetos existentes podem adotar o mesmo snippet → `references/verificacao-encoding-build.md`.
+**Testes Java** (`Java/test`) ficam em **UTF-8**: o `compileTestJava` compila em UTF-8, então teste salvo em ISO-8859-1 tem os literais acentuados lidos errado e as asserções de mensagem falham. O `.editorconfig` do projeto declara isso e o hook de encoding o respeita (não converte arquivo com `charset = utf-8`). Se um teste aparecer em ISO-8859-1, converter para UTF-8, não o contrário.
+
+O projeto modelo verifica isso no build: a task `verificar-encoding-<demanda>` roda antes de `gerar-jar-<demanda>` e de `compileTestJava` e falha se houver `U+FFFD`, encodings misturados ou encoding fora do padrão da pasta. Projetos existentes podem adotar o mesmo snippet → `references/verificacao-encoding-build.md`.
 
 ---
 
@@ -353,4 +355,4 @@ Carregar o arquivo ao aprofundar um tópico:
 | Clean Code — métodos: nomes, tamanho, return early, SRP, efeitos colaterais | Em qualquer revisão ou criação de método | `references/clean-code-metodos.md` |
 | Clean Code — variáveis: nomes, constantes, booleanos, escopo, coleções | Em qualquer revisão ou criação de variável | `references/clean-code-variaveis.md` |
 | Encoding de arquivos — ISO-8859-1 obrigatório em `.java` e `.xml`, como converter, antipadrões | Ao criar ou editar qualquer arquivo `.java` ou `.xml` | `instructions/encoding-instructions.md` |
-| Verificação de encoding no build — task Gradle que falha antes do JAR (Java ISO-8859-1, Kotlin UTF-8) | Ao adotar a verificação num projeto existente ou investigar falha de `verificar-encoding-*` | `references/verificacao-encoding-build.md` |
+| Verificação de encoding no build — task Gradle que falha antes do JAR e dos testes (Java ISO-8859-1; testes e Kotlin UTF-8) | Ao adotar a verificação num projeto existente ou investigar falha de `verificar-encoding-*` | `references/verificacao-encoding-build.md` |

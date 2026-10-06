@@ -128,8 +128,10 @@ Regras aplicadas pelo script:
 | Mojibake (`Ã§`, `Ã£`) | AVISO |
 | Encoding mudou em relação ao HEAD (Latin-1 ↔ UTF-8) | AVISO |
 
-Política: `charset` do `.editorconfig` para o caminho (última seção que casa vence). Sem
-`charset` declarado, valem os padrões do ecossistema: `.java` em ISO-8859-1, `.kt` em
+Política: `charset` do `.editorconfig` para o caminho (última seção que casa vence), por exemplo
+`Java/test` em UTF-8 com o restante do `.java` em ISO-8859-1. A mensagem de cada achado informa
+se a política veio do `.editorconfig` ou do padrão embutido. Sem `charset` declarado, valem os
+padrões do ecossistema: `.java` em ISO-8859-1, `.kt` em
 UTF-8 e `.xml` sob `datadictionary`/`dbscripts`/`dbquerys`/`dashboards` em ISO-8859-1.
 Demais tipos sem `charset` declarado: só as regras de caractere.
 
