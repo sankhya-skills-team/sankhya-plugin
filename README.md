@@ -20,6 +20,7 @@ Plugin do Claude Code com skills, agents e hook para desenvolvimento no **ERP Sa
 | `sankhya-gera-escopo` | Geração de documento de escopo `.docx` (proposta técnica) a partir de contexto bruto, preservando template Word padrão. |
 | `sankhya-commit` | Commit Git interativo: analisa o diff e gera mensagem Conventional Commits com emojis. |
 | `sankhya-doc-entrega` | Gera documento de entrega de desenvolvimento em `.html` interativo ou `.docx` Word (à escolha), para Addon Studio e Módulo Java. Coleta as evidências de homologação pelo navegador e embute nos dois formatos. |
+| `sankhya-gerar-btnacao-banco` | Botão de Ação por procedure (*Rotina no Banco de dados*): assinatura `P_CODUSU/P_IDSESSAO/P_QTDLINHAS/P_MENSAGEM`, `ACT_*_FIELD`/`ACT_*_PARAM`, confirmação `ACT_ESCOLHER_SIMNAO`, teste sem a tela via `EXECPARAMS`. Invocação: `/sankhya:gerar-btnacao-banco`. |
 
 ### Agents (`agents/`)
 
