@@ -1,7 +1,7 @@
 {
   "name": "sankhya",
-  "version": "1.27.0",
-  "description": "Skills, agents e hooks para desenvolvimento no ERP Sankhya: Addon Studio, Módulo Java, persistência JAPE, botão de ação por procedure (rotina de banco), JasperReports, BI/dashboards, dicionário de dados, frontend sankhya-js, análise de requisitos, geração de escopo, doc. de entrega e commits; suíte de code review, agents de dev especializados e hooks de encoding/auto-update.",
+  "version": "1.28.0",
+  "description": "Skills, agents e hooks para desenvolvimento no ERP Sankhya: Addon Studio, Módulo Java, persistência JAPE, botão de ação por procedure (rotina de banco), triggers Oracle, JasperReports, BI/dashboards, dicionário de dados, frontend sankhya-js, análise de requisitos, geração de escopo, doc. de entrega e commits; suíte de code review, agents de dev especializados e hooks de encoding/auto-update.",
   "author": {
     "name": "Sankhya Skills Team",
     "url": "https://github.com/sankhya-skills-team"
