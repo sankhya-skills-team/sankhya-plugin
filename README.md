@@ -22,6 +22,7 @@ Plugin do Claude Code com skills, agents e hook para desenvolvimento no **ERP Sa
 | `sankhya-doc-entrega` | Gera documento de entrega de desenvolvimento em `.html` interativo ou `.docx` Word (à escolha), para Addon Studio e Módulo Java. Coleta as evidências de homologação pelo navegador e embute nos dois formatos. |
 | `sankhya-gerar-btnacao-banco` | Botão de Ação por procedure (*Rotina no Banco de dados*): assinatura `P_CODUSU/P_IDSESSAO/P_QTDLINHAS/P_MENSAGEM`, `ACT_*_FIELD`/`ACT_*_PARAM`, confirmação `ACT_ESCOLHER_SIMNAO`, teste sem a tela via `EXECPARAMS`. Invocação: `/sankhya:gerar-btnacao-banco`. |
 | `sankhya-gerar-trigger` | Trigger Oracle no padrão das nativas do Sankhya: `TRG_<INC|UPD|DLT>_<TABELA>_<SUFIXO>`, guarda `STP_GET_ATUALIZANDO`, `FPODEVALIDAR`, erro `-20101`, `:NEW/:OLD`, sem COMMIT nem SELECT na própria tabela. Invocação: `/sankhya:gerar-trigger`. |
+| `sankhya-apontamento-os` | Apontamento de OS de consultoria de implantação: transforma o relato livre do consultor em registro fiel e rastreável, até 4.000 caracteres, sem Markdown, com validação de horários e contagem real. Invocação: `/sankhya:apontamento-os`. |
 
 ### Agents (`agents/`)
 
