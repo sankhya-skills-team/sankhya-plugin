@@ -18,54 +18,6 @@
           }
         ]
       }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Read",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/sankhya-encoding.js\" --pre",
-            "timeout": 10,
-            "statusMessage": "Preparando leitura de arquivo Sankhya (ISO-8859-1 -> UTF-8)..."
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/sankhya-encoding.js\"",
-            "timeout": 10,
-            "statusMessage": "Validando encoding Sankhya (ISO-8859-1)..."
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/sankhya-encoding.js\" --flush",
-            "timeout": 30
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/sankhya-encoding.js\" --flush",
-            "timeout": 30
-          }
-        ]
-      }
     ]
   }
 }

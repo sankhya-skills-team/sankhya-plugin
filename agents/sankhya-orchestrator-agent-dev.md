@@ -45,7 +45,7 @@ Ao delegar pela ferramenta `Agent`, use o nome completo com o prefixo do plugin 
 
 ## Princípios herdados (repassar aos especialistas)
 
-**Encoding:** `.java` e XML de artefato em ISO-8859-1; `.kt`/`.sql`/`.jrxml`/`.js`/`.html`/`.css`/`.json` = UTF-8. O hook `sankhya-encoding` converte sozinho `.java` e XML em `datadictionary/`, `dbscripts/`, `dbquerys/` e `dashboards/`: usar Read/Edit/Write normalmente e **não** regravar com python/iconv (depois de um Read o arquivo fica em UTF-8 no disco até o fim do turno, e a reconversão manual gera arquivo misto). ISO fora dessa cobertura (ex.: `.properties`): ler e gravar com Python em `encoding="iso-8859-1"`, sem Edit/Write. **Símbolos:** sem emoji/glifo Unicode em artefatos servidos como ISO-8859-1 — usar SVG ou caracteres Latin-1/entidades. Nomes em Português. Clean Code + SOLID. `MGEModelException`. Validação MCP antes de codar. Segurança em pontos de entrada não autenticados. Sem credenciais no código.
+**Encoding:** `.java` e XML de artefato em ISO-8859-1; `.kt`/`.sql`/`.jrxml`/`.js`/`.html`/`.css`/`.json` = UTF-8. O mod `sankhya-encoding` converte sozinho `.java` e XML em `datadictionary/`, `dbscripts/`, `dbquerys/` e `dashboards/`: usar Read/Edit/Write normalmente e **não** regravar com python/iconv (o mod já converte, e uma segunda conversão gera arquivo misto). ISO fora dessa cobertura (ex.: `.properties`): ler e gravar com Python em `encoding="iso-8859-1"`, sem Edit/Write. **Símbolos:** sem emoji/glifo Unicode em artefatos servidos como ISO-8859-1 — usar SVG ou caracteres Latin-1/entidades. Nomes em Português. Clean Code + SOLID. `MGEModelException`. Validação MCP antes de codar. Segurança em pontos de entrada não autenticados. Sem credenciais no código.
 
 ## Saída
 
@@ -60,7 +60,7 @@ Plano de build estruturado: **abordagem do projeto (addon/módulo + justificativ
   - Dashboards: JSP em `vc/src/main/webapp/dashboard/jsp/<nome>.jsp` + XML em `dashboards/<dash>.xml` (`gadgetSS`/`html5component` com `entryPoint="dashboard/jsp/<nome>.jsp"` e `moduleContext=<contexto>`) + `<dashboard id=".." file=".." description=".."/>` no menu.
   - `moduleContext` = contexto do webapp = `rootProject.name` do `settings.gradle` (ex.: `addonexemplo`; sem hífen, exigência dos blocos `snk-*` do DS), NÃO o id do menu.
   - `@Service`/`@ActionButton`/`@Job` só são expostos/criados **no deploy**; basta a classe anotada existir com o nome certo.
-- **Encoding:** gravar `.java/.xml` com Read/Edit/Write (o hook converte para ISO-8859-1); nunca regravar com python/iconv. Auditar os arquivos criados/editados com `file --mime-encoding` e `grep U+FFFD` ao fim de cada onda.
+- **Encoding:** gravar `.java/.xml` com Read/Edit/Write (o mod converte para ISO-8859-1); nunca regravar com python/iconv. Auditar os arquivos criados/editados com `file --mime-encoding` e `grep U+FFFD` ao fim de cada onda.
 - **Job financeiro de risco** (idempotente, destrutivo) deve nascer **desabilitado por parâmetro** (ex.: `EXEMPLO_JOB_DESC_ATIVO`), nunca ativo por padrão.
 
 

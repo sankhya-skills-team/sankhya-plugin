@@ -1,4 +1,4 @@
-// Testes do hook sankhya-encoding.js. Executar: node --test hooks/
+// Testes do conversor sankhya-encoding.js. Executar: node --test hooks/
 const test = require("node:test");
 const assert = require("node:assert");
 const fs = require("fs");
@@ -11,7 +11,6 @@ const CODIGO_SANKHYA_UTF8 = Buffer.from("package br.com.sankhya.x;\n// ação\n"
 const CODIGO_SANKHYA_LATIN1 = Buffer.from("package br.com.sankhya.x;\n// ação\n", "latin1");
 const MODO_POS = [];
 const MODO_PRE = ["--pre"];
-const MODO_FLUSH = ["--flush"];
 
 let contadorSessao = 0;
 
@@ -61,22 +60,22 @@ test("charset latin1 declarado para Java/src: continua convertendo", () => {
   assert.deepStrictEqual(fs.readFileSync(arquivo), CODIGO_SANKHYA_LATIN1);
 });
 
-test("Read + flush num arquivo utf-8 declarado não regrava em Latin-1", () => {
+test("antes e depois num arquivo utf-8 declarado não regrava em Latin-1", () => {
   const raiz = criarProjeto(EDITORCONFIG_TESTE_UTF8);
   const arquivo = gravar(raiz, "Java/test/ATest.java", CODIGO_SANKHYA_UTF8);
   const sessao = novaSessao();
   executarHook(MODO_PRE, arquivo, sessao);
-  executarHook(MODO_FLUSH, arquivo, sessao);
+  executarHook(MODO_POS, arquivo, sessao);
   assert.deepStrictEqual(fs.readFileSync(arquivo), CODIGO_SANKHYA_UTF8);
 });
 
-test("Read num arquivo Latin-1 de Java/src continua expondo como UTF-8 e flush volta", () => {
+test("antes da ferramenta expõe Latin-1 de Java/src como UTF-8 e depois volta", () => {
   const raiz = criarProjeto(EDITORCONFIG_TESTE_UTF8);
   const arquivo = gravar(raiz, "Java/src/A.java", CODIGO_SANKHYA_LATIN1);
   const sessao = novaSessao();
   executarHook(MODO_PRE, arquivo, sessao);
   assert.deepStrictEqual(fs.readFileSync(arquivo), CODIGO_SANKHYA_UTF8);
-  executarHook(MODO_FLUSH, arquivo, sessao);
+  executarHook(MODO_POS, arquivo, sessao);
   assert.deepStrictEqual(fs.readFileSync(arquivo), CODIGO_SANKHYA_LATIN1);
 });
 

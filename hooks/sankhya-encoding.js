@@ -1,23 +1,21 @@
 #!/usr/bin/env node
-// Hook de encoding Sankhya (ISO-8859-1) — BIDIRECIONAL.
+// Conversao de encoding Sankhya (ISO-8859-1), chamada pelo mod do plugin
+// (hooks/register.ts) em volta de cada Read, Edit e Write.
 //
-// Por que bidirecional: Claude Code le e grava arquivos SEMPRE em UTF-8.
-// Um arquivo em ISO-8859-1 lido pelo tool Read vira U+FFFD (�) nos acentos;
-// se o modelo edita e grava, o U+FFFD acabava convertido para "?" — corrompendo
-// todos os acentos a cada ciclo Read->Edit. A conversao pos-escrita sozinha
-// causava o problema que tentava resolver.
+// Por que em volta da ferramenta: Claude Code le e grava arquivos SEMPRE em
+// UTF-8. Um arquivo ISO-8859-1 lido direto vira U+FFFD (�) nos acentos, e uma
+// edicao grava UTF-8. O mod converte para UTF-8 logo antes da ferramenta e de
+// volta para ISO-8859-1 logo depois: o arquivo so fica em UTF-8 no disco
+// durante a chamada, inclusive em subagent e com build no mesmo turno.
 //
-// Modos (argv[2]):
-//   --pre    PreToolUse(Read): arquivo Sankhya em Latin-1 -> regrava em UTF-8
-//            (conversao lossless) ANTES da leitura, para o Read ver os acentos
-//            corretos. Registra o arquivo como pendencia de reconversao.
-//   (vazio)  PostToolUse(Write|Edit|MultiEdit): UTF-8 -> ISO-8859-1 (como
-//            sempre). Guarda anti-corrupcao: conteudo com U+FFFD NAO e
-//            convertido; exit 2 devolve instrucao de recuperacao ao modelo.
-//   --flush  Stop/SessionEnd: reconverte para ISO-8859-1 as pendencias que
-//            foram lidas mas nao editadas (sem isso ficariam UTF-8 no disco).
+// Modos (argv[2]), arquivo em tool_input.file_path do JSON no stdin:
+//   --pre    antes da ferramenta: arquivo Sankhya em Latin-1 -> regrava em
+//            UTF-8 (conversao lossless).
+//   (vazio)  depois da ferramenta: UTF-8 -> ISO-8859-1. Guarda
+//            anti-corrupcao: conteudo com U+FFFD NAO e convertido; exit 2
+//            devolve instrucao de recuperacao ao modelo.
 //
-// Gate por tipo de arquivo (igual nos tres modos):
+// Gate por tipo de arquivo (igual nos dois modos):
 //   .xml:      so dentro de pasta de artefato Sankhya
 //              (datadictionary/dbscripts/dbquerys/dashboards).
 //   .java:     gate hibrido (basta UM) -> pasta marcadora ancestral
@@ -29,7 +27,6 @@
 // Nunca bloqueia o fluxo: qualquer erro inesperado -> exit 0.
 
 const fs = require("fs");
-const os = require("os");
 const path = require("path");
 
 // Extensoes que seguem o padrao ISO-8859-1 do Sankhya. Kotlin (.kt) fica de
@@ -214,7 +211,7 @@ function temConteudoSankhya(conteudo) {
   return RE_CODIGO_SANKHYA.test(amostra);
 }
 
-// Gate unico usado pelos tres modos. "conteudo" e o texto ja decodificado
+// Gate unico usado pelos dois modos. "conteudo" e o texto ja decodificado
 // (UTF-8 ou Latin-1, conforme o modo) — usado so no gate de conteudo.
 function arquivoSankhya(arquivo, conteudo) {
   const ext = path.extname(arquivo).toLowerCase();
@@ -281,52 +278,7 @@ function garantirDeclaracaoXml(conteudo) {
 }
 
 // ---------------------------------------------------------------------------
-// State file: pendencias de reconversao (arquivos expostos como UTF-8 pelo
-// modo --pre e ainda nao reconvertidos pelo PostToolUse). Um por sessao.
-// ---------------------------------------------------------------------------
-
-function statePath(sessionId) {
-  const id = String(sessionId || "global").replace(/[^a-zA-Z0-9_-]/g, "_");
-  return path.join(os.tmpdir(), `sankhya-encoding-${id}.json`);
-}
-
-function lerPendencias(arquivoState) {
-  try {
-    const lista = JSON.parse(fs.readFileSync(arquivoState, "utf8"));
-    return Array.isArray(lista) ? lista : [];
-  } catch {
-    return [];
-  }
-}
-
-function salvarPendencias(arquivoState, lista) {
-  try {
-    if (lista.length === 0) {
-      fs.rmSync(arquivoState, { force: true });
-    } else {
-      fs.writeFileSync(arquivoState, JSON.stringify(lista));
-    }
-  } catch {
-    /* state e otimizacao; nunca quebra o fluxo */
-  }
-}
-
-function registrarPendencia(sessionId, arquivo) {
-  const p = statePath(sessionId);
-  const lista = lerPendencias(p);
-  if (!lista.includes(arquivo)) lista.push(arquivo);
-  salvarPendencias(p, lista);
-}
-
-function removerPendencia(sessionId, arquivo) {
-  const p = statePath(sessionId);
-  const lista = lerPendencias(p);
-  const filtrada = lista.filter((item) => item !== arquivo);
-  if (filtrada.length !== lista.length) salvarPendencias(p, filtrada);
-}
-
-// ---------------------------------------------------------------------------
-// Conversao UTF-8 -> ISO-8859-1 (clean), compartilhada por post e flush.
+// Conversao UTF-8 -> ISO-8859-1 (clean).
 // ---------------------------------------------------------------------------
 
 // Retorna { status, perdidos?, transliterados? }:
@@ -366,7 +318,7 @@ function avisarConversao(arquivo, resultado) {
 }
 
 // ---------------------------------------------------------------------------
-// Resolucao do arquivo alvo a partir do payload do hook.
+// Resolucao do arquivo alvo a partir do JSON recebido no stdin.
 // ---------------------------------------------------------------------------
 
 function resolverArquivo(dados) {
@@ -389,47 +341,30 @@ function resolverArquivo(dados) {
 // Modos
 // ---------------------------------------------------------------------------
 
-// PreToolUse(Read): expoe arquivo Latin-1 como UTF-8 para a leitura nao
-// corromper acentos. Lossless: todo byte Latin-1 tem codepoint UTF-8.
+// Antes da ferramenta: expoe arquivo Latin-1 como UTF-8 para a leitura e a
+// edicao nao corromperem acentos. Lossless: todo byte Latin-1 tem codepoint UTF-8.
 function modoPre(dados) {
   const arquivo = resolverArquivo(dados);
   if (!arquivo) return;
 
   const buffer = fs.readFileSync(arquivo);
   if (buffer.includes(0)) return; // binario: nao mexe
-
-  const comoUtf8 = decodificarUtf8Estrito(buffer);
-  if (comoUtf8 !== null) {
-    // Ja esta em UTF-8. Se tem acentos e e arquivo Sankhya, registra para o
-    // --flush reconverter no fim do turno (cobre arquivo lido e nao editado
-    // e tambem arquivos que ficaram UTF-8 orfaos de sessoes anteriores).
-    if (/[^\x00-\x7F]/.test(comoUtf8) && arquivoSankhya(arquivo, comoUtf8)) {
-      registrarPendencia(dados?.session_id, arquivo);
-    }
-    return;
-  }
+  // Ja em UTF-8 (ex.: orfao de versao antiga): o modo pos reconverte depois
+  if (decodificarUtf8Estrito(buffer) !== null) return;
 
   const conteudo = buffer.toString("latin1");
   if (!arquivoSankhya(arquivo, conteudo)) return;
 
   fs.writeFileSync(arquivo, Buffer.from(conteudo, "utf8"));
-  registrarPendencia(dados?.session_id, arquivo);
-  process.stderr.write(
-    `[sankhya-encoding] ${path.basename(arquivo)} exposto como UTF-8 para ` +
-      `leitura; volta para ISO-8859-1 ao final do turno.\n`
-  );
 }
 
-// PostToolUse(Write|Edit|MultiEdit): converte para ISO-8859-1 com guarda
-// anti-corrupcao. Exit 2 devolve o aviso ao modelo como feedback acionavel.
+// Depois da ferramenta: converte para ISO-8859-1 com guarda anti-corrupcao.
+// Exit 2 devolve o aviso ao modelo como feedback acionavel.
 function modoPost(dados) {
   const arquivo = resolverArquivo(dados);
   if (!arquivo) return;
 
   const resultado = limparParaLatin1(arquivo);
-  if (resultado.status !== "corrompido") {
-    removerPendencia(dados?.session_id, arquivo);
-  }
 
   if (resultado.status === "convertido") {
     avisarConversao(arquivo, resultado);
@@ -448,32 +383,6 @@ function modoPost(dados) {
   }
 }
 
-// Stop/SessionEnd: reconverte pendencias (arquivos expostos como UTF-8 pelo
-// --pre que nenhum Write/Edit reconverteu).
-function modoFlush(dados) {
-  const arquivoState = statePath(dados?.session_id);
-  for (const arquivo of lerPendencias(arquivoState)) {
-    try {
-      if (!fs.existsSync(arquivo)) continue;
-      const resultado = limparParaLatin1(arquivo);
-      if (resultado.status === "convertido") avisarConversao(arquivo, resultado);
-      if (resultado.status === "corrompido") {
-        process.stderr.write(
-          `[sankhya-encoding] AVISO: ${path.basename(arquivo)} contem U+FFFD; ` +
-            `mantido em UTF-8 para nao corromper. Revise manualmente.\n`
-        );
-      }
-    } catch {
-      /* segue para o proximo */
-    }
-  }
-  try {
-    fs.rmSync(arquivoState, { force: true });
-  } catch {
-    /* ignora */
-  }
-}
-
 function main() {
   const entrada = lerStdin();
   if (!entrada) return;
@@ -487,7 +396,6 @@ function main() {
 
   const modo = process.argv[2];
   if (modo === "--pre") return modoPre(dados);
-  if (modo === "--flush") return modoFlush(dados);
   return modoPost(dados);
 }
 

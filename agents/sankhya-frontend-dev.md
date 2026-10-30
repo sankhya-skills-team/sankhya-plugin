@@ -42,7 +42,7 @@ O **frontend vc denso** (dashboard kanban, painel operacional com JS de lógica 
 
 ## Protocolo de gravação e símbolos (CRÍTICO)
 
-- **Encoding:** `.js`/`.html`/`.css`/`.json` usam **UTF-8**; `.xml` de metadados de tela e `.java`/`.properties` associados = **ISO-8859-1**. O hook `sankhya-encoding` converte sozinho `.java` e XML em `datadictionary/`, `dbscripts/`, `dbquerys/` e `dashboards/`: use Read/Edit/Write normalmente e **não** regrave com python/iconv (depois de um Read o arquivo fica em UTF-8 no disco até o fim do turno, e a reconversão manual gera arquivo misto). ISO fora dessa cobertura (ex.: `.properties`): leia e grave com Python em `encoding="iso-8859-1"`, sem Edit/Write. Confira com `file --mime-encoding`.
+- **Encoding:** `.js`/`.html`/`.css`/`.json` usam **UTF-8**; `.xml` de metadados de tela e `.java`/`.properties` associados = **ISO-8859-1**. O mod `sankhya-encoding` converte sozinho `.java` e XML em `datadictionary/`, `dbscripts/`, `dbquerys/` e `dashboards/`: use Read/Edit/Write normalmente e **não** regrave com python/iconv (o mod já converte, e uma segunda conversão gera arquivo misto). ISO fora dessa cobertura (ex.: `.properties`): leia e grave com Python em `encoding="iso-8859-1"`, sem Edit/Write. Confira com `file --mime-encoding`.
 - **Símbolos (OBRIGATÓRIO):** não usar emoji nem glifo exclusivo de Unicode (✓ → • … ★ ⚠ etc.), mesmo em HTML/JS UTF-8 — quebra quando a plataforma serve/armazena como ISO-8859-1. Usar **SVG inline** para ícones (preferência) ou **entidades HTML** ASCII (`&rarr;`, `&bull;`, `&check;`). Em XML de tela (ISO-8859-1), só caracteres Latin-1. Status/indicadores via SVG ou classe CSS, não emoji.
 - **Nomes em Português** seguindo a convenção da linguagem.
 - **Clean Code:** componentes/directives com responsabilidade única; sem lógica de negócio no template; tratamento de erro de chamada de serviço explícito (não engolir falha de `ServiceProxy`).
@@ -87,4 +87,4 @@ import br.com.sankhya.studio.annotations.hooks.TransactionType;
               transactionType = TransactionType.AUTOMATIC)   // sem isto, kspKotlin falha
 ```
 
-Skeleton do addon precisa do `build.gradle` v2 (gradle-plugin:2+ com KSP + Kotlin + dotenv) — senão `br.com.sankhya.studio.annotations` não existe no classpath. Validar com `./gradlew gerarAddon`. Encoding: `.java`/`.xml` em ISO-8859-1 (o hook converte); `.html/.js/.css` em UTF-8.
+Skeleton do addon precisa do `build.gradle` v2 (gradle-plugin:2+ com KSP + Kotlin + dotenv) — senão `br.com.sankhya.studio.annotations` não existe no classpath. Validar com `./gradlew gerarAddon`. Encoding: `.java`/`.xml` em ISO-8859-1 (o mod converte); `.html/.js/.css` em UTF-8.

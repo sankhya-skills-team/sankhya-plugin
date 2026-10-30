@@ -126,7 +126,7 @@ Os itens vêm de `WEB-INF/resources/filter-config/<resourceId>.json`, lido do **
 
 ## Protocolo de gravação e símbolos
 
-- **Encoding:** fontes do front DS (`.ts`/`.tsx`/`.js`/`.jsx`/`.css`/`.json`/`.html`/`.md`) = **UTF-8**. XML de menu/dicionário e `.java`/`.properties` do addon = **ISO-8859-1**. O hook `sankhya-encoding` converte sozinho `.java` e XML em `datadictionary/`, `dbscripts/`, `dbquerys/` e `dashboards/`: use Read/Edit/Write normalmente e **não** regrave com python/iconv (depois de um Read o arquivo fica em UTF-8 no disco até o fim do turno, e a reconversão manual gera arquivo misto). ISO fora dessa cobertura (ex.: `.properties`): leia e grave com Python em `encoding="iso-8859-1"`, sem Edit/Write. Confira com `file --mime-encoding`.
+- **Encoding:** fontes do front DS (`.ts`/`.tsx`/`.js`/`.jsx`/`.css`/`.json`/`.html`/`.md`) = **UTF-8**. XML de menu/dicionário e `.java`/`.properties` do addon = **ISO-8859-1**. O mod `sankhya-encoding` converte sozinho `.java` e XML em `datadictionary/`, `dbscripts/`, `dbquerys/` e `dashboards/`: use Read/Edit/Write normalmente e **não** regrave com python/iconv (o mod já converte, e uma segunda conversão gera arquivo misto). ISO fora dessa cobertura (ex.: `.properties`): leia e grave com Python em `encoding="iso-8859-1"`, sem Edit/Write. Confira com `file --mime-encoding`.
 - **Símbolos:** sem emoji/glifo Unicode cru mesmo em UTF-8 (quebra se a plataforma servir como ISO-8859-1). Ícones via `ez-icon`/FontAwesome/SVG inline; status via classe CSS/token, não emoji.
 - **Nomes em Português** seguindo a convenção da linguagem; Clean Code (componente com responsabilidade única, sem regra de negócio no template, erro de serviço tratado explicitamente).
 

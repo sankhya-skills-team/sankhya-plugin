@@ -220,7 +220,7 @@ Todas as classes Java criadas devem usar **ISO-8859-1** como encoding do arquivo
 
 Classes **Kotlin** (`Kotlin/src`) ficam em **UTF-8**: o compilador Kotlin lê fontes em UTF-8, então converter para ISO-8859-1 corrompe os acentos.
 
-**Testes Java** (`Java/test`) ficam em **UTF-8**: o `compileTestJava` compila em UTF-8, então teste salvo em ISO-8859-1 tem os literais acentuados lidos errado e as asserções de mensagem falham. O `.editorconfig` do projeto declara isso e o hook de encoding o respeita (não converte arquivo com `charset = utf-8`). Se um teste aparecer em ISO-8859-1, converter para UTF-8, não o contrário.
+**Testes Java** (`Java/test`) ficam em **UTF-8**: o `compileTestJava` compila em UTF-8, então teste salvo em ISO-8859-1 tem os literais acentuados lidos errado e as asserções de mensagem falham. O `.editorconfig` do projeto declara isso e o mod de encoding o respeita (não converte arquivo com `charset = utf-8`). Se um teste aparecer em ISO-8859-1, converter para UTF-8, não o contrário.
 
 O projeto modelo verifica isso no build: a task `verificar-encoding-<demanda>` roda antes de `gerar-jar-<demanda>` e de `compileTestJava` e falha se houver `U+FFFD`, encodings misturados ou encoding fora do padrão da pasta. Projetos existentes podem adotar o mesmo snippet → `references/verificacao-encoding-build.md`.
 
@@ -254,7 +254,7 @@ O projeto modelo verifica isso no build: a task `verificar-encoding-<demanda>` r
 - [ ] Evento implementa todos os 7 métodos de `EventoProgramavelJava`
 - [ ] Helper com construtor privado e métodos estáticos
 - [ ] Enum no lugar de strings mágicas
-- [ ] Encoding do arquivo fonte: **ISO-8859-1** (nunca UTF-8) — o hook `sankhya-encoding` converte ao gravar; conferir com `file --mime-encoding` → `instructions/encoding-instructions.md`
+- [ ] Encoding do arquivo fonte: **ISO-8859-1** (nunca UTF-8) — o mod `sankhya-encoding` converte ao gravar; conferir com `file --mime-encoding` → `instructions/encoding-instructions.md`
 - [ ] Pacote inclui segmento `nomedemanda` — nunca classes direto em `br.com.sankhya.customizacao.{camada}`
 
 ### Camadas e fluxo
