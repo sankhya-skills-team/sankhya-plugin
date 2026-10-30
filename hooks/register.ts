@@ -1,5 +1,7 @@
 import type { EngineInterface, Register, ToolCallResult } from 'claude-code'
 
+import { registrarGuard } from './guard'
+
 // Encoding ISO-8859-1 dos fontes Sankhya: o gate e a conversao ficam em
 // sankhya-encoding.js (testado com node --test); aqui so a volta da ferramenta
 const CONVERSOR = 'hooks/sankhya-encoding.js'
@@ -29,7 +31,8 @@ async function envolver($: EngineInterface, arquivo: string, ehLeitura: boolean,
   return { ...resultado, context: [...(resultado.context ?? []), ...avisos] }
 }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  registrarGuard(on, options)
   on('tool.call', { tool: 'Read' }, ($, e, next) =>
     EXTENSOES.test(e.file_path) ? envolver($, e.file_path, true, () => next(e)) : next(e),
   ).catch(($, e, next) => next(e)) // falha do mod nunca impede o trabalho
