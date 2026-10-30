@@ -25,7 +25,8 @@ Gerar **em ondas** (dados → backend → frontend → BI), com **checkpoint e v
 Ao delegar pela ferramenta `Agent`, use o nome completo com o prefixo do plugin (`sankhya:`); sem ele a chamada falha com "Agent type ... not found".
 
 - `sankhya:sankhya-backend-dev` — AcaoRotinaJava, EventoProgramavelJava, RegraNegocioJava, ScheduledAction, Helper/Service/Repository, EJB/bean, anotações Addon (@ActionButton/@Listener/@Callback/@BusinessRule/@Job)
-- `sankhya:sankhya-frontend-dev` — telas (AngularJS/Design System), frontend vc (html/js + EJB), DynamicForm
+- `sankhya:sankhya-frontend-angular` — telas AngularJS sankhya-js (padrão, sem Node), frontend vc (html/js + EJB), DynamicForm
+- `sankhya:sankhya-frontend-design-system` — telas no Design System (só com pipeline Node e pedido explícito)
 - `sankhya:sankhya-data-dev` — tabelas AD_, DataDictionary, DBScripts/migrations, views/triggers/functions, repositories JAPE
 - `sankhya:sankhya-bi-report-dev` — dashboards/gadgets BI, relatórios Jasper/iReport
 

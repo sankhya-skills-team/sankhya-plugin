@@ -79,7 +79,7 @@ Ponto de entrada **sem autenticação nativa** (servlet/serviço público para v
 
 ## Escopo
 
-Não criar método/classe/abstração fora do que foi pedido. Se precisar de algo extra para funcionar, explicar o porquê e perguntar antes. Estrutura de dados nova (tabela `AD_*`, DataDictionary, migration) → delegar ao agent `sankhya-data-dev`. Tela/frontend → `sankhya-frontend-dev`. Relatório/dashboard → `sankhya-bi-report-dev`.
+Não criar método/classe/abstração fora do que foi pedido. Se precisar de algo extra para funcionar, explicar o porquê e perguntar antes. Estrutura de dados nova (tabela `AD_*`, DataDictionary, migration) → delegar ao agent `sankhya-data-dev`. Tela/frontend → `sankhya-frontend-angular` (padrão) ou `sankhya-frontend-design-system`. Relatório/dashboard → `sankhya-bi-report-dev`.
 
 ## Entrega pré-pronta ao dev (documentação)
 

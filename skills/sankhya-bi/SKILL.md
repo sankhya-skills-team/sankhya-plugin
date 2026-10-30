@@ -18,7 +18,7 @@ Cada gadget é construído visualmente pelo modo **Design** ou diretamente pelo 
 > **Default do pipeline = dashboard HTML5 moderno.** Quando o trabalho é gerar
 > dashboard de addon (não um gadget pontual na home do ERP), a preferência é
 > **html5 component** com visual moderno (cards/KPIs, gráficos via lib JS, layout
-> responsivo) — feito pelo agent `sankhya-bi-report-dev`/`sankhya-frontend-dev`,
+> responsivo) — feito pelo agent `sankhya-bi-report-dev`/`sankhya-frontend-angular`,
 > apoiado pelo agent `sankhya-frontend-design-system`. Esta skill (gadget XML
 > via Construtor de BI) aplica-se quando o usuário **pede explicitamente** o gadget
 > nativo ou um KPI embutido na home padrão.

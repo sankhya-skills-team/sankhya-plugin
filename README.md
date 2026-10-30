@@ -37,8 +37,7 @@ Plugin do Claude Code com skills, agents e hook para desenvolvimento no **ERP Sa
 | `sankhya-backend-dev` | Backend Java: `AcaoRotinaJava`, botão de ação, `EventoProgramavelJava`, `RegraNegocioJava`, ações agendadas, Helper/Service/Repository, `@ActionButton`/`@Listener`/`@Job`. Módulo Java e Addon Studio. |
 | `sankhya-data-dev` | Estrutura de dados e persistência: tabelas `AD_`, DataDictionary, DBScripts dual-dialect (Oracle/SQL Server), migrations, repositórios JAPE, views/triggers/functions. |
 | `sankhya-bi-report-dev` | BI e relatórios: dashboards/gadgets (Construtor de Componentes de BI) e JasperReports/iReport. |
-| `sankhya-frontend-dev` | Roteador de frontend: decide entre `sankhya-frontend-angular` (padrão) e `sankhya-frontend-design-system` e delega. |
-| `sankhya-frontend-angular` | Telas HTML5 AngularJS `sankhya-js` **sem** Node/Design System: `sk-application`, `sk-datagrid`, `sk-wizard`, `ServiceProxy`. |
+| `sankhya-frontend-angular` | **Padrão** para telas. Telas HTML5 AngularJS `sankhya-js` **sem** Node/Design System: `sk-application`, `sk-datagrid`, `sk-wizard`, `ServiceProxy`. |
 | `sankhya-frontend-design-system` | Telas no Design System EzUI/Acorde (`ez-`/`snk-` web components) com pipeline Node (npm/Vite). |
 
 ### Hooks (`hooks/`)

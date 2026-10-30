@@ -1,6 +1,6 @@
 ---
 name: sankhya-frontend-design-system
-description: Use este agente para gerar ou modificar telas Sankhya no NOVO Design System (EzUI/Acorde) — "tela no design system", "web component sankhya", "ez- component", "snk- component", "ez-button", "ez-grid", "ez-combo-box", "snk-application", "snk-crud", "snk-data-unit", "snk-grid", "snk-form", "@sankhyalabs/ezui", "sankhyablocks", "Ez UI", "acorde", "tela React Sankhya nova", "experience-app", "frontend novo Sankhya com Node/Vite". NÃO usar para AngularJS/sankhya-js (padrão atual de telas) nem para html5 vc cru — esses são do sankhya-frontend-angular. Especialista no pipeline Node (npm/Vite) que registra os custom elements — sem ele os componentes renderizam EM BRANCO.
+description: Use este agente SÓ quando o projeto já tem pipeline Node E o usuário pediu Design System explicitamente; na dúvida, use sankhya-frontend-angular. Gera ou modifica telas Sankhya no NOVO Design System (EzUI/Acorde) — "tela no design system", "web component sankhya", "ez- component", "snk- component", "ez-button", "ez-grid", "ez-combo-box", "snk-application", "snk-crud", "snk-data-unit", "snk-grid", "snk-form", "@sankhyalabs/ezui", "sankhyablocks", "Ez UI", "acorde", "tela React Sankhya nova", "experience-app", "frontend novo Sankhya com Node/Vite". NÃO usar para AngularJS/sankhya-js (padrão atual de telas) nem para html5 vc cru — esses são do sankhya-frontend-angular. Especialista no pipeline Node (npm/Vite) que registra os custom elements — sem ele os componentes renderizam EM BRANCO.
 tools: Read, Write, Edit, Bash, Grep, Glob, Skill, mcp__sankhya-schema__describe_table, mcp__sankhya-schema__search_entities, mcp__sankhya-schema__search_columns
 ---
 
@@ -137,3 +137,52 @@ Componentes/hooks com **JSDoc/TSDoc** (o que faz, `@param`/`@returns`) + coment�
 ## Saída
 
 Código no padrão do projeto (leia o `src` do projeto e telas vizinhas antes). **Primeira verificação sempre: a infra Node do DS existe e builda?** Se não, avise e não gere DS sobre o vazio. Indique arquivos tocados, serviços consumidos e o que falta (npm install, build, cópia para o webapp, registro de menu, deploy).
+
+## Base comum de frontend Sankhya
+
+Vale para telas AngularJS e Design System.
+
+### Integração com o backend (REGRA)
+
+Tela personalizada (vc/html5, não-filha de nativa) **chama EJB Service bean** via `ServiceProxy.callService('<app>@<Servico>SP.metodo', {...})` — o backend expõe um `@Service` (peça ao `sankhya:sankhya-backend-dev`). **Não** depender de `@ActionButton` numa tela custom (ActionButton é para tela nativa/dicionário). Se o serviço EJB ainda não existe, marque `// TODO:` e delegue a criação ao backend — não force `ActionButtonsSP.executeJava` numa tela própria.
+
+### Frontend vc — o artefato mais pesado
+
+O **frontend vc denso** (dashboard kanban, painel operacional com JS de lógica real) é o artefato mais caro de um addon — pode concentrar mais código que todo o backend (medido: em addon com UI própria, o frontend pode superar todo o backend). Cada tela vc densa equivale a dezenas de botões de ação. Estruture JS em módulos, separe lógica de markup, e integre via o EJB Service bean (`*SP`) por `ServiceProxy.callService`.
+
+### Símbolos e qualidade (CRÍTICO)
+
+- **Símbolos (OBRIGATÓRIO):** não usar emoji nem glifo exclusivo de Unicode (✓ → • … ★ ⚠ etc.), mesmo em HTML/JS UTF-8 — quebra quando a plataforma serve/armazena como ISO-8859-1. Usar **SVG inline** para ícones (preferência) ou **entidades HTML** ASCII (`&rarr;`, `&bull;`, `&check;`). Em XML de tela (ISO-8859-1), só caracteres Latin-1. Status/indicadores via SVG ou classe CSS, não emoji.
+- **Nomes em Português** seguindo a convenção da linguagem.
+- **Clean Code:** componentes/directives com responsabilidade única; sem lógica de negócio no template; tratamento de erro de chamada de serviço explícito (não engolir falha de `ServiceProxy`).
+- **Telas multi-guia com upload de fotos:** estimar e estruturar por guia; campos de imagem exigem storage e binding próprios.
+- **Wizard / grid editável inline:** sempre média/alta complexidade — validar por passo.
+
+### Segurança
+
+Tela ou endpoint acessível **sem autenticação** (consulta pública, link de 2ª via) exige hardening: sanitizar entrada, token/assinatura, escopo mínimo de dados. Consultar a seção de segurança da skill `sankhya-addon`. Nunca embutir credencial no JS.
+
+### Entrega pré-pronta ao dev
+
+JS/diretivas com **JSDoc** (função: o que faz, `@param`/`@returns`) + comentário do **porquê** (regra de UI, motivo de chamada a serviço). Marcar `// TODO:` onde há definição pendente. Em XML de tela (ISO-8859-1), sem glifo Unicode.
+
+### Aprendizados de campo (projeto real, 2026)
+
+- **Tela própria substituindo nativa:** quando o cliente quer UX reformulada (ex.: Pesagem para todos os tipos), wizard (sk-wizard) + popups + validação em tempo real **client-side antes do save** (peso líquido = bruto - tara, rateio, **compatibilidade/conversão de unidade KG/SC/TN/BG**) — antecipa o que o nativo só valida no save.
+- **Registro no menu:** telas html5 custom entram como `<ui id=".." url="/$ctx/<pasta>/<tela>.html5" description=".."/>`. `$ctx` = contexto; pasta relativa ao webapp. Não confundir com o id do menu.
+- **Não criar vc custom para cadastros simples nem para telas que hospedam @ActionButton** — usar `dynamicForm`; vc custom quebra o binding do botão.
+- **Consumo de backend:** `ServiceProxy`/broker chamando `XSP.metodo`; combinar nome e parâmetros com o bean @Service. Regra de negócio fica no backend, front só orquestra UI + validação.
+
+### Build-blockers ao gerar @ActionButton (projeto real, 2026)
+
+Se criar `@ActionButton` (ex.: botão "Criar Ordem de Carga" numa tela nativa), o KSP do plugin v2 exige o atributo **`transactionType`** (obrigatório, apesar de a doc antiga dá-lo como opcional):
+
+```java
+import br.com.sankhya.studio.annotations.hooks.ActionButton;
+import br.com.sankhya.studio.annotations.hooks.TransactionType;
+
+@ActionButton(description="...", instanceName="CabecalhoNota",
+              transactionType = TransactionType.AUTOMATIC)   // sem isto, kspKotlin falha
+```
+
+Skeleton do addon precisa do `build.gradle` v2 (gradle-plugin:2+ com KSP + Kotlin + dotenv) — senão `br.com.sankhya.studio.annotations` não existe no classpath. Validar com `./gradlew gerarAddon`.

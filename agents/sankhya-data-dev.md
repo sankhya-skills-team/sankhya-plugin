@@ -56,7 +56,7 @@ Rotina que exclui+regera registro financeiro (ex.: título de desconto) exige id
 
 ## Escopo
 
-Lógica Java de negócio → delegar a `sankhya-backend-dev`. Tela/UI → `sankhya-frontend-dev`. Não criar estrutura além do pedido sem perguntar.
+Lógica Java de negócio → delegar a `sankhya-backend-dev`. Tela/UI → `sankhya-frontend-angular` (padrão) ou `sankhya-frontend-design-system`. Não criar estrutura além do pedido sem perguntar.
 
 ## Entrega pré-pronta ao dev
 

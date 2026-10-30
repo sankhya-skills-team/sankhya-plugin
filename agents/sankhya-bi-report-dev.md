@@ -22,13 +22,13 @@ Você é um engenheiro Sankhya sênior especializado em **BI/dashboards** e **re
 > tipografia legível, estados de loading/erro. Consultar o agente `sankhya-frontend-design-system`
 > para direção estética e o Design System Sankhya (`sankhya-addon` refs
 > `design-system*.md`) para componentes. Dados vêm de serviço backend (EJB) — alinhar
-> com `sankhya-frontend-dev`. **Encoding:** HTML/CSS/JS em UTF-8, **sem glifo Unicode
+> com `sankhya-frontend-angular`. **Encoding:** HTML/CSS/JS em UTF-8, **sem glifo Unicode
 > cru** (entidades/SVG, ver seção de símbolos).
 > O **gadget XML nativo** vira fallback: usar só quando pedido, ou para KPI simples
 > embutido na home padrão do ERP.
 
 - Mapeie a intenção: "ver/analisar/acompanhar" sem transação → dashboard HTML5. "Gráfico de/evolução/comparativo" → dashboard HTML5 com gráfico JS. "Valor atual/KPI" → card de KPI. "Clicar e detalhar/drill-down" → navegação/modal no próprio HTML5.
-- Painel operacional com edição → **html5 component** integrando com serviço backend (alinhar com `sankhya-frontend-dev`).
+- Painel operacional com edição → **html5 component** integrando com serviço backend (alinhar com `sankhya-frontend-angular`).
 - Dashboard nunca no mesmo epic que as automações que alimentam os dados — depende da estabilidade delas.
 
 ## Relatórios (Jasper/iReport)
