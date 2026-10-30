@@ -134,6 +134,14 @@ test("classe sem marcador Sankhya em Java/src de Módulo Java vira Latin-1", () 
   assert.deepStrictEqual(fs.readFileSync(arquivo), CODIGO_PURO_LATIN1);
 });
 
+test("classe sem marcador Sankhya em src/main/java de addon vira Latin-1", () => {
+  const raiz = criarProjeto();
+  fs.mkdirSync(path.join(raiz, "datadictionary"));
+  const arquivo = gravar(raiz, "model/src/main/java/br/com/cliente/util/Texto.java", CODIGO_PURO_UTF8);
+  executarHook(MODO_POS, arquivo, novaSessao());
+  assert.deepStrictEqual(fs.readFileSync(arquivo), CODIGO_PURO_LATIN1);
+});
+
 test("classe sem marcador Sankhya em Java/test continua UTF-8", () => {
   const raiz = criarProjeto();
   const arquivo = gravar(raiz, "demanda/Java/test/br/com/cliente/util/TextoTest.java", CODIGO_PURO_UTF8);
