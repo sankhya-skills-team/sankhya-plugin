@@ -1,18 +1,21 @@
 ---
 name: sankhya-modulo-java
 description: |
-  Esta skill deve ser utilizada quando o usuário mencionar módulo Java Sankhya,
-  EventoProgramavelJava, AcaoRotinaJava, RegraNegocioJava, ScheduledAction, JapeFactory,
-  DwfUtils, MGEModelException, DynamicEntityNames, AdicionalEntityNames, CustomModuleLoader,
-  Construtor de Telas, JapeSession, EntityFacade, helpers de customização, ou qualquer desenvolvimento
-  Java para Sankhya OM que não utiliza as anotações @ActionButton/@Listener/@Job do Addon Studio.
-  Também acionar para: "módulo java", "evento programável", "botão de ação manual",
-  "tela personalizada", "metadados sankhya", "importar módulo", "criar evento",
-  "criar trigger", "registrar botão ação", "construtor de telas",
-  "JAR sankhya", "deploy módulo java", "módulo complementar sankhya".
-  Também acionar para segurança (SQL injection em NativeSql, audit trail, deserialização
-  insegura, PCI/PDV, certificado SEFAZ, upload de anexo) e compatibilidade SQL
-  Oracle/SQL Server (type mapping, funções proibidas como NVL/DECODE/SYSDATE).
+  Use quando o projeto for Módulo Java Sankhya (código com EventoProgramavelJava,
+  AcaoRotinaJava ou RegraNegocioJava, sem pastas datadictionary/dbscripts) ou o pedido
+  citar módulo Java Sankhya, EventoProgramavelJava, AcaoRotinaJava, RegraNegocioJava,
+  ScheduledAction, DwfUtils, MGEModelException, DynamicEntityNames, AdicionalEntityNames,
+  CustomModuleLoader, Construtor de Telas, helpers de customização ou desenvolvimento Java
+  para Sankhya OM sem as anotações @ActionButton/@Listener/@Job do Addon Studio.
+  Também acionar para: "módulo java", "evento programável", "evento em Java",
+  "botão de ação em Java", "tela no Construtor de Telas", "metadados sankhya",
+  "importar módulo", "JAR sankhya", "deploy módulo java", "módulo complementar sankhya";
+  e, em Módulo Java, para segurança (SQL injection em NativeSql, audit trail,
+  deserialização insegura, PCI/PDV, certificado SEFAZ, upload de anexo) e
+  compatibilidade SQL Oracle/SQL Server.
+  Não usar para trigger Oracle (ver sankhya-gerar-trigger), botão de ação em procedure
+  (ver sankhya-gerar-btnacao-banco), addon com anotações (ver sankhya-addon), acesso a
+  dados JAPE/NativeSql (ver sankhya-jape) nem telas html5 (ver sankhya-js).
 ---
 
 # Módulos Java Sankhya OM

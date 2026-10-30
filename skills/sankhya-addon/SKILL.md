@@ -1,17 +1,18 @@
 ---
 name: sankhya-addon
 description: |
-  Especialista em desenvolvimento de addons para o ERP Sankhya utilizando Addon Studio.
-  Use esta skill SEMPRE que o usuário mencionar Sankhya, Addon Studio, Action Button,
-  Listener, DynamicVO, JapeFactory, JAPE, EntityFacade, Job agendado, Business Rule,
-  DynamicForm, parceiro Sankhya, ou qualquer desenvolvimento voltado ao ecossistema Sankhya.
-  Também acionar quando o usuário pedir ajuda com estrutura de pacotes Java para ERP,
-  integração com sistemas Sankhya, ou mencionar termos como "addon", "plugin Sankhya",
-  "portal Sankhya", "SDK Sankhya" ou "Sankhya W".
-  Também acionar para controle de acesso e permissões especiais (MGEAuthorizationManager,
-  hasAccess, menu.xml <acesso>, SnkApplication), segurança (SQL injection em NativeSql,
-  audit trail, PCI/PDV, certificado SEFAZ, upload de anexo) e compatibilidade SQL
-  Oracle/SQL Server (type mapping, funções proibidas como NVL/DECODE/SYSDATE).
+  Especialista em addons do ERP Sankhya feitos com o Addon Studio. Use quando o projeto
+  for Addon Studio (pastas datadictionary/ ou dbscripts/ na raiz) ou o pedido citar
+  Addon Studio, "addon", @ActionButton, @Listener, @Job, @BusinessRule, @Service,
+  DynamicForm, Job agendado de addon, "plugin Sankhya", "SDK Sankhya" ou "Sankhya W".
+  Também acionar, em addon, para controle de acesso e permissões especiais
+  (MGEAuthorizationManager, hasAccess, menu.xml <acesso>, SnkApplication), segurança
+  (SQL injection em NativeSql, audit trail, PCI/PDV, certificado SEFAZ, upload de anexo)
+  e compatibilidade SQL Oracle/SQL Server (type mapping, funções proibidas como
+  NVL/DECODE/SYSDATE/ROWNUM).
+  Não usar para Módulo Java tradicional (EventoProgramavelJava, AcaoRotinaJava — ver
+  sankhya-modulo-java), acesso a dados JAPE/NativeSql (ver sankhya-jape), trigger Oracle
+  (ver sankhya-gerar-trigger) nem botão de ação em procedure (ver sankhya-gerar-btnacao-banco).
 ---
 
 # Especialista em Desenvolvimento de Addons Sankhya
