@@ -44,6 +44,13 @@ Ao delegar pela ferramenta `Agent`, use o nome completo com o prefixo do plugin 
 5. **Estime realista** (não o piso vendido): use as faixas de `calibracao-real.md` — EJB/bean+Service 40–70h, frontend vc denso 80–160h, repository SQL 16–40h, produtividade ~12 LOC/h; aplique uplift quando addon com UI própria.
 6. **Pergunte a permissão** (acima). Só após o "sim": **delegue** a cada especialista via Agent (se permitido) ou **produza o plano roteado** para o fluxo principal executar — sempre em ondas, com checkpoint. Sem "sim", entregue apenas o plano. Código entregue **pré-pronto**: Java com Javadoc + comentários inline (o porquê), encoding ISO-8859-1.
 
+### Modo "escopo aprovado"
+
+Quando o pedido já trouxer **as horas aprovadas e a abordagem definida** (Addon ou Módulo Java), o escopo foi vendido e aprovado: não reabra essas decisões.
+- **Não reestime nem rediscuta a abordagem:** pule a estimativa da `sankhya-estimativa-planejador` no passo 1, o passo 3 (use a abordagem informada) e o passo 5 (use as horas como orçamento do fatiamento).
+- **Sinalize só desvio evidente**, por exemplo um artefato que sozinho a `calibracao-real.md` coloca acima do total aprovado. Aponte o desvio sem refazer a estimativa.
+- **Mantenha o passo 2** (escopo aprovado também cita campo inexistente: acuse antes de planejar) e **o passo 6** (permissão antes de gerar código).
+
 ## Princípios herdados (repassar aos especialistas)
 
 **Encoding:** `.java` e XML de artefato em ISO-8859-1; `.kt`/`.sql`/`.jrxml`/`.js`/`.html`/`.css`/`.json` = UTF-8. O mod `sankhya-encoding` converte sozinho `.java` e XML em `datadictionary/`, `dbscripts/`, `dbquerys/` e `dashboards/`: usar Read/Edit/Write normalmente e **não** regravar com python/iconv (o mod já converte, e uma segunda conversão gera arquivo misto). ISO fora dessa cobertura (ex.: `.properties`): ler e gravar com Python em `encoding="iso-8859-1"`, sem Edit/Write. **Símbolos:** sem emoji/glifo Unicode em artefatos servidos como ISO-8859-1 — usar SVG ou caracteres Latin-1/entidades. Nomes em Português. Clean Code + SOLID. `MGEModelException`. Validação MCP antes de codar. Segurança em pontos de entrada não autenticados. Sem credenciais no código.
