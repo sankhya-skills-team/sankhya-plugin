@@ -21,7 +21,8 @@
 //   .xml:      so dentro de pasta de artefato Sankhya
 //              (datadictionary/dbscripts/dbquerys/dashboards).
 //   .java:     gate hibrido (basta UM) -> pasta marcadora ancestral
-//              (datadictionary/dbscripts) OU conteudo com marcadores Sankhya.
+//              (datadictionary/dbscripts) OU caminho com Java/src (layout de
+//              Modulo Java) OU conteudo com marcadores Sankhya.
 // Excecao: .editorconfig declarando charset utf-8 para o caminho (ex.: pasta
 // Java/test) tira o arquivo do tratamento, em qualquer modo.
 // Padrao definido na skill sankhya-addon (instructions/encoding-instructions.md).
@@ -37,6 +38,10 @@ const path = require("path");
 const EXTENSOES = new Set([".java", ".xml"]);
 // Pastas que marcam a raiz de um projeto Addon Studio.
 const MARCADORES = ["datadictionary", "dbscripts"];
+// Segmentos consecutivos do layout de Modulo Java (<demanda>/Java/src/...).
+// Projetos legados nao tem datadictionary/dbscripts, e classe utilitaria pura
+// nao tem marcador de conteudo; sem isso ficariam em UTF-8 e quebrariam o JAR.
+const PASTA_FONTES_MODULO_JAVA = ["java", "src"];
 // Pastas onde XML e SEMPRE artefato Sankhya em Latin-1. Cobre os artefatos
 // reais sem pegar pom.xml (raiz) nem .idea/*.xml (config de IDE).
 const PASTAS_XML_SANKHYA = new Set([
@@ -94,6 +99,13 @@ function ehProjetoSankhya(inicio) {
     if (pai === dir) return false; // chegou na raiz do filesystem
     dir = pai;
   }
+}
+
+// O caminho contem os segmentos de PASTA_FONTES_MODULO_JAVA em sequencia?
+function emFontesModuloJava(arquivo) {
+  const segmentos = path.resolve(arquivo).toLowerCase().split(/[\\/]/);
+  const [pasta, subpasta] = PASTA_FONTES_MODULO_JAVA;
+  return segmentos.some((s, i) => s === pasta && segmentos[i + 1] === subpasta);
 }
 
 // XML so e Sankhya se estiver DENTRO de uma das pastas de artefato
@@ -210,7 +222,9 @@ function arquivoSankhya(arquivo, conteudo) {
   if (CHARSETS_UTF8.has(charsetDeclarado(arquivo))) return false;
   if (ext === ".xml") return xmlSankhyaPorPasta(path.dirname(arquivo));
   return (
-    ehProjetoSankhya(path.dirname(arquivo)) || temConteudoSankhya(conteudo)
+    ehProjetoSankhya(path.dirname(arquivo)) ||
+    emFontesModuloJava(arquivo) ||
+    temConteudoSankhya(conteudo)
   );
 }
 

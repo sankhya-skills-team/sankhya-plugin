@@ -124,6 +124,37 @@ test(".editorconfig sem charset não muda o comportamento", () => {
   assert.deepStrictEqual(fs.readFileSync(arquivo), CODIGO_SANKHYA_LATIN1);
 });
 
+const CODIGO_PURO_UTF8 = Buffer.from("package br.com.cliente.util;\n// ação\n", "utf8");
+const CODIGO_PURO_LATIN1 = Buffer.from("package br.com.cliente.util;\n// ação\n", "latin1");
+
+test("classe sem marcador Sankhya em Java/src de Módulo Java vira Latin-1", () => {
+  const raiz = criarProjeto();
+  const arquivo = gravar(raiz, "demanda/Java/src/br/com/cliente/util/Texto.java", CODIGO_PURO_UTF8);
+  executarHook(MODO_POS, arquivo, novaSessao());
+  assert.deepStrictEqual(fs.readFileSync(arquivo), CODIGO_PURO_LATIN1);
+});
+
+test("classe sem marcador Sankhya em Java/test continua UTF-8", () => {
+  const raiz = criarProjeto();
+  const arquivo = gravar(raiz, "demanda/Java/test/br/com/cliente/util/TextoTest.java", CODIGO_PURO_UTF8);
+  executarHook(MODO_POS, arquivo, novaSessao());
+  assert.deepStrictEqual(fs.readFileSync(arquivo), CODIGO_PURO_UTF8);
+});
+
+test("charset utf-8 no .editorconfig prevalece sobre o layout Java/src", () => {
+  const raiz = criarProjeto("[**/Java/src/**]\ncharset = utf-8\n");
+  const arquivo = gravar(raiz, "demanda/Java/src/br/com/cliente/util/Texto.java", CODIGO_PURO_UTF8);
+  executarHook(MODO_POS, arquivo, novaSessao());
+  assert.deepStrictEqual(fs.readFileSync(arquivo), CODIGO_PURO_UTF8);
+});
+
+test("classe sem marcador fora de Java/src e fora de projeto Sankhya continua UTF-8", () => {
+  const raiz = criarProjeto();
+  const arquivo = gravar(raiz, "src/main/java/br/com/cliente/util/Texto.java", CODIGO_PURO_UTF8);
+  executarHook(MODO_POS, arquivo, novaSessao());
+  assert.deepStrictEqual(fs.readFileSync(arquivo), CODIGO_PURO_UTF8);
+});
+
 test(".kt continua fora do tratamento do hook", () => {
   const raiz = criarProjeto();
   const arquivo = gravar(raiz, "Kotlin/src/A.kt", CODIGO_SANKHYA_UTF8);
