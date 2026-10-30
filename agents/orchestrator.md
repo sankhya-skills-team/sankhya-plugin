@@ -19,18 +19,20 @@ Execute `git diff --name-only main` (ou `master`, conforme o branch padrão do r
 
 ## Passo 2 — Executar sub-agentes
 
+Chame cada revisor pela ferramenta `Agent` com o nome **completo, com o prefixo do plugin** (`sankhya:`). Sem o prefixo a chamada falha com "Agent type ... not found".
+
 Ordem de execução:
 
-1. **Primeiro:** execute `arch-reviewer` sobre os arquivos identificados. Aguarde o resultado.
+1. **Primeiro:** execute `sankhya:arch-reviewer` sobre os arquivos identificados. Aguarde o resultado.
 2. **Em paralelo:** execute os demais agentes simultaneamente, passando também os findings do arch-reviewer como contexto adicional:
-   - `clean-code`
-   - `security-scanner`
-   - `perf-analyzer`
-   - `doc-checker`
+   - `sankhya:clean-code`
+   - `sankhya:security-scanner`
+   - `sankhya:perf-analyzer`
+   - `sankhya:doc-checker`
 
 Se um sub-agente falhar por modelo indisponível (ex: haiku não suportado no ambiente), re-execute com modelo `sonnet` como fallback.
 
-Se um sub-agente falhar por outro motivo ou não retornar resultado, registre no relatório que aquela análise não foi concluída e continue com os demais.
+Se um sub-agente falhar por outro motivo ou não retornar resultado, registre no relatório que aquela análise não foi concluída, com a mensagem de erro exata, e continue com os demais.
 
 ## Passo 3 — Consolidar findings
 
@@ -68,6 +70,7 @@ Justifique o parecer em 2-3 frases, citando os findings mais relevantes.
 # Relatório de Revisão de Código
 
 ## Resumo
+- Revisores executados: [lista dos que retornaram resultado; os que falharam, com o erro]
 - Total de findings: X
 - Critical: X | Warning: X | Info: X
 - Arquivos analisados: [lista]
@@ -96,6 +99,7 @@ Se nenhum finding for encontrado, emita:
 # Relatório de Revisão de Código
 
 ## Resumo
+- Revisores executados: [lista dos que retornaram resultado; os que falharam, com o erro]
 - Total de findings: 0
 - Arquivos analisados: [lista]
 

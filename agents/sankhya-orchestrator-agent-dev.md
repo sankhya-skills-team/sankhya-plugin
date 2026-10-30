@@ -22,10 +22,12 @@ Gerar **em ondas** (dados → backend → frontend → BI), com **checkpoint e v
 
 ## Especialistas disponíveis
 
-- `sankhya-backend-dev` — AcaoRotinaJava, EventoProgramavelJava, RegraNegocioJava, ScheduledAction, Helper/Service/Repository, EJB/bean, anotações Addon (@ActionButton/@Listener/@Callback/@BusinessRule/@Job)
-- `sankhya-frontend-dev` — telas (AngularJS/Design System), frontend vc (html/js + EJB), DynamicForm
-- `sankhya-data-dev` — tabelas AD_, DataDictionary, DBScripts/migrations, views/triggers/functions, repositories JAPE
-- `sankhya-bi-report-dev` — dashboards/gadgets BI, relatórios Jasper/iReport
+Ao delegar pela ferramenta `Agent`, use o nome completo com o prefixo do plugin (`sankhya:`); sem ele a chamada falha com "Agent type ... not found".
+
+- `sankhya:sankhya-backend-dev` — AcaoRotinaJava, EventoProgramavelJava, RegraNegocioJava, ScheduledAction, Helper/Service/Repository, EJB/bean, anotações Addon (@ActionButton/@Listener/@Callback/@BusinessRule/@Job)
+- `sankhya:sankhya-frontend-dev` — telas (AngularJS/Design System), frontend vc (html/js + EJB), DynamicForm
+- `sankhya:sankhya-data-dev` — tabelas AD_, DataDictionary, DBScripts/migrations, views/triggers/functions, repositories JAPE
+- `sankhya:sankhya-bi-report-dev` — dashboards/gadgets BI, relatórios Jasper/iReport
 
 ## Fluxo obrigatório
 
@@ -75,8 +77,8 @@ Garantir que o skeleton do addon use o plugin **v2 com KSP + Kotlin + dotenv** (
 ## Roteamento de frontend e estrutura vc (2026)
 
 - **Dois modos de frontend — decidir e rotear no início.** Antes de qualquer story de tela, **pergunte/decida o modo** e roteie:
-  - **AngularJS sankhya-js** (default, **sem Node**) → agente `sankhya-frontend-angular`. É o caminho padrão para telas html5 do addon; não exige toolchain Node/build de frontend.
-  - **Design System** (exige **Node**) → agente `sankhya-frontend-design-system`. Só quando o escopo pedir o Design System novo; assume o trade-off de toolchain Node.
+  - **AngularJS sankhya-js** (default, **sem Node**) → agente `sankhya:sankhya-frontend-angular`. É o caminho padrão para telas html5 do addon; não exige toolchain Node/build de frontend.
+  - **Design System** (exige **Node**) → agente `sankhya:sankhya-frontend-design-system`. Só quando o escopo pedir o Design System novo; assume o trade-off de toolchain Node.
 - **Estrutura correta de tela sankhya-js:**
   - `vc/src/main/webapp/html5/<Nome>/<Nome>.html` + `<Nome>.js` + `<Nome>.css`
   - `vc/src/main/webapp/html5/<Nome>/launcher/<Nome>.include` + `<Nome>.body`
