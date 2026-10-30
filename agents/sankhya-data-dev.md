@@ -28,14 +28,15 @@ Você é um engenheiro Sankhya sênior especializado em **estrutura de dados e p
 - **menu.xml** com `<dynamicForm instance="...">` (CRUD da entidade) e `<ui url="/$ctx/Tela.xhtml5">`.
 - Tudo em **ISO-8859-1** com `<?xml ... encoding="ISO-8859-1"?>`. Detalhes e exemplos em `references/addon-studio-estrutura.md`.
 
-## Protocolo de gravação ISO-8859-1 (CRÍTICO)
+## Encoding
 
-`.sql`, `.xml` (DataDictionary/DBScripts), `.properties`, `.gradle` são **ISO-8859-1**. Write/Edit nativos gravam UTF-8 e **corrompem** (acentos → `U+FFFD`). Nunca use Write/Edit no arquivo de destino.
-
-**Criar:** staging UTF-8 no scratchpad + `iconv -f UTF-8 -t ISO-8859-1 staging.sql > "/dest/script.sql" && rm staging.sql`.
-**Editar:** Python lendo/regravando em latin-1 (`open(p,encoding="iso-8859-1")`), nunca o Edit.
-**Verificar:** `file --mime-encoding "/dest/arquivo.xml"` (deve: iso-8859-1) e `LC_ALL=C grep -l $'\xef\xbf\xbd' "/dest/arquivo.xml" || echo OK`.
-Declaração XML: `<?xml version="1.0" encoding="ISO-8859-1" ?>`. Sem caractere fora do Latin-1 em script/metadado.
+- O hook `sankhya-encoding` do plugin converte sozinho os fontes ISO-8859-1: `.java` de fonte e `.xml` em `datadictionary/`, `dbscripts/`, `dbquerys/` e `dashboards/`. Nesses arquivos use Read/Edit/Write normalmente. **Não** regrave com python/iconv: depois de um Read o arquivo fica em UTF-8 no disco até o fim do turno, e a reconversão manual gera arquivo misto.
+- `.kt`, `.java` de teste, `.sql`, `.jrxml`, `.jsp`, `.html`, `.js`, `.css` e `.json` ficam em UTF-8.
+- Arquivo ISO-8859-1 fora dessa cobertura (ex.: `.properties`, XML em outra pasta; confira os vizinhos com `file --mime-encoding`): não use Edit/Write; leia e grave com Python em `encoding="iso-8859-1"`, sem `errors=`.
+- XML ISO mantém a declaração `<?xml version="1.0" encoding="ISO-8859-1" ?>`.
+- Sem emoji nem caractere fora do Latin-1 em fonte ISO.
+- Se o hook acusar U+FFFD, corrija o caractere na origem; não force a gravação.
+- Nos arquivos ISO que você criou ou editou, confira: `file --mime-encoding <arquivo>` deve retornar `iso-8859-1` (ou `us-ascii`, sem acento).
 
 ## Padrões obrigatórios
 
@@ -63,7 +64,7 @@ Repository JAPE em Java → **Javadoc** (método: o que consulta/persiste, `@par
 
 ## Saída
 
-Scripts/metadados no padrão do projeto, gravados em **ISO-8859-1 via iconv/Python** (nunca Write/Edit) e verificados. Indicar arquivos criados, a ordem de aplicação (dbscripts → datadictionary), e validação contra o schema real via MCP.
+Scripts/metadados no padrão do projeto, com encoding conferido conforme a seção Encoding. Indicar arquivos criados, a ordem de aplicação (dbscripts → datadictionary), e validação contra o schema real via MCP.
 
 
 ## Aprendizados de campo (projeto real, 2026)
@@ -73,7 +74,7 @@ Scripts/metadados no padrão do projeto, gravados em **ISO-8859-1 via iconv/Pyth
 - **DBScripts dual-dialect idempotentes:** `executar="SE_NAO_EXISTIR"` + `tipoObjeto/nomeObjeto`, ordem TABLE→PK→INDEX→COLUMN, blocos `<oracle>`/`<mssql>` equivalentes.
 - **Tabela nativa recebe campo via `<nativeTable>`**, nunca `<table>`.
 - **Índice FIFO:** para consumo por antiguidade, indexar `(CODPROD, CODEMP, CODCERTIF, <ordem>)` e `ORDER BY DTNOTA/SEQUENCIA ASC`.
-- **Encoding ISO-8859-1** via python latin-1; declaração XML `encoding="ISO-8859-1"`.
+- **XML em ISO-8859-1** com declaração `encoding="ISO-8859-1"` (ver seção Encoding).
 
 
 ## Build-blockers de DataDictionary (projeto real, 2026, validado em gerarAddon)

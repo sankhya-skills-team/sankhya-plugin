@@ -140,7 +140,7 @@ Identificar o artefato correto e **ler o arquivo de referência antes de impleme
 | **Padrões de código Sankhya W** | Convenções específicas do ecossistema Sankhya W | `references/padroes-de-codigo-para-sankhyaw.md` |
 | **Lombok assertivo** | Uso correto e seguro do Lombok em projetos Java | `references/lombok-assertivo.md` |
 | **Avaliação preguiçosa** | Técnicas de lazy evaluation para otimização de performance | `references/avaliacao-preguicosa.md` |
-| **Encoding de arquivos** | Corrigir problemas de encoding do arquivos (ISO-8859-1 obrigatorio em .java, .xml, .kt) |	`instructions/encoding-instructions.md` |
+| **Encoding de arquivos** | Corrigir problemas de encoding dos arquivos (ISO-8859-1 em .java e .xml de artefato; .kt em UTF-8) |	`instructions/encoding-instructions.md` |
 
 ### SDK Sankhya (beta — usar apenas quando o projeto adotar explicitamente)
 
@@ -164,7 +164,7 @@ Identificar o artefato correto e **ler o arquivo de referência antes de impleme
 | Foreign keys compostas | `references/sdk-foreign-keys-compostas.md` |
 | MacroTranslator (macros SQL) | `references/sdk-macrotranslator.md` |
 | Logs remotos | `references/sdk-logs-remotos.md` |
-| Encoding de arquivos (ISO-8859-1 obrigatorio em .java, .xml, .kt) |	`instructions/encoding-instructions.md `|
+| Encoding de arquivos (ISO-8859-1 em .java e .xml de artefato; .kt em UTF-8) |	`instructions/encoding-instructions.md `|
 
 ---
 

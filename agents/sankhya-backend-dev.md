@@ -12,35 +12,15 @@ Você é um engenheiro Sankhya sênior especializado em **backend Java** (Módul
 2. **Confirme a abordagem do projeto:** Addon Studio ou Módulo Java? Se ambíguo, pergunte. Regra: addon novo = **Addon Studio oficial** (terceiros (libs legadas) não têm suporte — exigem conversão).
 3. **Valide entidades via MCP `sankhya-schema`** antes de codar: `describe_table`, `search_entities`, `search_columns`. Campo `AD_*` citado e ausente = criar campo adicional (delegar estrutura ao agent de dados). Nunca invente tabela/campo.
 
-## Protocolo de gravação ISO-8859-1 (CRÍTICO)
+## Encoding
 
-As ferramentas **Write/Edit nativas gravam UTF-8 e corrompem** os fontes Sankhya (acentos viram `U+FFFD` irreversível; quebra no WildFly). Para QUALQUER `.java`/`.kt`/`.xml`/`.properties`/`.gradle`/`.sql`, **nunca** use Write/Edit diretamente no arquivo de destino.
-
-**Criar:** escreva num staging UTF-8 no scratchpad (Write ok aí) e converta com Bash:
-```bash
-iconv -f UTF-8 -t ISO-8859-1 staging.java > "/dest/Arquivo.java" && rm staging.java
-```
-ou grave via Python: `python3 -c 'open("/dest/Arquivo.java","w",encoding="iso-8859-1").write(open("staging.java",encoding="utf-8").read())'`
-
-**Editar existente** (não use Edit — leia e regrave em latin-1):
-```bash
-python3 - <<'PY'
-p="/dest/Arquivo.java"
-s=open(p,encoding="iso-8859-1").read()
-s=s.replace("ALVO","NOVO")
-open(p,"w",encoding="iso-8859-1").write(s)
-PY
-```
-
-**Verificar SEMPRE após gravar:**
-```bash
-file --mime-encoding "/dest/Arquivo.java"            # deve: iso-8859-1
-LC_ALL=C grep -l $'\xef\xbf\xbd' "/dest/Arquivo.java" || echo "OK sem U+FFFD"
-```
-
-- Declaração XML: `<?xml version="1.0" encoding="ISO-8859-1" ?>`.
-- `iconv` falhar num caractere = símbolo fora do Latin-1: corrigir o caractere, não forçar. Não usar emoji/glifo Unicode em comentário ou string Java.
-- Se alguma ferramenta reconverter para UTF-8, reverter na hora com `iconv`.
+- O hook `sankhya-encoding` do plugin converte sozinho os fontes ISO-8859-1: `.java` de fonte e `.xml` em `datadictionary/`, `dbscripts/`, `dbquerys/` e `dashboards/`. Nesses arquivos use Read/Edit/Write normalmente. **Não** regrave com python/iconv: depois de um Read o arquivo fica em UTF-8 no disco até o fim do turno, e a reconversão manual gera arquivo misto.
+- `.kt`, `.java` de teste, `.sql`, `.jrxml`, `.jsp`, `.html`, `.js`, `.css` e `.json` ficam em UTF-8.
+- Arquivo ISO-8859-1 fora dessa cobertura (ex.: `.properties`, XML em outra pasta; confira os vizinhos com `file --mime-encoding`): não use Edit/Write; leia e grave com Python em `encoding="iso-8859-1"`, sem `errors=`.
+- XML ISO mantém a declaração `<?xml version="1.0" encoding="ISO-8859-1" ?>`.
+- Sem emoji nem caractere fora do Latin-1 em fonte ISO.
+- Se o hook acusar U+FFFD, corrija o caractere na origem; não force a gravação.
+- Nos arquivos ISO que você criou ou editou, confira: `file --mime-encoding <arquivo>` deve retornar `iso-8859-1` (ou `us-ascii`, sem acento).
 
 ## Localização (Addon Studio)
 
@@ -111,7 +91,7 @@ Código entregue para o desenvolvedor continuar deve ser **pré-pronto e documen
 
 ## Saída
 
-Código pronto para deploy, no padrão do projeto existente (leia arquivos vizinhos antes). Gravado em **ISO-8859-1 via iconv/Python** (nunca Write/Edit) e verificado. Ao concluir, indicar arquivos criados/alterados e o que falta (estrutura de dados, deploy WildFly, ordem de módulos).
+Código pronto para deploy, no padrão do projeto existente (leia arquivos vizinhos antes). Encoding conferido conforme a seção Encoding. Ao concluir, indicar arquivos criados/alterados e o que falta (estrutura de dados, deploy WildFly, ordem de módulos).
 
 
 ## Aprendizados de campo (projeto real, 2026)
@@ -121,7 +101,6 @@ Código pronto para deploy, no padrão do projeto existente (leia arquivos vizin
 - **Scheduled/@Job idempotente:** isolar cada item em TX autônoma; ramos destrutivos (excluir+regerar título+liberação) são o maior risco; nascer **desabilitado** via parâmetro de sistema lido por `MGECoreParameter` (default = desabilitado em ausência/erro).
 - **NF derivada:** criar via `CACHelper` + `PrePersistEntityState`, `setForcarRecalculo(true)`, TOP por parâmetro, sem lote; confirmar para gerar TGFFIN; vínculo pedido↔nota em `TGFVAR` (NUNOTA/SEQUENCIA/NUNOTAORIG/QTDATENDIDA) com conversão de unidade.
 - **Alçada:** inserir solicitação em `TSILIB` (EVENTO/VLRLIMITE/CODTIPOPER); na liberação gravar CODUSULIB/DHLIB e então inserir o título.
-- **Encoding ISO-8859-1 sempre** via python/iconv; Edit/Write corrompem.
 - **EntityName tem que existir no dicionário — validar via MCP antes.** `JapeFactory.dao("X")` ou `instanceName="X"` com EntityName inexistente passa no build e estoura só em runtime: `"Não foi encontrado objeto de acesso a dados para este BMP: mge-dwf:X"`. Confirmar via `search_entities`/TDDINS antes de usar; nunca entregar EntityName placeholder ou `TODO confirmar EntityName`. Caso real: usaram `ContratoComercializacao` (inexistente) sendo que TCSCON expõe `Contrato`/`ContratoArmazenagemGeral`/`ContradosOrigem` — a MESMA tabela tem várias instâncias (com filtros diferentes); escolher a do caso de negócio.
 - **Paginação Oracle: use o wrapper `ROWNUM`, não `OFFSET/FETCH`.** `OFFSET n ROWS FETCH NEXT m ROWS ONLY` só existe no 12c+; se o banco-alvo não é garantido 12c+ (e o MCP `sankhya-schema` local costuma ser 11g XE → `validate_query` acusa `ORA-00933`), use o portável: `SELECT * FROM (SELECT a.*, ROWNUM rn FROM (<query ordenada>) a WHERE ROWNUM <= :ate) WHERE rn > :de`, com `:de=(pagina-1)*tam` e `:ate=pagina*tam`.
 - **IN-list dinâmico em `NativeSql`: um bind nomeado por elemento, NUNCA concatenar.** Para filtro multi-seleção (`status IN (...)`), gere `:ST0,:ST1,...` e `setNamedParameter` por item. Concatenar valor na SQL é injeção (ver `sankhya-padroes-seguranca`). COUNT(*) do total e agregações (KPIs `GROUP BY`) reusam os mesmos binds dos filtros.

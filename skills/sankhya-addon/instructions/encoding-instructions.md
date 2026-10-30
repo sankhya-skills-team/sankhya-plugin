@@ -1,12 +1,10 @@
 ---
-applyTo: "**/*.java,**/*.xml,**/*.kt"
+applyTo: "**/*.java,**/*.xml"
 ---
 
 # Codificacao de Arquivos — Addon Studio 2.0
 
-> **REGRA CRITICA — SEM EXCECOES**
-
-Todo arquivo `.java`, `.xml` e `.kt` em projetos Addon Studio **deve ser salvo em ISO-8859-1 (Latin-1)**.
+Fontes `.java` e XMLs de artefato em projetos Addon Studio **ficam em ISO-8859-1 (Latin-1)**. O hook `sankhya-encoding` do plugin cuida da conversao: use Read/Edit/Write normalmente.
 
 ---
 
@@ -18,88 +16,34 @@ O servidor Sankhya (Wildfly legado) e o compilador de addons esperam Latin-1. Ar
 
 ## Regras
 
-| Tipo de arquivo | Regra                                                                                    |
-|:----------------|:-----------------------------------------------------------------------------------------|
-| `.java` / `.kt` | Salvo em ISO-8859-1. Acentos diretamente no encoding **ou** escapados como `é`, `ç` etc. |
-| `.xml` (datadictionary, dbscripts) | Salvo em ISO-8859-1. Cabecalho **obrigatorio**: `<?xml version="1.0" encoding="ISO-8859-1" ?>` |
+| Tipo de arquivo | Encoding |
+|:----------------|:---------|
+| `.java` de fonte | ISO-8859-1. Acentos literais. |
+| `.xml` em `datadictionary/`, `dbscripts/`, `dbquerys/`, `dashboards/` | ISO-8859-1. Cabecalho **obrigatorio**: `<?xml version="1.0" encoding="ISO-8859-1" ?>` |
+| `.java` de teste, `.kt` | UTF-8 (o compilador de testes e o Kotlin leem UTF-8; converter para Latin-1 corrompe os acentos) |
+| `.sql`, `.jrxml`, `.jsp`, `.html`, `.js`, `.css`, `.json` | UTF-8 |
 
 ---
 
-## O problema com LLMs
+## Como o encoding e garantido
 
-LLMs geram arquivos em UTF-8 por padrao. Apos criar ou editar qualquer `.java`, `.xml` ou `.kt`, **converta o encoding** antes de usar.
+1. **Hook `sankhya-encoding` (edicao):** no Read, expoe o arquivo ISO como UTF-8 para o Claude ver os acentos; no Write/Edit, grava de volta em ISO-8859-1; no fim do turno (`Stop`/`SessionEnd`), reconverte os arquivos que foram lidos e nao editados. Respeita o `.editorconfig` (`charset = utf-8` tira o arquivo do tratamento).
+2. **Task `verificar-encoding-<demanda>` no `build.gradle`:** so nos projetos criados do projeto modelo. Quebra o build se houver U+FFFD, arquivo misto ou encoding fora do padrao.
+3. **Skill `sankhya-commit`:** confere o encoding dos arquivos em stage antes do commit.
 
-### Mac / Linux — `iconv` (nativo, preferido)
+**Nao converta manualmente** (python/iconv) um arquivo coberto pelo hook. Depois de um Read ele fica em UTF-8 no disco ate o fim do turno; quem regrava lendo como Latin-1 produz arquivo misto.
 
-```bash
-# Arquivo especifico
-iconv -f UTF-8 -t ISO-8859-1 arquivo.java -o arquivo.java
+### Arquivo ISO fora da cobertura do hook
 
-# Todos os .java do projeto
-find . -name "*.java" -exec sh -c 'iconv -f UTF-8 -t ISO-8859-1 "$1" -o "$1.tmp" && mv "$1.tmp" "$1"' _ {} \;
-
-# Todos os .xml do projeto
-find . -name "*.xml" -exec sh -c 'iconv -f UTF-8 -t ISO-8859-1 "$1" -o "$1.tmp" && mv "$1.tmp" "$1"' _ {} \;
-```
-
-> **Dica:** se o arquivo ja esta em ISO-8859-1 puro (sem chars fora da faixa Latin-1), `iconv` finaliza sem erro. Seguro rodar mesmo sem necessidade.
-
-### Windows — Python3 (fallback)
-
-`iconv` nao esta disponivel nativamente no Windows. Use Python3 (disponivel em `python.org` ou Microsoft Store):
-
-```python
-# Arquivo especifico
-python3 -c "
-import sys
-p = sys.argv[1]
-c = open(p, 'r', encoding='utf-8', errors='ignore').read()
-open(p, 'w', encoding='iso-8859-1', errors='replace').write(c)
-" arquivo.java
-```
-
-```python
-# Todos os .java e .xml do projeto (rodar na raiz)
-python3 -c "
-import os, glob
-for ext in ('**/*.java', '**/*.xml', '**/*.kt'):
-    for p in glob.glob(ext, recursive=True):
-        try:
-            c = open(p, 'r', encoding='utf-8').read()
-            open(p, 'w', encoding='iso-8859-1', errors='replace').write(c)
-        except (UnicodeDecodeError, UnicodeEncodeError):
-            pass
-"
-```
-
-### Script com deteccao automatica de plataforma
-
-Salve como `scripts/fix-encoding.sh` no projeto para uso rapido:
+O hook so trata `.java` e os XMLs das pastas acima. Arquivo ISO-8859-1 fora disso (ex.: `.properties`, XML em outra pasta; confira os vizinhos com `file --mime-encoding`): nao use Edit/Write. Leia e grave em Latin-1, sem `errors=`, para que um caractere fora do Latin-1 de erro em vez de sumir:
 
 ```bash
-#!/bin/sh
-# Converte .java, .xml e .kt para ISO-8859-1
-# Usa iconv (Mac/Linux) ou python3 (Windows/fallback)
-
-FILES=$(find . \( -name "*.java" -o -name "*.xml" -o -name "*.kt" \) -not -path "*/build/*" -not -path "*/.gradle/*")
-
-if command -v iconv > /dev/null 2>&1; then
-    echo "$FILES" | while read -r f; do
-        iconv -f UTF-8 -t ISO-8859-1 "$f" -o "$f.tmp" && mv "$f.tmp" "$f"
-    done
-else
-    python3 -c "
-import sys, os
-for p in sys.argv[1:]:
-    try:
-        c = open(p, 'r', encoding='utf-8').read()
-        open(p, 'w', encoding='iso-8859-1', errors='replace').write(c)
-    except (UnicodeDecodeError, UnicodeEncodeError):
-        pass
-" $FILES
-fi
-
-echo "Encoding convertido para ISO-8859-1."
+python3 - <<'PY'
+p = "caminho/arquivo.properties"
+s = open(p, encoding="iso-8859-1").read()
+s = s.replace("ALVO", "NOVO")
+open(p, "w", encoding="iso-8859-1").write(s)
+PY
 ```
 
 ---
@@ -107,16 +51,18 @@ echo "Encoding convertido para ISO-8859-1."
 ## Verificar encoding de um arquivo
 
 ```bash
-file -i NomeArquivo.java
-# Esperado: charset=iso-8859-1
-# Problema: charset=utf-8
+file --mime-encoding NomeArquivo.java
+# Esperado: iso-8859-1 (ou us-ascii, se nao houver acento)
+LC_ALL=C grep -l $'\xef\xbf\xbd' NomeArquivo.java || echo "OK sem U+FFFD"
 ```
+
+Se o hook acusar U+FFFD, corrija o caractere na origem. Nao force a gravacao.
 
 ---
 
 ## Cabecalho obrigatorio em XMLs
 
-Todo XML criado ou modificado **deve manter**:
+Todo XML de artefato criado ou modificado **deve manter**:
 
 ```xml
 <?xml version="1.0" encoding="ISO-8859-1" ?>
@@ -126,20 +72,11 @@ Nunca alterar para `UTF-8` mesmo que editor sugira.
 
 ---
 
-## Caracteres especiais em Java/Kotlin
+## Caracteres especiais em Java
 
-**REGRA ABSOLUTA — SEM EXCECOES:** Escrever acentos **diretamente** no arquivo apos salvar em ISO-8859-1.
+**Escrever acentos diretamente** no fonte. **Proibido** usar escapes Unicode (`ã`, `ç` etc.) em `.java` ou `.xml`: mascaram o encoding real e confundem a manutencao.
 
-**PROIBIDO em qualquer hipotese:** escapes Unicode (`ã`, `ç`, etc.) em arquivos `.java`, `.xml` ou `.kt`.
-
-- Escapes unicode mascaram o encoding real e causam confusao sobre qual encoding o arquivo usa.
-- O compilador Java aceita acentos literais em ISO-8859-1 sem necessidade de escapes.
-- Se o arquivo esta em ISO-8859-1 correto, os acentos aparecem literalmente — isso e o comportamento esperado.
-
-**Fluxo correto:**
-1. Gerar o arquivo com acentos literais (o LLM gera em UTF-8 com acentos literais).
-2. Converter para ISO-8859-1 com `iconv` (Mac/Linux) ou Python3/PowerShell (Windows).
-3. Os acentos permanecem literais, agora em ISO-8859-1.
+Sem emoji nem caractere fora do Latin-1 em fonte ISO. Pontuacao tipografica comum (travessao, aspas curvas, reticencias) o hook translitera para ASCII; o resto vira `?`.
 
 ---
 
@@ -147,7 +84,8 @@ Nunca alterar para `UTF-8` mesmo que editor sugira.
 
 | Errado                                              | Correto                                         |
 |:----------------------------------------------------|:------------------------------------------------|
-| Salvar `.java` / `.xml` em UTF-8                    | Sempre ISO-8859-1                               |
-| XML sem cabecalho `encoding="ISO-8859-1"`           | Cabecalho obrigatorio em todo XML               |
-| Alterar cabecalho de XML para `encoding="UTF-8"`    | Manter `ISO-8859-1` sem excecao                 |
-| Deixar arquivo gerado por LLM sem converter         | Rodar `iconv` (Mac/Linux) ou Python3 (Windows) apos cada criacao/edicao |
+| Salvar `.java` de fonte / XML de artefato em UTF-8  | ISO-8859-1 (o hook converte)                    |
+| Converter `.kt` ou `.java` de teste para ISO-8859-1 | UTF-8                                           |
+| Regravar com python/iconv arquivo coberto pelo hook | Read/Edit/Write normais                         |
+| `errors='ignore'` ou `errors='replace'` na conversao | Sem `errors=`: falhar e corrigir o caractere   |
+| XML sem cabecalho `encoding="ISO-8859-1"`           | Cabecalho obrigatorio em todo XML de artefato   |

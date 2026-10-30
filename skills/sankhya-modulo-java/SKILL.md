@@ -254,7 +254,7 @@ O projeto modelo verifica isso no build: a task `verificar-encoding-<demanda>` r
 - [ ] Evento implementa todos os 7 métodos de `EventoProgramavelJava`
 - [ ] Helper com construtor privado e métodos estáticos
 - [ ] Enum no lugar de strings mágicas
-- [ ] Encoding do arquivo fonte: **ISO-8859-1** (nunca UTF-8) — converter com Python3/iconv após geração → `instructions/encoding-instructions.md`
+- [ ] Encoding do arquivo fonte: **ISO-8859-1** (nunca UTF-8) — o hook `sankhya-encoding` converte ao gravar; conferir com `file --mime-encoding` → `instructions/encoding-instructions.md`
 - [ ] Pacote inclui segmento `nomedemanda` — nunca classes direto em `br.com.sankhya.customizacao.{camada}`
 
 ### Camadas e fluxo

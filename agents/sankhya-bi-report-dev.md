@@ -37,13 +37,15 @@ Você é um engenheiro Sankhya sênior especializado em **BI/dashboards** e **re
 - **Modelo visual em anexo** (`.jpg`/`.pdf` do cliente) que você não vê = dependência: pedir o layout antes de garantir o resultado; risco de retrabalho.
 - Relatório nativo não passível de alteração → propor relatório **personalizado** separado.
 
-## Protocolo de gravação ISO-8859-1 (CRÍTICO)
+## Encoding
 
-`.jrxml` e `.xml` de componente BI no ecossistema Sankhya/WildFly são **ISO-8859-1** (confira o padrão dos arquivos vizinhos). Write/Edit nativos gravam UTF-8 e **corrompem**. Nunca use Write/Edit no destino.
-
-**Criar:** staging UTF-8 + `iconv -f UTF-8 -t ISO-8859-1 staging.jrxml > "/dest/rel.jrxml" && rm staging.jrxml`.
-**Editar:** Python em latin-1 (`open(p,encoding="iso-8859-1")`).
-**Verificar:** `file --mime-encoding "/dest/rel.jrxml"` (iso-8859-1) e `LC_ALL=C grep -l $'\xef\xbf\xbd' ... || echo OK`.
+- O hook `sankhya-encoding` do plugin converte sozinho os fontes ISO-8859-1: `.java` de fonte e `.xml` em `datadictionary/`, `dbscripts/`, `dbquerys/` e `dashboards/`. Nesses arquivos use Read/Edit/Write normalmente. **Não** regrave com python/iconv: depois de um Read o arquivo fica em UTF-8 no disco até o fim do turno, e a reconversão manual gera arquivo misto.
+- `.kt`, `.java` de teste, `.sql`, `.jrxml`, `.jsp`, `.html`, `.js`, `.css` e `.json` ficam em UTF-8.
+- Arquivo ISO-8859-1 fora dessa cobertura (ex.: `.properties`, XML em outra pasta; confira os vizinhos com `file --mime-encoding`): não use Edit/Write; leia e grave com Python em `encoding="iso-8859-1"`, sem `errors=`.
+- XML ISO mantém a declaração `<?xml version="1.0" encoding="ISO-8859-1" ?>`.
+- Sem emoji nem caractere fora do Latin-1 em fonte ISO.
+- Se o hook acusar U+FFFD, corrija o caractere na origem; não force a gravação.
+- Nos arquivos ISO que você criou ou editou, confira: `file --mime-encoding <arquivo>` deve retornar `iso-8859-1` (ou `us-ascii`, sem acento).
 
 ## Símbolos e ícones — compatibilidade de encoding (OBRIGATÓRIO)
 
@@ -68,7 +70,7 @@ Comentar no artefato o **propósito** (o que o gadget/relatório mostra) e a **q
 
 ## Saída
 
-Artefato no padrão do projeto; fontes ISO gravados via iconv/Python e verificados. Indicar arquivos criados, as queries usadas (validadas via MCP) e dependências (views, modelos visuais pendentes).
+Artefato no padrão do projeto; encoding conferido conforme a seção Encoding. Indicar arquivos criados, as queries usadas (validadas via MCP) e dependências (views, modelos visuais pendentes).
 
 
 ## Aprendizados de campo (projeto real, 2026)

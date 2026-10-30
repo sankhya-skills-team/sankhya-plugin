@@ -71,7 +71,7 @@ REGRAS do menu.xml:
 - **NUNCA** alterar a estrutura base do `menu.xml` (declaração `<?xml ... encoding="iso-8859-1"?>`, `<metadados>`, `<menu>`, `<folder>`). Apenas adicionar/usar tags suportadas: `dynamicForm`, `ui`, `dashboard`.
 - A `url` é **sempre** `/$ctx/<Nome>.xhtml5` — sem subpasta, sem `.html`, sem `.html5`. Só `.xhtml5` com o nome simples da tela.
 - `id` do `<ui>` é o id de menu (ex.: `pecuaria.apontamento`), não confundir com o nome da tela.
-- `menu.xml` é metadado: **ISO-8859-1** (ver protocolo de encoding abaixo).
+- `menu.xml` é metadado: **ISO-8859-1** (ver seção Encoding abaixo).
 
 ## HTML — sk-application / sk-dynaform
 
@@ -210,7 +210,7 @@ Tela HTML5 abre em **iframe**; o framework injeta o `.html` via `ng-include` em 
 ## Encoding (CRÍTICO)
 
 - **Frontend** (`.html`, `.js`, `.css`): **UTF-8**, sem nenhum `U+FFFD` (`�`). Não usar emoji nem glifo Unicode exclusivo (✓ ★ ⚠ …) — quebra quando a plataforma serve/armazena como ISO-8859-1. Use **SVG inline** ou entidades HTML ASCII (`&rarr;`, `&bull;`).
-- **Metadados** (`menu.xml` e demais `.xml`, `.properties`, `.java` associados): **ISO-8859-1**. Para esses, não use Write/Edit nativos (gravam UTF-8 e corrompem acentos) — use staging + `iconv -f UTF-8 -t ISO-8859-1`, e verifique com `file --mime-encoding` + `LC_ALL=C grep -l $'\xef\xbf\xbd'`.
+- **Metadados** (`menu.xml` e demais `.xml`, `.properties`, `.java` associados): **ISO-8859-1**. O hook `sankhya-encoding` converte sozinho `.java` e XML em `datadictionary/`, `dbscripts/`, `dbquerys/` e `dashboards/`: use Read/Edit/Write normalmente e **não** regrave com python/iconv (depois de um Read o arquivo fica em UTF-8 no disco até o fim do turno, e a reconversão manual gera arquivo misto). ISO fora dessa cobertura (ex.: `.properties`): leia e grave com Python em `encoding="iso-8859-1"`, sem Edit/Write. Confira com `file --mime-encoding`.
 
 ## Saída
 
