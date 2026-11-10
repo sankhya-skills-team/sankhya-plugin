@@ -15,7 +15,7 @@ Use a tag `<filters>` dentro da definição de `<table>`:
 <metadados xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:noNamespaceSchemaLocation="../.gradle/metadados.xsd">
 
-    <table name="SGT_TBTESTE">
+    <table name="SGT_TBTESTE" sequenceType="A" sequenceField="CODIGO">
         <description>Tabela de Atendimentos do Add-on</description>
         <primaryKey>
             <field name="CODIGO"/>
@@ -28,11 +28,11 @@ Use a tag `<filters>` dentro da definição de `<table>`:
         </instances>
 
         <fields>
-            <field name="CODIGO" dataType="INTEIRO" required="true" />
-            <field name="DESCRICAO" dataType="TEXTO" size="100" required="true" />
+            <field name="CODIGO" dataType="INTEIRO" allowSearch="S" visibleOnSearch="S" nullable="N" required="S" />
+            <field name="DESCRICAO" dataType="TEXTO" size="100" allowSearch="S" visibleOnSearch="S" nullable="N" required="S" />
             <field name="CODUSU" dataType="PESQUISA" targetInstance="Usuario"
-                   targetField="CODUSU" targetType="INTEIRO" />
-            <field name="DATA_CRIACAO" dataType="DATA_HORA" readOnly="true" />
+                   targetField="CODUSU" targetType="INTEIRO" allowSearch="N" visibleOnSearch="S" />
+            <field name="DATA_CRIACAO" dataType="DATA_HORA" readOnly="true" allowSearch="N" visibleOnSearch="S" />
         </fields>
 
         <filters>

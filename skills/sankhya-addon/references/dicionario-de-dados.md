@@ -47,7 +47,7 @@ O XSD permite validação em tempo de desenvolvimento e autocompletar na IDE (In
 - **Campo de lista (`dataType="LISTA"`):** declare as opções em `<fieldOptions>`:
 
   ```xml
-  <field name="STATUS" dataType="LISTA" nullable="N">
+  <field name="STATUS" dataType="LISTA" allowSearch="S" visibleOnSearch="S" nullable="N" required="S">
       <description>Status</description>
       <fieldOptions>
           <option value="A">Ativa</option>
@@ -55,7 +55,15 @@ O XSD permite validação em tempo de desenvolvimento e autocompletar na IDE (In
       </fieldOptions>
   </field>
   ```
-- **Obrigatório:** `nullable="N"` no campo.
+- **Obrigatório:** são dois atributos, com papéis diferentes. `nullable="N"` impede valor nulo no
+  dado; `required="S"` marca o campo como requerido na tela gerada pelo dynaform. Campo obrigatório
+  leva os dois. Os padrões são `nullable="S"` e `required="N"`.
+- **Valores `S`/`N`, não `true`/`false`:** `nullable`, `required`, `allowSearch`, `visibleOnSearch`,
+  `visible`, `calculated` e `isPresentation` só aceitam `S` ou `N`. `required="true"` é inválido.
+- **`allowSearch` e `visibleOnSearch` são obrigatórios em todo `<field>`**, assim como `name` e
+  `dataType`. Na `<table>`, `sequenceType` (`A` automática, `M` manual) é obrigatório.
+- **Fonte da verdade:** o `.gradle/metadados.xsd` do projeto, gerado pelo plugin Gradle do Addon
+  Studio. É ele que alimenta o autocompletar da IDE; na dúvida sobre atributo ou valor, leia o XSD.
 - **Mestre-detalhe:** declare o vínculo em `<instances>/<instance>/<relationShip>` (ver seção abaixo).
 - **Teste a instalação em base limpa e em base que já tem o addon.** Só a base limpa revela
   dependência fora de ordem entre `dbscripts` e dicionário; só a existente revela script que não

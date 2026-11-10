@@ -26,9 +26,9 @@ A tag `<treeTable>` permite criar tabelas com estrutura hierárquica pai/filho, 
         </instances>
 
         <fields>
-            <field name="CODCENCUS" dataType="INTEIRO" required="true" />
-            <field name="DESCRCENCUS" dataType="TEXTO" size="100" required="true" />
-            <field name="ATIVO" dataType="TEXTO" size="1" required="true" />
+            <field name="CODCENCUS" dataType="INTEIRO" allowSearch="S" visibleOnSearch="S" nullable="N" required="S" />
+            <field name="DESCRCENCUS" dataType="TEXTO" size="100" allowSearch="S" visibleOnSearch="S" nullable="N" required="S" />
+            <field name="ATIVO" dataType="TEXTO" size="1" allowSearch="S" visibleOnSearch="S" nullable="N" required="S" />
         </fields>
     </treeTable>
 </metadados>

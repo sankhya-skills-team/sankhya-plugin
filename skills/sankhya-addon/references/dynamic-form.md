@@ -26,7 +26,7 @@ Crie um arquivo XML (ex: `SGT_TBTESTE.xml`) para definir a tabela `SGT_TBTESTE` 
 <metadados xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
            xsi:noNamespaceSchemaLocation="../.gradle/metadados.xsd">
            
-    <table name="SGT_TBTESTE">
+    <table name="SGT_TBTESTE" sequenceType="A" sequenceField="CODIGO">
         <description>Tabela de Atendimentos do Add-on</description>
         <primaryKey>
             <field name="CODIGO"/>
@@ -40,17 +40,17 @@ Crie um arquivo XML (ex: `SGT_TBTESTE.xml`) para definir a tabela `SGT_TBTESTE` 
         </instances>
         
         <fields>
-            <field name="CODIGO" dataType="INTEIRO" required="true" />
-            <field name="DESCRICAO" dataType="TEXTO" size="100" required="true" />
+            <field name="CODIGO" dataType="INTEIRO" allowSearch="S" visibleOnSearch="S" nullable="N" required="S" />
+            <field name="DESCRICAO" dataType="TEXTO" size="100" allowSearch="S" visibleOnSearch="S" nullable="N" required="S" />
             
             <!-- Campo de pesquisa que busca na tabela de Usuários -->
-            <field name="CODUSU" dataType="PESQUISA" targetInstance="Usuario" targetField="CODUSU" targetType="INTEIRO">
+            <field name="CODUSU" dataType="PESQUISA" targetInstance="Usuario" targetField="CODUSU" targetType="INTEIRO" allowSearch="N" visibleOnSearch="S">
                 <description>Usuário Responsável</description>
                 <!-- Expressão para preencher com o usuário logado por padrão -->
                 <expression><![CDATA[return $ctx_usuario_logado;]]></expression>
             </field>
             
-            <field name="DATA_CRIACAO" dataType="DATA_HORA" readOnly="true">
+            <field name="DATA_CRIACAO" dataType="DATA_HORA" readOnly="true" allowSearch="N" visibleOnSearch="S">
                 <description>Data de Criação</description>
                 <expression><![CDATA[return $ctx_dh_atual;]]></expression>
             </field>

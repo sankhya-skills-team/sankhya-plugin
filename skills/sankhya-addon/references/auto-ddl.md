@@ -47,15 +47,15 @@ O Auto DDL lê os arquivos XML do `datadictionary/`. Principais componentes:
 <metadados xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:noNamespaceSchemaLocation="../.gradle/metadados.xsd">
 
-    <table name="SGT_PROJETOCUSTOM">
+    <table name="SGT_PROJETOCUSTOM" sequenceType="A" sequenceField="IDPROJ">
         <primaryKey>
-            <field>IDPROJ</field>
+            <field name="IDPROJ"/>
         </primaryKey>
         <fields>
-            <field name="IDPROJ" dataType="INTEIRO" required="true" />
-            <field name="NOMEPROJ" dataType="TEXTO" size="100" required="true" />
-            <field name="ATIVO" dataType="CHECKBOX" required="true" default="S" />
-            <field name="DATA_INICIO" dataType="DATA" />
+            <field name="IDPROJ" dataType="INTEIRO" allowSearch="S" visibleOnSearch="S" nullable="N" required="S" />
+            <field name="NOMEPROJ" dataType="TEXTO" size="100" allowSearch="S" visibleOnSearch="S" nullable="N" required="S" />
+            <field name="ATIVO" dataType="CHECKBOX" allowSearch="S" visibleOnSearch="S" nullable="N" required="S" />
+            <field name="DATA_INICIO" dataType="DATA" allowSearch="N" visibleOnSearch="S" />
         </fields>
     </table>
 </metadados>
