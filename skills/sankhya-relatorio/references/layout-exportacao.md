@@ -2,6 +2,10 @@
 
 Use quando o problema envolver alinhamento, aparência, PDF, XLS, fontes, estilos, imagens ou comportamento visual.
 
+> **Padrão visual:** fonte, cor, paleta, cabeçalho, rodapé, logo, tabela, zebra, grupo e destaque seguem a skill
+> `sankhya-relatorio-visual`, que prevalece sobre este arquivo em tudo que é aparência. Carregue-a antes de
+> desenhar ou redesenhar um `.jrxml`. Aqui ficam o comportamento de exportação e a mecânica dos elementos.
+
 ## Canal principal — decidir antes de desenhar
 
 | Alvo | Estratégia |
@@ -21,12 +25,10 @@ Use quando o problema envolver alinhamento, aparência, PDF, XLS, fontes, estilo
 
 ## PDF — fontes e acentuação
 
-Fontes seguras sem pacote próprio: `Arial`, `Times New Roman`, `Courier New`
-
-Propriedades quando houver problema de acento:
-- `pdfFontName` — nome da fonte PDF (ex: `Helvetica-Bold`)
-- `pdfEncoding` — ex: `Cp1252` para Latin-1
-- `isPdfEmbedded="true"` — embutir fonte no PDF
+A fonte é **Calibri**, embutida pelo módulo de fontes do Sankhya (`custom.net.sf.jasperreports.fonts`). Todo
+`<style>` declara `fontName="Calibri"`. Não use `Arial`, `SansSerif`, `pdfFontName`, `pdfEncoding` nem
+`isPdfEmbedded`: eles fazem o PDF trocar a fonte e perder o negrito. Regras e escala de tamanhos em
+`sankhya-relatorio-visual` (`references/tipografia.md`).
 
 Outras propriedades úteis: `REPORT_LOCALE`, `REPORT_TIME_ZONE`
 
@@ -36,21 +38,8 @@ Testar acentuação sempre no servidor, não só no iReport local.
 
 Reduzem repetição visual. Centralizar fonte, tamanho, borda e cores.
 
-```xml
-<style name="CabecalhoTabela" fontName="Arial" fontSize="9" isBold="true"
-       mode="Opaque" backcolor="#CCCCCC">
-    <box><pen lineWidth="0.5" lineColor="#999999"/></box>
-</style>
-
-<style name="DetalheTabela" fontName="Arial" fontSize="8">
-    <box><pen lineWidth="0.5" lineColor="#CCCCCC"/></box>
-</style>
-
-<style name="Subtotal" fontName="Arial" fontSize="9" isBold="true"/>
-<style name="TotalGeral" fontName="Arial" fontSize="10" isBold="true"/>
-```
-
-Nomes recomendados: `BaseTexto`, `Titulo`, `CabecalhoTabela`, `DetalheTabela`, `Subtotal`, `TotalGeral`
+Os estilos prontos (cabeçalho de tabela, célula, zebra, total, cartão, rodapé), com cores e medidas, estão nos
+templates e em `references/pecas.md` da skill `sankhya-relatorio-visual`. Copie de lá em vez de criar estilos novos.
 
 ## Estilos condicionais
 

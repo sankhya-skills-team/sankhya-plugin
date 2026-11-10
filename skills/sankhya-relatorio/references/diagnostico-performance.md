@@ -61,9 +61,9 @@ No iReport local: revisar **Options > Classpath** para adicionar JARs de driver 
 - Evitar gaps mínimos entre colunas
 
 **PDF com acento quebrado:**
-- Revisar `fontName` — usar fonte disponível no servidor
-- Definir `pdfEncoding="Cp1252"` (Latin-1)
-- Considerar `isPdfEmbedded="true"`
+- Revisar `fontName`: todo `<style>` declara `fontName="Calibri"` (padrão da skill `sankhya-relatorio-visual`)
+- Remover `pdfFontName`, `pdfEncoding` e `isPdfEmbedded`: fazem o PDF trocar a fonte
+- Conferir o módulo de fontes no WildFly do cliente (`modules/custom/net/sf/jasperreports/fonts/main/`)
 - Testar no servidor, não só no iReport local
 
 ## Performance

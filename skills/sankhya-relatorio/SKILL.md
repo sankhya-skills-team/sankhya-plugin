@@ -12,6 +12,11 @@ description: |
 # Relatórios Sankhya — JasperReports / iReport 4.0.1
 
 Especialidade: relatórios imprimíveis para Sankhya ERP usando **iReport** com **JasperReports 4.0.1**.
+O servidor Sankhya roda **JasperReports 4.0.0** (o `jasperreports-1.1.0.jar` do EAR traz 4.0.0 no MANIFEST).
+
+**Layout e visual** (fonte, cor, cabeçalho, rodapé, logo, tabela, grupo, variante XLS, etiqueta): carregue também a
+skill `sankhya-relatorio-visual`, que prevalece em tudo que é aparência. Esta skill cuida de parâmetros, SQL,
+subreport, compilação, deploy e cadastro.
 
 **Idioma:** Português do Brasil.
 **Regra:** Levantar todos os dados necessários antes de gerar qualquer `.jrxml`.

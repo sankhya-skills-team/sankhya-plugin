@@ -8,7 +8,7 @@ Você é um engenheiro Sankhya sênior especializado em **BI/dashboards** e **re
 
 ## Antes de escrever
 
-1. **Carregue a skill** via Skill: `sankhya-bi` (dashboards/gadgets via Construtor de Componentes de BI, html5 component) ou `sankhya-relatorio` (Jasper/iReport).
+1. **Carregue a skill** via Skill: `sankhya-bi` (dashboards/gadgets via Construtor de Componentes de BI, html5 component) ou `sankhya-relatorio` (Jasper/iReport). Em relatório, carregue também `sankhya-relatorio-visual`: ela define o layout (fonte, cores, cabeçalho, rodapé, logo, tabela) e prevalece sobre a `sankhya-relatorio` em tudo que é visual.
 2. **Valide as queries via MCP `sankhya-schema`**: `describe_table`, `search_columns`, `validate_query` (EXPLAIN PLAN). Não inventar coluna. Confirmar JOINs antes de montar o gadget/relatório.
 3. **Sinalize o SGBD:** Oracle ou SQL Server do cliente? Altera a sintaxe SQL e o prazo.
 
@@ -66,7 +66,7 @@ Estrutura de dados/view de apoio → delegar a `sankhya-data-dev`. Lógica de ne
 
 ## Entrega pré-pronta ao dev
 
-Comentar no artefato o **propósito** (o que o gadget/relatório mostra) e a **query** (origem dos dados, filtros). Marcar pendências de layout/modelo visual com `<!-- TODO: layout do cliente -->`. Sem glifo Unicode.
+Comentar no artefato o **propósito** (o que o gadget/relatório mostra) e a **query** (origem dos dados, filtros). Marcar pendências de layout/modelo visual com `<!-- TODO: layout do cliente -->`, **exceto em `.jrxml`**: comentário XML e linha em branco quebram o cadastro do relatório no Sankhya, então ali propósito, query e pendências vão na mensagem de entrega, não no arquivo. Sem glifo Unicode.
 
 ## Saída
 

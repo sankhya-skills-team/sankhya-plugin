@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="TitulosPorVencimento" language="java" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="786" leftMargin="28" rightMargin="28" topMargin="28" bottomMargin="28" whenNoDataType="NoDataSection">
+	<property name="ireport.encoding" value="UTF-8"/>
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="dstech.padrao.visual" value="sankhya-relatorio-visual 1.0.0 xls"/>
+	<property name="net.sf.jasperreports.export.xls.detect.cell.type" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.remove.empty.space.between.rows" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.white.page.background" value="false"/>
+	<property name="net.sf.jasperreports.export.xls.exclude.origin.band.1" value="pageFooter"/>
+	<property name="net.sf.jasperreports.export.xls.exclude.origin.band.2" value="pageHeader"/>
+	<property name="net.sf.jasperreports.export.xls.exclude.origin.keep.first.band.3" value="columnHeader"/>
+	<style name="Base" isDefault="true" fontName="Calibri" fontSize="8" forecolor="#1F2933"/>
+	<style name="Titulo" fontName="Calibri" fontSize="16" isBold="true" forecolor="#2E3C50" vAlign="Middle">
+		<box leftPadding="10"/>
+	</style>
+	<style name="Subtitulo" fontName="Calibri" fontSize="8" forecolor="#6B7785" vAlign="Middle">
+		<box leftPadding="10"/>
+	</style>
+	<style name="Tarja" mode="Opaque" forecolor="#FFFFFF" backcolor="#2E3C50" fontName="Calibri" fontSize="9" isBold="true" hAlign="Center" vAlign="Middle"/>
+	<style name="CartaoRotulo" mode="Opaque" forecolor="#6B7785" backcolor="#EEF2F5" fontName="Calibri" fontSize="7" isBold="true" vAlign="Bottom">
+		<box leftPadding="10"/>
+	</style>
+	<style name="CartaoValor" mode="Opaque" forecolor="#2E3C50" backcolor="#EEF2F5" fontName="Calibri" fontSize="18" isBold="true" vAlign="Middle">
+		<box leftPadding="10"/>
+	</style>
+	<style name="CabColuna" mode="Opaque" forecolor="#FFFFFF" backcolor="#2E3C50" fontName="Calibri" fontSize="7" isBold="true" vAlign="Middle">
+		<box topPadding="1" leftPadding="3" bottomPadding="1" rightPadding="3"/>
+	</style>
+	<style name="Linha" mode="Opaque" backcolor="#FFFFFF" fontName="Calibri" fontSize="8" forecolor="#1F2933" vAlign="Middle">
+		<box topPadding="2" leftPadding="3" bottomPadding="2" rightPadding="3">
+			<bottomPen lineWidth="0.5" lineColor="#D5DBE1"/>
+		</box>
+		<conditionalStyle>
+			<conditionExpression><![CDATA[Boolean.valueOf($V{REPORT_COUNT}.intValue() % 2 == 0)]]></conditionExpression>
+			<style mode="Opaque" backcolor="#F1F4F7"/>
+		</conditionalStyle>
+	</style>
+	<style name="LinhaSituacao" mode="Opaque" backcolor="#FFFFFF" fontName="Calibri" fontSize="8" forecolor="#1F2933" hAlign="Center" vAlign="Middle">
+		<box topPadding="2" leftPadding="3" bottomPadding="2" rightPadding="3">
+			<bottomPen lineWidth="0.5" lineColor="#D5DBE1"/>
+		</box>
+		<conditionalStyle>
+			<conditionExpression><![CDATA[Boolean.valueOf($V{REPORT_COUNT}.intValue() % 2 == 0 && !($F{DHBAIXA} == null && $F{DTVENC} != null && new java.text.SimpleDateFormat("yyyyMMdd").format($F{DTVENC}).compareTo($V{V_HOJE}) < 0))]]></conditionExpression>
+			<style mode="Opaque" backcolor="#F1F4F7"/>
+		</conditionalStyle>
+		<conditionalStyle>
+			<conditionExpression><![CDATA[Boolean.valueOf($F{DHBAIXA} == null && $F{DTVENC} != null && new java.text.SimpleDateFormat("yyyyMMdd").format($F{DTVENC}).compareTo($V{V_HOJE}) < 0)]]></conditionExpression>
+			<style mode="Opaque" backcolor="#F5B85C" forecolor="#1F2933" isBold="true"/>
+		</conditionalStyle>
+	</style>
+	<style name="Total" mode="Opaque" forecolor="#2E3C50" backcolor="#EEF2F5" fontName="Calibri" fontSize="9" isBold="true" vAlign="Middle">
+		<box topPadding="2" leftPadding="3" bottomPadding="2" rightPadding="3">
+			<topPen lineWidth="1.5" lineColor="#2E3C50"/>
+		</box>
+	</style>
+	<style name="Rodape" fontName="Calibri" fontSize="8" forecolor="#6B7785" vAlign="Middle"/>
+	<style name="Legenda" fontName="Calibri" fontSize="7" forecolor="#6B7785" vAlign="Middle">
+		<box leftPadding="4"/>
+	</style>
+	<parameter name="P_DTINI" class="java.sql.Timestamp">
+		<parameterDescription><![CDATA[Vencimento de]]></parameterDescription>
+	</parameter>
+	<parameter name="P_DTFIN" class="java.sql.Timestamp">
+		<parameterDescription><![CDATA[Vencimento até]]></parameterDescription>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT FIN.NUFIN, FIN.CODEMP, FIN.NUMNOTA, FIN.DTNEG, FIN.DTVENC, FIN.DHBAIXA, FIN.RECDESP,
+       FIN.VLRDESDOB, FIN.VLRBAIXA, FIN.CODPARC, PAR.NOMEPARC, FIN.CODNAT, NAT.DESCRNAT, FIN.HISTORICO
+  FROM TGFFIN FIN
+  JOIN TGFPAR PAR ON PAR.CODPARC = FIN.CODPARC
+  LEFT JOIN TGFNAT NAT ON NAT.CODNAT = FIN.CODNAT
+ WHERE FIN.DTVENC BETWEEN $P{P_DTINI} AND $P{P_DTFIN}
+   AND FIN.RECDESP <> 0
+ ORDER BY FIN.DTVENC, FIN.NUFIN]]>
+	</queryString>
+	<field name="NUFIN" class="java.math.BigDecimal"/>
+	<field name="CODEMP" class="java.math.BigDecimal"/>
+	<field name="NUMNOTA" class="java.math.BigDecimal"/>
+	<field name="DTNEG" class="java.sql.Timestamp"/>
+	<field name="DTVENC" class="java.sql.Timestamp"/>
+	<field name="DHBAIXA" class="java.sql.Timestamp"/>
+	<field name="RECDESP" class="java.math.BigDecimal"/>
+	<field name="VLRDESDOB" class="java.math.BigDecimal"/>
+	<field name="VLRBAIXA" class="java.math.BigDecimal"/>
+	<field name="CODPARC" class="java.math.BigDecimal"/>
+	<field name="NOMEPARC" class="java.lang.String"/>
+	<field name="CODNAT" class="java.math.BigDecimal"/>
+	<field name="DESCRNAT" class="java.lang.String"/>
+	<field name="HISTORICO" class="java.lang.String"/>
+	<variable name="V_MOEDA" class="java.text.DecimalFormat" calculation="System">
+		<initialValueExpression><![CDATA[new java.text.DecimalFormat("#,##0.00", new java.text.DecimalFormatSymbols(new java.util.Locale("pt", "BR")))]]></initialValueExpression>
+	</variable>
+	<variable name="V_DATA" class="java.text.SimpleDateFormat" calculation="System">
+		<initialValueExpression><![CDATA[new java.text.SimpleDateFormat("dd/MM/yyyy")]]></initialValueExpression>
+	</variable>
+	<variable name="V_HOJE" class="java.lang.String" calculation="System">
+		<initialValueExpression><![CDATA[new java.text.SimpleDateFormat("yyyyMMdd").format(new java.util.Date())]]></initialValueExpression>
+	</variable>
+	<variable name="V_LOGO" class="java.awt.Image" calculation="System">
+		<initialValueExpression><![CDATA[javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(java.util.Base64.getDecoder().decode("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")))]]></initialValueExpression>
+	</variable>
+	<variable name="V_SELO" class="java.awt.Image" calculation="System">
+		<initialValueExpression><![CDATA[javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(java.util.Base64.getDecoder().decode("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")))]]></initialValueExpression>
+	</variable>
+	<variable name="V_PAGINA" class="java.lang.Integer" resetType="Page">
+		<variableExpression><![CDATA[$V{PAGE_NUMBER}]]></variableExpression>
+	</variable>
+	<variable name="V_TITULOS" class="java.lang.Integer" calculation="Count">
+		<variableExpression><![CDATA[$F{NUFIN}]]></variableExpression>
+	</variable>
+	<variable name="V_RECEBER" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{RECDESP} != null && $F{RECDESP}.signum() > 0 && $F{DHBAIXA} == null && $F{VLRDESDOB} != null ? $F{VLRDESDOB} : java.math.BigDecimal.ZERO]]></variableExpression>
+	</variable>
+	<variable name="V_PAGAR" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{RECDESP} != null && $F{RECDESP}.signum() < 0 && $F{DHBAIXA} == null && $F{VLRDESDOB} != null ? $F{VLRDESDOB} : java.math.BigDecimal.ZERO]]></variableExpression>
+	</variable>
+	<variable name="V_VENCIDOS" class="java.lang.Integer" calculation="Sum">
+		<variableExpression><![CDATA[Integer.valueOf($F{DHBAIXA} == null && $F{DTVENC} != null && new java.text.SimpleDateFormat("yyyyMMdd").format($F{DTVENC}).compareTo($V{V_HOJE}) < 0 ? 1 : 0)]]></variableExpression>
+	</variable>
+	<title>
+		<band height="98">
+			<frame>
+				<reportElement x="0" y="0" width="786" height="40"/>
+				<box>
+					<bottomPen lineWidth="2.0" lineColor="#66CB66"/>
+				</box>
+				<image scaleImage="RetainShape" hAlign="Left" vAlign="Middle" onErrorType="Blank">
+					<reportElement x="0" y="4" width="106" height="22"/>
+					<imageExpression class="java.awt.Image"><![CDATA[$V{V_LOGO}]]></imageExpression>
+				</image>
+				<frame>
+					<reportElement x="106" y="0" width="426" height="34"/>
+					<box>
+						<leftPen lineWidth="1.5" lineColor="#66CB66"/>
+					</box>
+					<staticText>
+						<reportElement style="Titulo" x="0" y="0" width="426" height="22"/>
+						<textElement/>
+						<text><![CDATA[Títulos por Vencimento]]></text>
+					</staticText>
+					<textField isBlankWhenNull="true">
+						<reportElement style="Subtitulo" x="0" y="22" width="426" height="12"/>
+						<textElement/>
+						<textFieldExpression class="java.lang.String"><![CDATA["Vencimento de " + ($P{P_DTINI} == null ? "-" : $V{V_DATA}.format($P{P_DTINI})) + " a " + ($P{P_DTFIN} == null ? "-" : $V{V_DATA}.format($P{P_DTFIN}))]]></textFieldExpression>
+					</textField>
+				</frame>
+				<staticText>
+					<reportElement style="Tarja" x="652" y="3" width="134" height="16"/>
+					<textElement/>
+					<text><![CDATA[FINANCEIRO]]></text>
+				</staticText>
+			</frame>
+			<frame>
+				<reportElement mode="Opaque" x="0" y="48" width="162" height="44" backcolor="#2E3C50"/>
+				<box>
+					<rightPen lineWidth="4.0" lineColor="#FFFFFF"/>
+				</box>
+				<staticText>
+					<reportElement style="CartaoRotulo" x="0" y="0" width="162" height="14" forecolor="#CFD6DF" backcolor="#2E3C50"/>
+					<textElement/>
+					<text><![CDATA[TÍTULOS NO PERÍODO]]></text>
+				</staticText>
+				<textField evaluationTime="Report">
+					<reportElement style="CartaoValor" x="0" y="14" width="162" height="30" forecolor="#FFFFFF" backcolor="#2E3C50">
+						<property name="net.sf.jasperreports.text.truncate.suffix" value="…"/>
+					</reportElement>
+					<textElement>
+						<font size="20"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[String.valueOf($V{V_TITULOS})]]></textFieldExpression>
+				</textField>
+			</frame>
+			<frame>
+				<reportElement mode="Opaque" x="162" y="48" width="240" height="44" backcolor="#EEF2F5"/>
+				<box>
+					<rightPen lineWidth="4.0" lineColor="#FFFFFF"/>
+				</box>
+				<staticText>
+					<reportElement style="CartaoRotulo" x="0" y="0" width="240" height="14"/>
+					<textElement/>
+					<text><![CDATA[A RECEBER EM ABERTO (R$)]]></text>
+				</staticText>
+				<textField evaluationTime="Report">
+					<reportElement style="CartaoValor" x="0" y="14" width="240" height="30">
+						<property name="net.sf.jasperreports.text.truncate.suffix" value="…"/>
+					</reportElement>
+					<textElement/>
+					<textFieldExpression class="java.lang.String"><![CDATA[$V{V_RECEBER} == null ? "0,00" : $V{V_MOEDA}.format($V{V_RECEBER})]]></textFieldExpression>
+				</textField>
+			</frame>
+			<frame>
+				<reportElement mode="Opaque" x="402" y="48" width="180" height="44" backcolor="#EEF2F5"/>
+				<box>
+					<rightPen lineWidth="4.0" lineColor="#FFFFFF"/>
+				</box>
+				<staticText>
+					<reportElement style="CartaoRotulo" x="0" y="0" width="180" height="14"/>
+					<textElement/>
+					<text><![CDATA[A PAGAR EM ABERTO (R$)]]></text>
+				</staticText>
+				<textField evaluationTime="Report">
+					<reportElement style="CartaoValor" x="0" y="14" width="180" height="30">
+						<property name="net.sf.jasperreports.text.truncate.suffix" value="…"/>
+					</reportElement>
+					<textElement/>
+					<textFieldExpression class="java.lang.String"><![CDATA[$V{V_PAGAR} == null ? "0,00" : $V{V_MOEDA}.format($V{V_PAGAR})]]></textFieldExpression>
+				</textField>
+			</frame>
+			<frame>
+				<reportElement mode="Opaque" x="582" y="48" width="204" height="44" backcolor="#EEF2F5"/>
+				<staticText>
+					<reportElement style="CartaoRotulo" x="0" y="0" width="204" height="14"/>
+					<textElement/>
+					<text><![CDATA[VENCIDOS EM ABERTO]]></text>
+				</staticText>
+				<textField evaluationTime="Report">
+					<reportElement style="CartaoValor" x="0" y="14" width="204" height="30">
+						<property name="net.sf.jasperreports.text.truncate.suffix" value="…"/>
+					</reportElement>
+					<textElement/>
+					<textFieldExpression class="java.lang.String"><![CDATA[String.valueOf($V{V_VENCIDOS})]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="28">
+			<printWhenExpression><![CDATA[Boolean.valueOf($V{PAGE_NUMBER}.intValue() > 1)]]></printWhenExpression>
+			<frame>
+				<reportElement x="0" y="0" width="786" height="24"/>
+				<box>
+					<bottomPen lineWidth="1.0" lineColor="#66CB66"/>
+				</box>
+				<image scaleImage="RetainShape" hAlign="Left" vAlign="Middle" onErrorType="Blank">
+					<reportElement x="0" y="2" width="106" height="16"/>
+					<imageExpression class="java.awt.Image"><![CDATA[$V{V_LOGO}]]></imageExpression>
+				</image>
+				<textField>
+					<reportElement style="Titulo" x="106" y="0" width="680" height="20">
+						<property name="net.sf.jasperreports.text.truncate.suffix" value="…"/>
+					</reportElement>
+					<box>
+						<leftPen lineWidth="1.5" lineColor="#66CB66"/>
+					</box>
+					<textElement>
+						<font size="11"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA["Títulos por Vencimento · " + ($P{P_DTINI} == null ? "-" : $V{V_DATA}.format($P{P_DTINI})) + " a " + ($P{P_DTFIN} == null ? "-" : $V{V_DATA}.format($P{P_DTFIN})) + " (continuação)"]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="20">
+			<staticText>
+				<reportElement style="CabColuna" x="0" y="0" width="50" height="20"/>
+				<textElement/>
+				<text><![CDATA[Nº fin.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="CabColuna" x="50" y="0" width="56" height="20"/>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[Vencimento]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="CabColuna" x="106" y="0" width="56" height="20"/>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[Negociação]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="CabColuna" x="162" y="0" width="50" height="20"/>
+				<textElement/>
+				<text><![CDATA[Nota]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="CabColuna" x="212" y="0" width="190" height="20"/>
+				<textElement/>
+				<text><![CDATA[Parceiro]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="CabColuna" x="402" y="0" width="130" height="20"/>
+				<textElement/>
+				<text><![CDATA[Natureza]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="CabColuna" x="532" y="0" width="50" height="20"/>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[Tipo]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="CabColuna" x="582" y="0" width="70" height="20"/>
+				<textElement textAlignment="Right"/>
+				<text><![CDATA[Valor (R$)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="CabColuna" x="652" y="0" width="56" height="20"/>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[Baixa]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="CabColuna" x="708" y="0" width="78" height="20"/>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[Situação]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="16" splitType="Prevent">
+			<textField isStretchWithOverflow="true" pattern="0" isBlankWhenNull="true">
+				<reportElement style="Linha" stretchType="RelativeToTallestObject" x="0" y="0" width="50" height="16" forecolor="#2E3C50"/>
+				<textElement textAlignment="Left">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{NUFIN}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Linha" stretchType="RelativeToTallestObject" x="50" y="0" width="56" height="16"/>
+				<textElement textAlignment="Center"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DTVENC} == null ? "" : $V{V_DATA}.format($F{DTVENC})]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Linha" stretchType="RelativeToTallestObject" x="106" y="0" width="56" height="16" forecolor="#4A5563"/>
+				<textElement textAlignment="Center"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DTNEG} == null ? "" : $V{V_DATA}.format($F{DTNEG})]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="0" isBlankWhenNull="true">
+				<reportElement style="Linha" stretchType="RelativeToTallestObject" x="162" y="0" width="50" height="16" forecolor="#4A5563"/>
+				<textElement textAlignment="Left"/>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{NUMNOTA} == null || $F{NUMNOTA}.signum() == 0 ? null : $F{NUMNOTA}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Linha" stretchType="RelativeToTallestObject" x="212" y="0" width="190" height="16"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[($F{CODPARC} == null ? "" : $F{CODPARC}.toPlainString() + " · ") + ($F{NOMEPARC} == null ? "" : $F{NOMEPARC})]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Linha" stretchType="RelativeToTallestObject" x="402" y="0" width="130" height="16" forecolor="#4A5563"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DESCRNAT}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Linha" stretchType="RelativeToTallestObject" x="532" y="0" width="50" height="16" forecolor="#4A5563"/>
+				<textElement textAlignment="Center"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{RECDESP} == null ? "" : ($F{RECDESP}.signum() > 0 ? "Receita" : "Despesa")]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true">
+				<reportElement style="Linha" stretchType="RelativeToTallestObject" x="582" y="0" width="70" height="16" forecolor="#2E3C50"/>
+				<textElement textAlignment="Right">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{VLRDESDOB}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Linha" stretchType="RelativeToTallestObject" x="652" y="0" width="56" height="16" forecolor="#4A5563"/>
+				<textElement textAlignment="Center"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DHBAIXA} == null ? "" : $V{V_DATA}.format($F{DHBAIXA})]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="LinhaSituacao" stretchType="RelativeToTallestObject" x="708" y="0" width="78" height="16"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DHBAIXA} != null ? "Baixado" : ($F{DTVENC} != null && new java.text.SimpleDateFormat("yyyyMMdd").format($F{DTVENC}).compareTo($V{V_HOJE}) < 0 ? "VENCIDO" : "A vencer")]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="24">
+			<frame>
+				<reportElement x="0" y="4" width="786" height="18"/>
+				<box>
+					<topPen lineWidth="0.5" lineColor="#D5DBE1"/>
+				</box>
+				<image scaleImage="RetainShape" hAlign="Left" vAlign="Middle" onErrorType="Blank">
+					<reportElement x="0" y="5" width="50" height="12"/>
+					<imageExpression class="java.awt.Image"><![CDATA[$V{V_SELO}]]></imageExpression>
+				</image>
+				<textField>
+					<reportElement style="Rodape" x="50" y="5" width="532" height="12"/>
+					<box leftPadding="8"/>
+					<textElement/>
+					<textFieldExpression class="java.lang.String"><![CDATA["Títulos por Vencimento · Emitido em " + new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(new java.util.Date())]]></textFieldExpression>
+				</textField>
+				<textField evaluationTime="Auto">
+					<reportElement style="Rodape" x="582" y="5" width="204" height="12" forecolor="#2E3C50"/>
+					<textElement textAlignment="Right">
+						<font isBold="true"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA["Página " + $V{V_PAGINA} + " de " + $V{PAGE_NUMBER}]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="62">
+			<textField>
+				<reportElement style="Total" x="0" y="6" width="582" height="18"/>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA["A receber em aberto"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Total" x="582" y="6" width="70" height="18"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$V{V_RECEBER} == null ? "0,00" : $V{V_MOEDA}.format($V{V_RECEBER})]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Total" x="0" y="24" width="582" height="18"/>
+				<box>
+					<topPen lineWidth="0.0"/>
+				</box>
+				<textElement/>
+				<textFieldExpression class="java.lang.String"><![CDATA["A pagar em aberto"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Total" x="582" y="24" width="70" height="18"/>
+				<box>
+					<topPen lineWidth="0.0"/>
+				</box>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression class="java.lang.String"><![CDATA[$V{V_PAGAR} == null ? "0,00" : $V{V_MOEDA}.format($V{V_PAGAR})]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="48" width="50" height="12" backcolor="#F5B85C">
+					<printWhenExpression><![CDATA[Boolean.valueOf($V{V_VENCIDOS}.intValue() > 0)]]></printWhenExpression>
+				</reportElement>
+				<textElement/>
+				<text><![CDATA[]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Legenda" x="50" y="48" width="352" height="12">
+					<printWhenExpression><![CDATA[Boolean.valueOf($V{V_VENCIDOS}.intValue() > 0)]]></printWhenExpression>
+				</reportElement>
+				<textElement/>
+				<text><![CDATA[Vencido e em aberto]]></text>
+			</staticText>
+		</band>
+	</summary>
+	<noData>
+		<band height="30">
+			<textField isStretchWithOverflow="true">
+				<reportElement x="0" y="0" width="786" height="20" forecolor="#2E3C50"/>
+				<textElement>
+					<font size="11" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Nenhum título com vencimento no período informado."]]></textFieldExpression>
+			</textField>
+		</band>
+	</noData>
+</jasperReport>

@@ -13,6 +13,7 @@ Plugin do Claude Code com skills, agents e hook para desenvolvimento no **ERP Sa
 | `sankhya-modulo-java` | Módulo Java: `EventoProgramavelJava`, `AcaoRotinaJava`, `RegraNegocioJava`, helpers de customização. |
 | `sankhya-jape` | Persistência JAPE: `JapeSession`, `NativeSql`, `EntityFacade`, `DynamicVO`, `execWithTX`, transações, macros portáveis Oracle/SQL Server. |
 | `sankhya-relatorio` | Relatórios JasperReports / iReport / `.jrxml`, impressão Sankhya. |
+| `sankhya-relatorio-visual` | Padrão visual DSTech para `.jrxml`: Calibri, paleta petróleo/verde, cabeçalho com logo do cliente, cartões, tabela com zebra, grupo, rodapé com selo, variante para Excel e etiqueta com código de barras. Traz 3 templates prontos e prevalece sobre a `sankhya-relatorio` em tudo que é aparência. |
 | `sankhya-bi` | Dashboards e componentes de BI (gadgets) no Sankhya OM: Construtor de Componentes de BI, gráficos, XML `TSIGDG.CONFIG`, HTML5. |
 | `sankhya-kit` | Kit de produtos no core do Sankhya OM: composição (`TIPOKIT`, `TGFICP`), kit independente (`TSIKIT`), abertura dos componentes `USOPROD='D'`, reserva e baixa de estoque no pedido e na nota, `INIBESELECUSOPD`, `TIPOIMPKIT` e erros `CORE_E01199`/`CORE_E04505`/`CORE_E03881`. |
 | `sankhya-dicionario` | Dicionário de dados Sankhya OM: ~730 tabelas mapeadas (campos, PKs, FKs, enums, entityNames), metamodelo TDD, relacionamentos. |
@@ -130,3 +131,4 @@ Skills, agents e hooks deste plugin são desenvolvidos e mantidos por:
 - **Felipe Rosa da Silva**
 - **Daniel Ratkevicius**
 - **Claiton Trisch Farias**
+- **Julio Fraga**
