@@ -97,12 +97,13 @@ Identificar o artefato correto e **ler o arquivo de referência antes de impleme
 | **Action Button** | Ação manual iniciada pelo usuário em uma tela | `references/action-button.md` |
 | **Listener** | Reage a eventos de persistência: INSERT, UPDATE, DELETE | `references/listeners.md` |
 | **CRUD Service Listener** | Legado (`DatasetCRUDListenerAdapter`): intercepta CRUD da grade/tela DWF; enxerga campos transientes do dataset | `references/crud-service-listener.md` |
+| **Before-load Listener** | Preparar/filtrar dados antes da montagem da tela (`BeforeLoadListener`) | `references/before-load-listener.md` |
 | **Callback** | Reage a eventos de negócio de documentos comerciais (confirmação, faturamento) — incluindo notas de entrada | `references/callback.md` |
 | **Business Rule** | Validação vinculada à confirmação/faturamento de notas de saída com interação no barramento de regras | `references/business-rules.md` |
 | **Controller / Service** | Endpoint externo, integração ou reutilização entre artefatos. Código novo: `@Controller` (`references/sdk-controller.md`). `@Service` está **deprecated** — `references/service.md` só para legado | `references/sdk-controller.md` |
 | **Job** | Execução periódica, processamento em lote, background | `references/job.md` — runtime, fila e concorrência em `references/job-runtime.md` |
 | **Dynamic Form** | Tela de cadastro gerada automaticamente pelo dicionário de dados | `references/dynamic-form.md` |
-| **Tela Personalizada** | Interface customizada com controle total de layout | ver seção abaixo |
+| **Tela Personalizada** | Interface customizada com controle total de layout | `references/telas.md` (registro da tela via tag `<ui>`) + seção "Telas Personalizadas" abaixo |
 
 ### Dicionário de dados e banco
 
@@ -111,8 +112,11 @@ Identificar o artefato correto e **ler o arquivo de referência antes de impleme
 | **Dicionário de dados** | Tabelas, campos, tipos, relacionamentos | `references/dicionario-de-dados.md` |
 | **Auto DDL** | Geração automática de tabelas a partir do XML do dicionário | `references/auto-ddl.md` |
 | **DBScripts** | Scripts de banco versionados: views, triggers, migrações não cobertas pelo Auto DDL | `references/dbscripts.md` |
+| **SQL Multibanco** | SQL portável Oracle ↔ SQL Server: mapeamento de tipos, funções proibidas (`NVL`, `DECODE`, `SYSDATE`, `ROWNUM`), DML idempotente | `references/sql-multibanco.md` |
 | **Tabela hierárquica** | Estruturas hierárquicas no dicionário | `references/tabela-hierarquica.md` |
 | **Filtros** | Filtros e consultas em entidades | `references/filtros.md` |
+| **JAPE (persistência)** | Controle de sessão, `EntityFacade`, `JapeWrapper`, Entity Listener; checklist antes de codar acesso a dados. Aprofundamento: skill `sankhya-jape` | `references/jape.md` |
+| **Acesso a dados** | Hierarquia das APIs: `JapeFactory`, `DwfUtils`, `EntityFacade`/`FinderWrapper`, `DynamicVO`, `JdbcWrapper`; patterns comuns de consulta | `references/acesso-dados.md` |
 | **NativeSQL assertivo** | Uso correto da classe `NativeSql` para queries nativas, SQL externo, IN clause dinâmico | `references/nativesql-assertivo.md` |
 | **SankhyaUtil** | Utilitários back-end: `StringUtils`, `TimeUtils`, `SQLUtils`, `JsonUtils`, `XMLUtils`, `JdbcUtils`, `BigDecimalUtil`, `CollectionUtils`, `SessionFile` | `references/sankhyautil.md` |
 | **Núcleo Comercial** | Criar notas fiscais, calcular impostos, confirmar notas, refazer financeiro via `CACHelper`, `ImpostosHelpper`, `CentralFinanceiro` | `references/comercial-notas.md` |
@@ -123,12 +127,15 @@ Identificar o artefato correto e **ler o arquivo de referência antes de impleme
 |---|---|---|
 | **Estrutura do projeto** | Dúvidas sobre diretórios, build, deploy | `references/estrutura-do-projeto.md` |
 | **Add-on Studio (geral)** | Configuração, anotações, ciclo de vida do add-on | `references/add-on-studio.md` |
+| **Portal do Desenvolvedor** | Visão geral da documentação oficial: frameworks, tipos de personalização, onde achar cada assunto | `references/conhecendo-portal.md` |
 | **Menus** | Criação de menus, pastas e itens de navegação no add-on | `references/menu.md` |
+| **Controle de Acesso** | Permissões especiais em todas as camadas: `<acesso>` no `menu.xml`, `MGEAuthorizationManager` no service, `hasAccess` no frontend | `references/controle-acesso.md` |
 | **Parâmetros** | Parâmetros embarcados no add-on via `parameter.xml` | `references/parameters.md` |
 | **Dashboards** | Dashboards embarcados no add-on | `references/dashboards.md` |
 | **Organização de pacotes Java** | Estrutura de pacotes para evitar conflitos de ClassLoader | `references/organizacao-pacotes-java.md` |
 | **Micromódulo (legado EJB2)** | SPBeans, `service-providers.xml`, `BaseSPBean`, XDoclet | `references/micromodule.md` |
 | **Micromódulo (SDK moderno)** | `@Controller`, `@Repository`, `@Listener`, DI Guice, `@Transactional` | `references/micromodule-sdk.md` |
+| **Migração DWF → Addon** | Converter módulo/entidade DWF legado ou extensão de terceiro para Addon Studio | `references/migracao-dwf-addon.md` |
 
 ### Qualidade de código
 
@@ -140,6 +147,8 @@ Identificar o artefato correto e **ler o arquivo de referência antes de impleme
 | **Clean Code — Variáveis** | Nomes, escopo, imutabilidade, clareza | `references/clean-code-variaveis.md` |
 | **Padrões de código Sankhya W** | Convenções específicas do ecossistema Sankhya W | `references/padroes-de-codigo-para-sankhyaw.md` |
 | **Lombok assertivo** | Uso correto e seguro do Lombok em projetos Java | `references/lombok-assertivo.md` |
+| **Segurança** | SQL injection em `NativeSql`, desserialização insegura, audit trail, WebService público, hash de senha, PCI no PDV, upload de anexo; checklist de review | `references/seguranca-sankhya.md` |
+| **SEFAZ — segurança na integração** | Certificado digital, assinatura XML, chave privada em memória, ambientes, audit trail fiscal | `references/sefaz-integration.md` |
 | **Avaliação preguiçosa** | Técnicas de lazy evaluation para otimização de performance | `references/avaliacao-preguicosa.md` |
 | **Encoding de arquivos** | Corrigir problemas de encoding dos arquivos (ISO-8859-1 em .java e .xml de artefato; .kt em UTF-8) |	`instructions/encoding-instructions.md` |
 
