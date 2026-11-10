@@ -38,7 +38,7 @@ Plugin do Claude Code com skills, agents e hook para desenvolvimento no **ERP Sa
 | `sankhya-orchestrator-agent-dev` | Planeja e roteia o desenvolvimento a partir de escopo/backlog: decide Addon × Módulo Java, fatia por artefato e aciona os especialistas abaixo. |
 | `sankhya-backend-dev` | Backend Java: `AcaoRotinaJava`, botão de ação, `EventoProgramavelJava`, `RegraNegocioJava`, ações agendadas, Helper/Service/Repository, `@ActionButton`/`@Listener`/`@Job`. Módulo Java e Addon Studio. |
 | `sankhya-data-dev` | Estrutura de dados e persistência: tabelas `AD_`, DataDictionary, DBScripts dual-dialect (Oracle/SQL Server), migrations, repositórios JAPE, views/triggers/functions. |
-| `sankhya-bi-report-dev` | BI e relatórios: dashboards/gadgets (Construtor de Componentes de BI) e JasperReports/iReport. |
+| `sankhya-bi-report-dev` | BI e relatórios: dashboards/gadgets (Construtor de Componentes de BI) e JasperReports/iReport, com o layout no padrão da `sankhya-relatorio-visual`. |
 | `sankhya-frontend-angular` | **Padrão** para telas. Telas HTML5 AngularJS `sankhya-js` **sem** Node/Design System: `sk-application`, `sk-datagrid`, `sk-wizard`, `ServiceProxy`. |
 | `sankhya-frontend-design-system` | Telas no Design System EzUI/Acorde (`ez-`/`snk-` web components) com pipeline Node (npm/Vite). |
 
@@ -111,7 +111,7 @@ Ou no seu `settings.json`:
 
 | Adicionar | Onde | Edita plugin.json? |
 |---|---|---|
-| Skill | `skills/<nome>/SKILL.md` | Não (auto-load) |
+| Skill | `skills/<nome>/SKILL.md` + `skills/<nome>/README.md` (o que faz, quando acionar, estrutura) e uma linha na tabela de skills acima | Não (auto-load) |
 | Command `/x` | `commands/x.md` | Não (auto-load) |
 | Agent | `agents/x.md` (frontmatter `name`/`description`) | Não (auto-load) |
 | Refs/assets de skill | dentro da própria `skills/<nome>/` (caminho relativo) | Não |
