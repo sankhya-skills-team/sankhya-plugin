@@ -69,6 +69,19 @@ Disparado na inserção ou alteração de um documento (não por CRUD do JAPE, m
 | `BEFORE` | `nunota` (`BigDecimal`), `bRegras` (`BarramentoRegra`) |
 | `AFTER` | `nunota` (`BigDecimal`), `bRegras` (`BarramentoRegra`), `error` (`Exception`) — preenchido se houve erro |
 
+Confirmado em runtime (core 4.35) e no bytecode:
+
+- **A confirmação pela Central não gera evento JAPE.** `ConfirmacaoNotaHelper.confirmaNota` grava
+  `STATUSNOTA='L'` pela procedure `STP_CONFIRMANOTA2` (`CallableStatement`), então um `@Listener` de
+  `CabecalhoNota` **não vê** a confirmação. Para reagir ao botão Confirmar da Central use
+  `PROCESS_CONFIRMATION` (`central.processarConfirmacao.after`, parâmetro `CBACKPRCCONFAFT`).
+  `CONFIRMATION` (`CBACKCONFPORAFT`) é o do lote do portal e a Central **não** o dispara. Portal em
+  lote/API não passa pelo `PROCESS_CONFIRMATION`.
+- **O `AFTER` roda fora de transação** ("Operação requer uma transação ativa"): grave dentro de
+  `SessionHandle.execEnsuringTX`.
+- **`confirmarNota` com liberação pendente para sem avisar** (só um WARN do `LiberacaoAlcadaHelper`).
+  Quem confirma por código precisa reler o `STATUSNOTA` depois e avisar o usuário.
+
 ### `PROCESS_BILLING`
 
 Disparado no início do faturamento. **Não possui evento `AFTER`.**

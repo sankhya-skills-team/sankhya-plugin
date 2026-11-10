@@ -125,6 +125,42 @@ public class AuditoriaListener extends PersistenceEventAdapter {
 - **Mantenha a lógica enxuta**: listeners devem ser rápidos. Delegue regras complexas para `@Service`.
 - **Validações bloqueantes**: para impedir uma operação (em eventos `before...`), lance uma exceção. Ex: `throw new Exception("O campo X é obrigatório.")`.
 
+## Tratamento de exceção no evento (obrigatório)
+
+Declarar `throws Exception` na assinatura **não basta**. Se a lógica lançar (direto ou num helper
+chamado por ela) e a exceção subir crua pelas camadas do `AddonListenerWrapper` + `EventDispatcher`,
+o Sankhya costuma **mascarar** o erro real e exibir o falso *"Erro Interno: A execução falhou porque
+existe um módulo em processo de atualização. Aguarde a conclusão antes de tentar novamente"*, mesmo
+sem módulo nenhum em atualização.
+
+Todo método de evento com lógica (`beforeInsert`, `afterInsert`, `beforeUpdate`, `afterUpdate`,
+`beforeDelete`, `afterDelete`) envolve o corpo em `try/catch` e reemite com
+`MGEModelException.throwMe(e)`:
+
+```java
+@Override
+public void beforeInsert(PersistenceEvent event) throws Exception {
+    // throwMe desembrulha as InvocationTargetException do AddonListenerWrapper + EventDispatcher
+    try {
+        // ... corpo original ...
+    } catch (Exception e) {
+        MGEModelException.throwMe(e);
+    }
+}
+```
+
+- `MGEModelException.throwMe(Throwable)` **sempre lança**: percorre a cadeia de `cause`; achando uma
+  `MGEModelException`, relança preservando a mensagem; erro genérico (NPE, cast, SQL) é embrulhado
+  numa `MGEModelException`. Nos dois casos a mensagem chega certa ao usuário.
+- O `try/catch` vai **no método de evento (topo)**, não em cada helper: cobre a cadeia inteira.
+- Cuidado com `catch` interno que engole (`catch (...) { log; return; }`): a exceção morre antes de
+  chegar ao topo e a validação deixa de bloquear.
+- Se o método já tem `catch` restrito (ex.: só `MGEModelException`), acrescentar depois um
+  `catch (Exception e) { MGEModelException.throwMe(e); }` para o erro genérico não escapar cru.
+- Método de evento com corpo vazio não precisa do bloco.
+- Auditoria: método de evento sem `throwMe` no corpo. Como os `.java` do addon são ISO-8859-1, o
+  `grep` os trata como binário; usar `grep -a` (ou ler em latin-1), senão a varredura sai incompleta.
+
 ## Anti-patterns
 
 - **Usar para eventos de negócio**: não use `@Listener` para reagir a "confirmação de nota". O listener dispara em qualquer `UPDATE`, não apenas na confirmação, causando execuções indesejadas. Use `@BusinessRule` ou `@Callback`.
