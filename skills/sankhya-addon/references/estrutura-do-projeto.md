@@ -110,6 +110,22 @@ Deploy remoto          →  ./gradlew publishAddon   (publica na AreaDev)
 
 ---
 
+## Problemas comuns de build e deploy
+
+- **`hooks.xml` velho depois de mudar anotação.** O KSP **mescla** o
+  `vc/buildGradle/tmp/customization/hooks.xml` existente pelo `className`: não atualiza
+  `description` nem remove callback antigo. Depois de mudar `@ActionButton`/`@Callback`, apague esse
+  arquivo (ou rode `clean`) antes do build e confira o `hooks.xml` dentro do war gerado.
+- **`java.lang.VerifyError: Bad access to protected data`.** Lib empacotada no addon que já existe no
+  runtime (EAR) em outra versão: duas versões no classpath (parent-first). Não empacote; compile
+  `compileOnly` contra a versão já presente no runtime e use a API dela.
+- **`ModuleBootLoaderException: Não foi possível realizar o deploy do Addon. Atualize o plugin gradle
+  e tente novamente.`** (stacktrace ofuscado, sem causa real). Pode ser estado ruim da própria
+  instância WildFly e não bug do addon: confira no log se outros addons já deployados também passaram
+  a falhar. Se sim, reiniciar o WildFly costuma resolver.
+
+---
+
 ## Organização de Pacotes — Add-on Studio 2.0 Clássico
 
 No clássico não existe injeção de dependências — colaboradores são instanciados com `new`. A separação de camadas é feita por convenção:

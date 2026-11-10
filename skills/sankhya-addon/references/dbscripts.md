@@ -76,7 +76,7 @@ Cada `.xml` contém um ou mais scripts. A estrutura segue o schema `scripts.xsd`
 | Atributo | Obrigatório | Descrição |
 |---|---|---|
 | `nomeTabela` | Sim | Nome da tabela principal à qual o script se aplica. Usado para referência e logs. |
-| `ordem` | Sim | Valor numérico que define a sequência de execução dentro do arquivo. Não pode haver ordens duplicadas no mesmo arquivo. |
+| `ordem` | Sim | Valor numérico que desempata a execução **entre blocos do mesmo arquivo** (ver "Ordem de execução"). Não pode haver `ordem` duplicada **no addon inteiro** — duplicada entre arquivos também quebra a instalação. |
 | `executar` | Sim | Condição de execução: `SE_NAO_EXISTIR`, `SE_EXISTIR`, `SEMPRE`. |
 | `tipoObjeto` | Sim | Tipo do objeto: `TABLE`, `COLUMN`, `VIEW`, `INDEX`, `TRIGGER`, etc. |
 | `nomeObjeto` | Sim | Nome único do objeto. Usado para controle de versão e para verificar se o objeto já existe. |
@@ -87,6 +87,56 @@ Cada `.xml` contém um ou mais scripts. A estrutura segue o schema `scripts.xsd`
 ### Scripts para Múltiplos Bancos
 
 Use `<mssql>` e `<oracle>` para fornecer SQL específico para cada banco. Se o add-on suporta apenas um tipo, inclua apenas a tag correspondente.
+
+---
+
+## Ordem de execução (crítico)
+
+**O arquivo manda, não o atributo `ordem`.** A sequência real é:
+
+1. **Arquivo**, em ordem numérica **natural** (`V1`, `V2`, … `V9`, `V10`, … `V26`) — não lexicográfica.
+2. **`ordem`**, só para desempatar **entre blocos do mesmo arquivo**.
+3. A posição do bloco dentro do XML é irrelevante — vale a `ordem`.
+
+Consequência: um bloco com `ordem="770"` no `V12.xml` roda **antes** de um com `ordem="743"` no
+`V13.xml`. Ajustar `ordem` não conserta dependência entre arquivos diferentes.
+
+### Como quebra
+
+Uma view no `V12` que lê uma view do `V15` falha na instalação com
+`ORA-00942: a tabela ou view não existe` e derruba em cascata o que depende dela. Parece objeto
+faltando, mas é objeto que ainda não foi criado.
+
+**O erro só aparece em base limpa.** Em base que já tem o addon, os objetos existem de deploys
+anteriores e a dependência invertida passa despercebida. Nunca valide ordem numa base que já rodou
+o addon.
+
+### Como corrigir
+
+Ponha os objetos interdependentes **no mesmo arquivo** e ordene por `ordem` dentro dele. Evite
+resolver criando arquivo novo com número alto: funciona, mas espalha a cadeia e esconde a relação de
+quem mexer depois.
+
+### Como verificar — pelo artefato, nunca pelo XML
+
+A task `gerarAddon` (presente em todo addon criado a partir do template do Addon Studio) gera
+`build/dist/dbscripts/oracle.sql` e `build/dist/dbscripts/mssqlserver.sql`, exatamente o que roda no
+cliente, com os blocos na sequência real e um cabeçalho `NomeObjeto/TipoObjeto/Executar/NomeTabela`
+por bloco:
+
+```bash
+./gradlew gerarAddon
+grep -ao 'NomeObjeto:.*' build/dist/dbscripts/oracle.sql | nl | grep -E 'VIEW_A|VIEW_B'
+```
+
+Se `VIEW_B` lê `VIEW_A`, a linha de `VIEW_A` tem de vir antes. Auditar lendo os atributos `ordem`
+dos XML leva à conclusão errada.
+
+`ordem` duplicada no addon inteiro (não por arquivo):
+
+```bash
+grep -aho 'ordem="[0-9]*"' dbscripts/*.xml | sed 's/.*ordem="//;s/"//' | sort -n | uniq -d
+```
 
 ---
 
@@ -117,7 +167,7 @@ O log no terminal e no servidor Sankhya exibirá mensagens indicando o sucesso o
   - Invalida o suporte técnico da Sankhya
   - **Solução correta**: crie uma tabela auxiliar com seu prefixo e relacione-a com a tabela nativa via chave estrangeira. Exemplo: para adicionar "SELO DE GARANTIA" ao produto, crie `SGT_INFOPRODUTO` com `CODPROD` (FK para `TGFPRO.CODPROD`) e `SELOGARANTIA`
 - **Usar o prefixo genérico `AD_`**: muito genérico, causa conflitos entre desenvolvedores. Crie um prefixo que identifique unicamente seu projeto
-- **Scripts desordenados**: criar uma `VIEW` que consulta uma tabela inexistente irá falhar. Garanta que `ordem` e a numeração dos arquivos sigam uma sequência lógica de dependências
+- **Scripts desordenados**: criar uma `VIEW` que consulta uma tabela ou view ainda não criada falha (`ORA-00942`). A numeração do arquivo vale antes da `ordem` — objetos interdependentes ficam no mesmo arquivo (ver "Ordem de execução")
 - **Usar ponto e vírgula (`;`)**: evite `;` no final das declarações SQL — a plataforma pode interpretar incorretamente e causar falhas no deploy
 
 ## Fonte

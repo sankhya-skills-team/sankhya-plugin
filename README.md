@@ -14,6 +14,7 @@ Plugin do Claude Code com skills, agents e hook para desenvolvimento no **ERP Sa
 | `sankhya-jape` | Persistência JAPE: `JapeSession`, `NativeSql`, `EntityFacade`, `DynamicVO`, `execWithTX`, transações, macros portáveis Oracle/SQL Server. |
 | `sankhya-relatorio` | Relatórios JasperReports / iReport / `.jrxml`, impressão Sankhya. |
 | `sankhya-bi` | Dashboards e componentes de BI (gadgets) no Sankhya OM: Construtor de Componentes de BI, gráficos, XML `TSIGDG.CONFIG`, HTML5. |
+| `sankhya-kit` | Kit de produtos no core do Sankhya OM: composição (`TIPOKIT`, `TGFICP`), kit independente (`TSIKIT`), abertura dos componentes `USOPROD='D'`, reserva e baixa de estoque no pedido e na nota, `INIBESELECUSOPD`, `TIPOIMPKIT` e erros `CORE_E01199`/`CORE_E04505`/`CORE_E03881`. |
 | `sankhya-dicionario` | Dicionário de dados Sankhya OM: ~730 tabelas mapeadas (campos, PKs, FKs, enums, entityNames), metamodelo TDD, relacionamentos. |
 | `sankhya-js` | Framework frontend AngularJS 1.x (`sankhya-js`): telas HTML5, `ServiceProxy`/`FluidBuilder`, componentes (grid, dataset, wizard, popup), MetadataProvider, i18n. |
 | `sankhya-estimativa-planejador` | Análise de requisitos funcionais → backlog (epics/stories/critérios), recomendação Addon × Módulo Java e estimativa de horas em 7 fases. |
