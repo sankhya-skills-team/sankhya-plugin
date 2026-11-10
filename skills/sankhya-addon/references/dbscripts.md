@@ -76,7 +76,7 @@ Cada `.xml` contém um ou mais scripts. A estrutura segue o schema `scripts.xsd`
 | Atributo | Obrigatório | Descrição |
 |---|---|---|
 | `nomeTabela` | Sim | Nome da tabela principal à qual o script se aplica. Usado para referência e logs. |
-| `ordem` | Sim | Valor numérico que desempata a execução **entre blocos do mesmo arquivo** (ver "Ordem de execução"). Não pode haver `ordem` duplicada **no addon inteiro** — duplicada entre arquivos também quebra a instalação. |
+| `ordem` | Sim | Valor numérico que desempata a execução **entre blocos do mesmo arquivo** (ver "Ordem de execução"). Não pode haver `ordem` duplicada **no mesmo arquivo**; repetir a mesma `ordem` em arquivos diferentes é permitido. |
 | `executar` | Sim | Condição de execução: `SE_NAO_EXISTIR`, `SE_EXISTIR`, `SEMPRE`. |
 | `tipoObjeto` | Sim | Tipo do objeto: `TABLE`, `COLUMN`, `VIEW`, `INDEX`, `TRIGGER`, etc. |
 | `nomeObjeto` | Sim | Nome único do objeto. Usado para controle de versão e para verificar se o objeto já existe. |
@@ -132,10 +132,12 @@ grep -ao 'NomeObjeto:.*' build/dist/dbscripts/oracle.sql | nl | grep -E 'VIEW_A|
 Se `VIEW_B` lê `VIEW_A`, a linha de `VIEW_A` tem de vir antes. Auditar lendo os atributos `ordem`
 dos XML leva à conclusão errada.
 
-`ordem` duplicada no addon inteiro (não por arquivo):
+`ordem` duplicada dentro de um mesmo arquivo (entre arquivos diferentes é permitido):
 
 ```bash
-grep -aho 'ordem="[0-9]*"' dbscripts/*.xml | sed 's/.*ordem="//;s/"//' | sort -n | uniq -d
+for f in dbscripts/*.xml; do
+  grep -ao 'ordem="[0-9]*"' "$f" | sort | uniq -d | sed "s|^|$f: |"
+done
 ```
 
 ---
