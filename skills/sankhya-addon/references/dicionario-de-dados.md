@@ -40,6 +40,27 @@ O XSD permite validação em tempo de desenvolvimento e autocompletar na IDE (In
 | **Telas Personalizadas** | `<ui />` | Registra telas customizadas (XHTML/JSF) |
 | **Filtros** | `<filters />` | Adiciona seção de filtros a formulários |
 
+## Regras de campo e tabela
+
+- **PK gerada automaticamente:** `sequenceType="A"` + `sequenceField="<CAMPO_PK>"` na `<table>`.
+- **Campo S/N:** `dataType="CHECKBOX"`. Não existe `dataType="LOGICO"`.
+- **Campo de lista (`dataType="LISTA"`):** declare as opções em `<fieldOptions>`:
+
+  ```xml
+  <field name="STATUS" dataType="LISTA" nullable="N">
+      <description>Status</description>
+      <fieldOptions>
+          <option value="A">Ativa</option>
+          <option value="I">Inativa</option>
+      </fieldOptions>
+  </field>
+  ```
+- **Obrigatório:** `nullable="N"` no campo.
+- **Mestre-detalhe:** declare o vínculo em `<instances>/<instance>/<relationShip>` (ver seção abaixo).
+- **Teste a instalação em base limpa e em base que já tem o addon.** Só a base limpa revela
+  dependência fora de ordem entre `dbscripts` e dicionário; só a existente revela script que não
+  roda de novo sem quebrar.
+
 ## Boas Práticas
 
 - **Prefixo único:** Use um prefixo exclusivo (ex: `SGT_`) para evitar conflitos com tabelas nativas e de outros add-ons
