@@ -9,7 +9,8 @@ description: |
   para Sankhya OM sem as anotações @ActionButton/@Listener/@Job do Addon Studio.
   Também acionar para: "módulo java", "evento programável", "evento em Java",
   "botão de ação em Java", "tela no Construtor de Telas", "metadados sankhya",
-  "importar módulo", "JAR sankhya", "deploy módulo java", "módulo complementar sankhya";
+  "importar módulo", "JAR sankhya", "deploy módulo java", "módulo complementar sankhya",
+  "callback customizado", "ICustomCallBack", parâmetro de callback CBACK* em Preferências;
   e, em Módulo Java, para segurança (SQL injection em NativeSql, audit trail,
   deserialização insegura, PCI/PDV, certificado SEFAZ, upload de anexo) e
   compatibilidade SQL Oracle/SQL Server.
@@ -353,6 +354,7 @@ Carregar o arquivo ao aprofundar um tópico:
 | Logger — níveis, boas práticas, exemplos certo/errado | Ao adicionar logging em qualquer classe | `references/logger.md` |
 | SankhyaUtil — `StringUtils`, `TimeUtils`, `SQLUtils`, `JsonUtils`, `XMLUtils`, `JDBCUtils`, `BigDecimalUtil`, `CollectionUtils`, `SessionFile` | Ao manipular strings, datas, decimais, JSON, XML ou coleções | `references/sankhyautil.md` |
 | Núcleo comercial — `CACHelper`, `ImpostosHelpper`, `CentralFinanceiro`, confirmar nota, `execWithTX`/`execWithFakeTX` | Ao criar ou faturar notas programaticamente | `references/comercial-notas.md` |
+| Callbacks customizados — `ICustomCallBack`, parâmetros `CBACK*`, catálogo dos 11 pontos (cabeçalho, confirmação, faturamento, XML NF-e, preço/Flex, impostos) | Ao reagir a confirmação/faturamento de nota, ajustar preço ou desconto Flex do item ou gravar imposto customizado na confirmação | `references/callbacks.md` |
 | Parâmetros do Sistema — `MGECoreParameter`, leitura TSIPAR com fallback | Ao ler parâmetros configurados em Preferências → Parâmetros do Sistema | `references/parametros-sistema.md` |
 | Organização de pacotes — conflitos de ClassLoader, segmento `nomedemanda` | Ao criar novo módulo ou adicionar camadas | `references/organizacao-pacotes-java.md` |
 | Clean Code — métodos: nomes, tamanho, return early, SRP, efeitos colaterais | Em qualquer revisão ou criação de método | `references/clean-code-metodos.md` |

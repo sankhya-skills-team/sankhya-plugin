@@ -40,15 +40,51 @@ A classe deve implementar `br.com.sankhya.modelcore.custommodule.ICustomCallBack
 ### Método da Interface
 
 ```java
-Object call(String id, Map<String, Object> data) throws Exception
+Object call(String id, Map<String, Object> data)
 ```
 
 - `id`: ID do evento disparado (ex: `central.cabecalho.before`)
-- `data`: Mapa com dados contextuais — conteúdo varia por evento
+- `data`: Mapa com dados contextuais — conteúdo varia por evento. As chaves diferenciam
+  maiúsculas de minúsculas
+- A interface **não declara `throws`**: `throws Exception` na implementação não compila.
+  Para abortar a operação, lance exceção não checada (`IllegalStateException`); ela sobe
+  com o código `CORE_E05913`
 
 ---
 
 ## Eventos Disponíveis (`CallbackEvent`)
+
+O enum do SDK (2.20.1) tem quatro valores. Cada combinação de evento e `when` corresponde a
+um ponto de disparo do core:
+
+| `event` | `when` | Id recebido em `call` | Parâmetro do core |
+|---|---|---|---|
+| `INSERTION` | `BEFORE` | `central.cabecalho.before` | `CBACKCABBEF` |
+| `INSERTION` | `AFTER` | `central.cabecalho.after` | `CBACKCABAFT` |
+| `CONFIRMATION` | `BEFORE` | `central.confirmacao_portal.before` | `CBACKCONFPORBEF` |
+| `CONFIRMATION` | `AFTER` | `central.confirmacao_portal.after` | `CBACKCONFPORAFT` |
+| `PROCESS_CONFIRMATION` | `BEFORE` | `central.processarConfirmacao.before` | `CBACKPRCCONFBEF` |
+| `PROCESS_CONFIRMATION` | `AFTER` | `central.processarConfirmacao.after` | `CBACKPRCCONFAFT` |
+| `PROCESS_BILLING` | `BEFORE` | `portal.processarFaturamento.before` | `CBACKPRCFATDOC` |
+
+Em addon o registro é feito pela anotação: não se preenche o parâmetro em Preferências. O
+parâmetro é o caminho do Módulo Java (`<NUMODULO>@<classe>`), e as classes registradas
+nele executam antes das do addon no mesmo ponto.
+
+### Callbacks sem `CallbackEvent` (só Módulo Java)
+
+Estes pontos existem no core, mas não têm valor no enum e **não podem ser declarados com
+`@Callback`**:
+
+| Id | Parâmetro | Uso |
+|---|---|---|
+| `portal.xmlnfe.after` | `CBACKXMLNFEAFT` | Alterar o XML da NF-e depois de montado |
+| `mgecom.inicializaProduto.flex.before` | `CBACKINIPRDFLX` | Ajustar preço do item antes do Conta Corrente Flex |
+| `mgecom.validaDescontoAcrescimo.before` | `CBACKVLDDESCAC` | Substituir a validação de desconto/acréscimo Flex |
+| `mgecom.impostosConfirmacao.after` | `CBACKIMPCONFAFT` | Gravar imposto customizado na TGFDIN na confirmação |
+
+Se o requisito depende de um deles, a entrega é um Módulo Java registrado por parâmetro.
+Detalhes na skill `sankhya-modulo-java`, `references/callbacks.md`.
 
 ### `INSERTION`
 
@@ -66,8 +102,10 @@ Disparado na inserção ou alteração de um documento (não por CRUD do JAPE, m
 
 | `when` | Parâmetros em `data` |
 |---|---|
-| `BEFORE` | `nunota` (`BigDecimal`), `bRegras` (`BarramentoRegra`) |
-| `AFTER` | `nunota` (`BigDecimal`), `bRegras` (`BarramentoRegra`), `error` (`Exception`) — preenchido se houve erro |
+| `BEFORE` | `nunota` (`BigDecimal`), `bregras` (`BarramentoRegra`) |
+| `AFTER` | `nunota` (`BigDecimal`), `bregras` (`BarramentoRegra`), `error` (`Exception`) — preenchido se houve erro. Em `PROCESS_CONFIRMATION` vem também `cab_state` |
+
+A chave do barramento aqui é `bregras`, em minúsculas. Só o `INSERTION`/`AFTER` usa `bRegras`.
 
 Confirmado em runtime (core 4.35) e no bytecode:
 
@@ -112,11 +150,11 @@ import java.util.Map;
 public class ValidaConfirmacaoCallback implements ICustomCallBack {
 
     @Override
-    public Object call(String id, Map<String, Object> data) throws Exception {
+    public Object call(String id, Map<String, Object> data) {
         BigDecimal nunota = (BigDecimal) data.get("nunota");
 
         if (nunota == null) {
-            throw new Exception("NUNOTA não encontrado no contexto da confirmação.");
+            throw new IllegalStateException("NUNOTA não encontrado no contexto da confirmação.");
         }
 
         // Delegar lógica complexa para um @Service

@@ -1,6 +1,6 @@
 ---
 name: sankhya-backend-dev
-description: Use this agent to generate or modify Sankhya ERP Java backend code — "criar AcaoRotinaJava", "botão de ação", "EventoProgramavelJava", "RegraNegocioJava", "ScheduledAction", "ação agendada", "Helper/Service/Repository", "EJB/bean", "ServiceProvider", "@ActionButton", "@Listener", "@Callback", "@BusinessRule", "@Job", "regra de negócio Sankhya", "evento de confirmação de nota", "gerar nota derivada", "alçada/liberação TSILIB". Handles both Módulo Java tradicional and Addon Studio backend.
+description: Use this agent to generate or modify Sankhya ERP Java backend code — "criar AcaoRotinaJava", "botão de ação", "EventoProgramavelJava", "RegraNegocioJava", "ScheduledAction", "ação agendada", "Helper/Service/Repository", "EJB/bean", "ServiceProvider", "@ActionButton", "@Listener", "@Callback", "ICustomCallBack", "callback customizado", "@BusinessRule", "@Job", "regra de negócio Sankhya", "evento de confirmação de nota", "gerar nota derivada", "alçada/liberação TSILIB". Handles both Módulo Java tradicional and Addon Studio backend.
 tools: Read, Write, Edit, Bash, Grep, Glob, Skill, mcp__sankhya-schema__describe_table, mcp__sankhya-schema__search_entities, mcp__sankhya-schema__search_columns, mcp__sankhya-schema__validate_query, mcp__sankhya-schema__get_foreign_keys, mcp__sankhya-schema__run_query
 ---
 

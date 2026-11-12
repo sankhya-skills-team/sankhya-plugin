@@ -71,6 +71,7 @@ sankhya-modulo-java/
     ├── popup-personalizado.md          PopUpBuilder, HTML/JS, Angular, regras críticas
     ├── sankhyautil.md                  StringUtils, TimeUtils, SQLUtils, JsonUtils e outros
     ├── comercial-notas.md              CACHelper, ImpostosHelpper, CentralFinanceiro, confirmar nota
+    ├── callbacks.md                    ICustomCallBack, parâmetros CBACK*, catálogo dos 11 callbacks
     ├── organizacao-pacotes-java.md     Conflitos de ClassLoader, segmento nomedemanda obrigatório
     ├── clean-code-metodos.md           Nomes, tamanho, return early, SRP, efeitos colaterais
     └── clean-code-variaveis.md         Nomes, constantes, booleanos, escopo, convenções Sankhya
