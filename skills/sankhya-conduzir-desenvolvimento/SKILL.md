@@ -1,0 +1,110 @@
+---
+name: sankhya-conduzir-desenvolvimento
+description: Conduz o desenvolvimento de uma demanda Sankhya em fases, uma fase por execução. Faz o plano a partir do escopo aprovado, e a cada fase cria a branch, delega ao especialista, roda o code review (obrigatório quando há .java), registra o resumo da fase, commita, mescla na branch base e atualiza o card. No fim da última fase faz o fechamento, com JAR, documento de entrega, commit, push e tag. Acionar só quando o usuário digitar /sankhya:sankhya-conduzir-desenvolvimento, com o caminho do escopo e as horas aprovadas, ou sem argumento para continuar o plano ou fechar o que já foi codificado. Não usar para escrever o documento de escopo (ver sankhya-gera-escopo) nem só para commitar (ver sankhya-commit).
+disable-model-invocation: true
+argument-hint: "<caminho do escopo> <horas>h   |   vazio: continuar o plano ou fechar o que foi codificado"
+---
+
+# Conduzir desenvolvimento
+
+Fluxo validado em projeto **Addon** (sem JAR; ver "Addon" no fim). Para **Módulo Java** as etapas são as mesmas, com JAR, mas esse caminho (`inc-`, task do módulo, `version.properties`, tag) **ainda não foi exercitado de ponta a ponta**: avisar o usuário no início da execução e pedir que relate qualquer comportamento diferente do descrito aqui. **Uma fase por execução**: ao terminar uma fase, a skill avisa para abrir uma nova janela de contexto e rodar o comando de novo.
+
+## Regras invioláveis
+- **Review obrigatório** quando há `.java` no que vai ser mesclado ou entregue. Sem `.java`: "review dispensado: sem .java" no resumo. O review cobre só `.java` (frontend e `.kt` ficam de fora).
+- **Push, commit e merge só com o "sim" do usuário** naquela execução. Apagar branch remota, só com pergunta.
+- **Toda confirmação mostra antes, em texto no chat, o conteúdo confirmado**: mensagem de commit completa (assunto e corpo), plano, lista de tasks do JAR, itens a gravar no card, comandos git de merge e push. Nunca depender do campo `preview` da pergunta, que pode não aparecer. A própria pergunta repete o assunto (por exemplo, a primeira linha da mensagem de commit).
+- **O review é sempre feito pelo agent** `sankhya:code-review-orchestrator` (ferramenta Agent). Nunca fazer a análise você mesmo. A ordem dos revisores é do próprio agent (plugin 1.30.0 em diante chama `sankhya:arch-reviewer`, `sankhya:clean-code`, `sankhya:security-scanner`, `sankhya:perf-analyzer` e `sankhya:doc-checker`), mas **a instrução que você escreve para ele decide se ele cumpre**: sempre dizer "execute os cinco revisores como sub-agentes", **inclusive em re-review e em diff pequeno**, e nunca escrever "review curto", "só verifique" nem pergunta central que o autorize a abreviar (na F5.2 da Konica o agent respondeu "fiz direto, o diff é pequeno" a um pedido assim). Passar a lista de arquivos, o relatório anterior e o que mudou. Ao receber o relatório, conferir a linha "Revisores executados": se faltar revisor ou disser "sem sub-agentes", **repetir uma vez** a chamada com a ordem explícita; se ainda faltar, avisar o usuário com o erro registrado e **não dar o review por cumprido** (nem marcar no card nem mesclar sem a decisão dele).
+- Nunca inventar comando de build. Nunca rodar task de **deploy**.
+- Nunca marcar item do card cuja etapa falhou ou foi pulada sem o usuário saber.
+- Perguntas: `AskUserQuestion` com **descrição em cada opção** (2 a 4 opções). Sem a ferramenta, a mesma pergunta em texto.
+
+## 0. Contexto
+1. Os `CLAUDE.md` já estão carregados. Do **projeto** vêm, quando declarados:
+   - `Tipo:` (Módulo Java ou Addon) e a **regra de geração do JAR**;
+   - `Base:` (padrão: `desenv` se existir, senão `main`) e `Entrega:` (padrão: `main`);
+   - `Fluxo de branch:` (`por fase` ou `direto`; padrão `por fase` quando há plano em fases);
+   - `Plano:` (padrão `docs/plano-desenvolvimento.md`) e `Registro de decisões:` (padrão `docs/pontos-de-atencao.md`);
+   - `Evidências:` (`locais` ou `versionadas`). **Opcional: sem a linha, a skill não coleta evidências por fase.** Com ela, o registro em texto é sempre versionado e as imagens são locais (`locais`) ou versionadas (`versionadas`).
+2. Sem `Tipo:`: perguntar uma vez e oferecer criar o `CLAUDE.md` do projeto com `Tipo:` e as linhas acima (só com o OK). Oferecer também: ignorar `docs/reviews/` em `.git/info/exclude` (ignore local; e, se o projeto declarar `Evidências:`, as pastas de imagens `docs/evidencias/*/`), se ainda não estiverem; e, em Addon, criar `docs/deploy-passos-manuais.md` e as regras permanentes de fim de tarefa no `CLAUDE.md` (guia de deploy e documento de entrega devem incluir todos os passos manuais; passo manual descoberto em qualquer fase entra na hora no arquivo).
+3. **Git:** rodar você mesmo `git status --porcelain` e `git branch --show-current`. Se a pasta não for um repositório git, avisar, pular as etapas de git e seguir só com o que não depende dele.
+4. **Card (Satori):** tentar `meu_card_ler` uma vez. Sem a ferramenta ou sem card, omitir toda etapa de card, sem erro. Com card, ler também as **raias do quadro** (`kanban_ler`): cada quadro tem as suas (por exemplo A fazer, Fazendo, Revisão, Feito, ou uma raia de homologação), então **nunca assumir o nome de uma raia** que o quadro não tem; sem raia compatível, não mover.
+
+## 1. Entrada
+- Argumento com **caminho de arquivo que existe**: é o escopo. As **horas** vêm no argumento (`120h`); se faltarem, perguntar uma vez ("sem horas" vale).
+- Argumento que **não é caminho**: o texto é o próprio escopo (uma fase só).
+- **Sem argumento:** procurar o plano (arquivo de plano ou fases no checklist do card) e perguntar:
+  - Com plano: **Continuar a próxima fase (F<n>)** / **Fechar o que foi codificado** / **Começar por um escopo**.
+  - Sem plano, com card que tenha descrição: **Começar por um escopo** / **Usar a descrição do card como escopo** (mostrar a descrição lida e confirmar) / **Fechar o que foi codificado**.
+  - Sem plano e sem card: **Começar por um escopo** / **Fechar o que foi codificado**.
+
+## 2. Planejamento (só quando começa por um escopo)
+1. **Lacunas.** Ler o escopo e apontar o que ficou de fora e as dúvidas para o consultor. **Parar** até o usuário dizer "seguir".
+2. **Plano.** Chamar o agent `sankhya:sankhya-orchestrator-agent-dev` com: o escopo, as horas como **orçamento de referência**, o Tipo e as instruções: "não reestimar, não rediscutir Addon x Módulo Java, só sinalizar desvio relevante; numere as fases F0, F1... com título e objetivo". Mostrar o plano e obter a aprovação. Se o agent pedir permissão para gerar código, responder conforme a aprovação. **Não** chamar `sankhya-estimativa-planejador`, salvo se o usuário pedir.
+3. **Depois da aprovação, perguntar:** **Só o plano (parar aqui)** / **Começar a primeira fase**.
+4. **Evidências por fase (decidir agora, só se o `CLAUDE.md` ainda não tiver `Evidências:`):** perguntar "Coletar evidências por fase neste projeto?" (Sim, locais / Sim, versionadas / Não). Em "Sim": mostrar em texto e pedir OK para acrescentar a linha `Evidências: <locais|versionadas>` ao `CLAUDE.md`, oferecer ignorar `docs/evidencias/*/` em `.git/info/exclude` (se `locais`) e incluir no checklist do card, junto com as fases do passo 5, um item "F<n> – evidências" por fase (marcado ao fechar a fase, passo 4.4/4.9). Em "Não": nada é gravado e os passos de evidência ficam de fora.
+5. **Registrar o plano:**
+   - Arquivo (`docs/plano-<demanda>.md` ou o `Plano:` do `CLAUDE.md`), com o caminho do escopo, as horas, o Tipo, Base e Entrega, e a tabela de fases (F<n> | título | objetivo | branch), **sem coluna de status** no fluxo por fase: o status vem do git (passo 3.1). **Versionado**, porque a definição das fases quase não muda e quem receber o projeto precisa dela; o git mostra onde parou. No fluxo `direto`, sem branch por fase, o plano ganha uma coluna de status.
+   - Card, se existir: ler o checklist, **mostrar os itens a acrescentar** (um por fase) e pedir uma confirmação; gravar com `kanban_editar_card` **preservando os itens existentes**, sem duplicar; marcar "Plano aprovado" se existir.
+6. **Lembrete no `CLAUDE.md` do projeto:** mostrar em texto o bloco abaixo e pedir OK para acrescentá-lo (ou atualizar o `Plano:` se o bloco já existir). Sem o OK, seguir sem ele. O bloco só lembra: o `CLAUDE.md` não aciona a skill, que é manual.
+   ```
+   ## Desenvolvimento em fases
+   Este projeto é conduzido pela skill /sankhya:sankhya-conduzir-desenvolvimento.
+   Plano: <caminho do plano> (escopo, horas e fases estão nele).
+   Para trabalhar numa fase, rode o comando sem argumento no início da mensagem.
+   Se o usuário pedir trabalho de fase, review, merge ou fechamento sem ter invocado a skill,
+   avisar antes de agir: "Rode /sankhya:sankhya-conduzir-desenvolvimento para seguir o fluxo."
+   ```
+
+## 3. Uma fase (F<n>)
+1. **Pré-checagem** (fluxo por fase):
+   - **Status das fases**, derivado do git: concluída = há merge de `feature/f<n>-*` na base (`git log --merges --first-parent <base>`); em andamento = existe a branch `feature/f<n>-*` ainda não mesclada; pendente = nenhuma das duas. A próxima fase é a primeira pendente.
+   - Há branch de fase anterior **não mesclada** (commits fora da base)? Perguntar: **Concluir a F<k> agora (review e merge)** ou **Continuar assim**.
+   - Árvore de trabalho suja? Perguntar o que fazer (commitar, guardar ou seguir). Nunca descartar nada.
+   - Atualizar a base: `git fetch`; se houver remoto, `git pull --ff-only` na base. Divergiu: parar e mostrar.
+2. **Branch:** criar `feature/f<n>-<slug>` a partir da base. No fluxo `direto`, trabalhar na própria base. **Card:** se existir e estiver na raia "A fazer" e o quadro tiver "Fazendo", mover para "Fazendo" **automaticamente** (`meu_card_mover`), sem perguntar, e avisar em uma linha. Card que já está em outra raia não é movido.
+3. **Contexto da fase:** ler do plano o objetivo da F<n> e, do registro de decisões, o que as fases anteriores deixaram.
+4. **Desenvolver:** delegar ao especialista do plano (`sankhya-data-dev`, `sankhya-backend-dev`, frontend ou `sankhya-bi-report-dev`). O usuário testa.
+5. **Ao terminar**, perguntar: **Fechar a fase (review e merge)** / **Gerar JAR de teste** (só Módulo Java; regra de JAR do `CLAUDE.md` e a seleção dos módulos do passo 5.4.1, com versões e confirmação; não exige review) / **Continuar trabalhando** / **Parar aqui** (deixa a branch).
+
+## 4. Fechar a fase
+1. **Escopo:** `.java` do diff `<base>...<branch>` (`git diff --name-only`). Reler as **regras permanentes de fim de tarefa** do `CLAUDE.md`, listar as aplicáveis e só executar com o OK.
+2. **Review** (se houver `.java`; senão, "review dispensado"): chamar `sankhya:code-review-orchestrator` com a **lista explícita**. Mostrar os achados por severidade e perguntar: corrigir tudo / só CRITICAL / seguir sem corrigir. Corrigir com Edit/Write (o hook de encoding converte; nunca regravar fonte por python ou iconv). Rodar de novo só nos corrigidos. Registrar a **Resolução** no relatório: tabela "Situação dos achados" (Resolvido / Parcial / Adiado) e, para cada adiado, a fase de destino, **também no registro de decisões**. **Saída explícita:** se o usuário pedir "mesclar sem review", registrar a justificativa no resumo e no registro.
+3. **Conferência de encoding** (leitura): `file --mime-encoding` nos `.java` alterados e nos `.xml` alterados de `datadictionary`, `dbscripts`, `dbquerys` e `dashboards`. Esperado: fonte e esses `.xml` em `iso-8859-1` ou `us-ascii`; `.java` de pasta `test`/`tests`, `utf-8` ou `us-ascii`. O `.editorconfig` do projeto vale. Divergência: parar e mostrar.
+4. **Evidências da fase**, **só se o `CLAUDE.md` do projeto declara `Evidências:`** (senão, pular este passo), e quando a fase entrega algo testável (spike e análise: "evidência dispensada: fase sem entrega testável"). Gravar em `docs/evidencias/`: o registro `f<n>-<slug>.md` e o `INDEX.md`, **versionados**, e a pasta `f<n>-<slug>/` com as imagens, **local** (ignorada em `.git/info/exclude`) por padrão; `Evidências: versionadas` no `CLAUDE.md` do projeto versiona as imagens também. Sem as imagens no git, o registro cita o nome do arquivo e a data da captura. Só o que **a própria fase entrega**: antes de capturar, consultar `docs/evidencias/INDEX.md` (funcionalidade | fase vigente | arquivo | situação). O que a fase não altera não é recapturado; o que ela altera ganha evidência nova, e a anterior é marcada "substituída na F<n>".
+   - **Testes automatizados:** comando e resultado. O comando vem da linha `Testes:` do `CLAUDE.md`; sem ela, registrar o que já foi rodado na fase ou perguntar se deve rodar.
+   - **Consultas:** cada SQL usada para validar (só leitura) e o resultado resumido, com dados sensíveis mascarados e **nunca credenciais**.
+   - **Cenários na tela:** tabela # | funcionalidade | passos | esperado | obtido | status | imagem. Capturar as imagens principais com a ferramenta de navegador (`screenshot` com `save_to_disk`), **só em base de teste ou homologação**, confirmada uma vez e nunca produção; cenário que grava dado exige confirmação. Sem navegador, o usuário tira os prints e a skill monta o registro.
+   - O registro traz o ambiente (URL de teste), os dados de teste usados (por exemplo `docs/dados-teste/`), as seções acima e "Fora desta fase (não recapturado)".
+5. **Resumo da fase**, antes do commit, para entrar nele:
+   - No registro de decisões: **decisões** (D<n>, com a fase) e **pontos** (#, ponto, origem, **destino**: consultor, cliente, guia de deploy, documento de entrega). Passo manual de deploy descoberto vai para `docs/deploy-passos-manuais.md`. Incluir também **uma linha com as contagens do review**, sem achados nem trechos de código (o relatório fica local): "Review: 5/5 revisores, 0 Critical, 2 Warning, 1 adiado".
+   - Fase grande: um documento próprio com as seções **Criado**, **Decisões e fontes**, **Validar após deploy** e **Dúvidas e riscos**. Quando uma decisão nova supera um documento anterior, pôr nele a faixa **OBSOLETO** com o ponteiro para a decisão.
+6. **Commit na branch.** Gerar a mensagem via `sankhya:sankhya-commit` e **mostrar a mensagem completa em texto** antes de perguntar. Perguntar repetindo o assunto. Sem `Co-Authored-By` nem atribuição ao Claude.
+7. **Merge** (fluxo por fase): mostrar os comandos e pedir o "sim": na base, `git merge --no-ff feature/f<n>-<slug>`. Conflito: parar e mostrar. Depois, `git branch -d <branch>` (nunca `-D`); branch remota, só com pergunta.
+8. **Push da base** (pergunta): `git push origin <base>`.
+9. **Card e plano:** marcar o item da fase (prioridade: fase indicada pelo usuário; senão inferir pela conversa e pelo checklist, marcar e avisar; perguntar só sem correspondência clara). **Nunca marcar em fase** os itens do fechamento (Code review, JAR, Documento, Commit): eles valem para a entrega. Com `Evidências:` declarado, marcar também o item "F<n> – evidências" quando o registro da fase foi gravado (ou marcar como dispensada). **Review da fase:** se o diff tinha `.java` e o review foi **cumprido** (relatório com os cinco revisores e a Resolução gravada), acrescentar ao checklist o item "F<n> – review" já marcado, com o resultado resumido no texto (por exemplo, "0 Critical, 5 revisores"): ler o checklist antes, preservar os itens existentes, sem duplicar, e avisar no resumo. Review não cumprido (revisor faltando) ou dispensado: não criar o item. Não mover o card de coluna aqui (a ida para "Fazendo" é no passo 3.2). No fluxo `direto`, atualizar a coluna de status do plano; no fluxo por fase o status vem do git e o plano não é alterado.
+10. **Encerrar a execução:** "F<n> concluída. Abra uma nova janela e rode /sankhya:sankhya-conduzir-desenvolvimento para a F<n+1>." Se era a última fase, seguir para o Fechamento final.
+
+## 5. Fechamento final (última fase concluída, ou "Fechar o que foi codificado")
+1. **Escopo.** Com `Base` diferente de `Entrega`: o diff `<entrega>...<base>`. Sem plano: os `.java` alterados depois do último relatório em `docs/reviews/`. Reler as regras permanentes de fim de tarefa. O fechamento roda depois da **última fase do plano**, a que o plano marcar como última, qualquer que seja o seu número. **Cobertura de evidência** (só com `Evidências:` declarado): comparar `docs/evidencias/INDEX.md` com o que o plano diz que foi entregue (objetivos das fases), listar as funcionalidades **sem evidência vigente** e perguntar se captura agora. Se a imagem vigente só existir localmente em outra máquina, avisar que falta e que será preciso recapturar.
+2. **Review obrigatório** (se houver `.java`), como no passo 4.2, sobre esse escopo integrado. Listar os arquivos corrigidos para reteste. **Regeração:** se o artefato já foi gerado antes do review e houve correção, avisar que é preciso gerar de novo (cada geração incrementa a versão). Sinal de "já gerado": Módulo Java, `version.properties` alterado e não commitado; Addon, linha `version = "x.y.z"` do `build.gradle` da raiz alterada e não commitada (`git diff -U0 HEAD -- build.gradle`). Fazer a conferência de encoding do passo 4.3.
+3. **Caixas** (`AskUserQuestion`, `multiSelect`, sem pré-marcação, descrição em cada opção): **Gerar JAR de entrega** (só Módulo Java) / **Documento de entrega** / **Commit** / **Card** (só se existir). Depois, mostrar o que **não** foi marcado e pedir confirmação ("Você não marcou: documento de entrega. Seguir assim?").
+4. **Executar, nesta ordem:**
+   1. **JAR** (marcado): se o `version.properties` já está alterado e não commitado e o review não corrigiu nada, o JAR testado vale: não gerar de novo. Senão, seguir a regra de JAR do `CLAUDE.md`: uma task por pacote alterado (`helper`/`enums`: os módulos que usam a classe). **Seleção dos módulos** (vale também para o JAR de teste da fase): mostrar em texto uma tabela módulo | versão atual | próxima | tasks (`inc-<módulo>` e `<módulo>`), lendo a versão atual no `version.properties`; a próxima só se o `CLAUDE.md` disser a regra do incremento (no blend, +1 no último número), senão mostrar só a atual. Perguntar com **duas opções**: **Gerar todos os N alterados** (descrição: a lista inteira em uma linha, `módulo versão atual → próxima`) / **Não gerar JAR**. No campo "Other" o usuário digita **só os módulos que quer, entre os já listados**: quem não for citado fica de fora. Aceitar apenas nomes da lista dos alterados; nome fora dela ou ambíguo: mostrar a lista de novo e perguntar, sem adivinhar. Depois da escolha, mostrar a lista final e o que ficou de fora ("Você não marcou: A, B. Seguir assim?"). Para cada módulo selecionado, rodar `inc-<módulo>` e **depois, em comando separado**, a task do módulo. Nenhum selecionado: não gerar JAR e registrar no resumo. Build falhou: mostrar o erro e parar (se o `inc-` já rodou, avisar). **Pausa para deploy e teste:** informar a versão, pedir o deploy e o teste (a skill não faz deploy) e só seguir quando o usuário avisar; pedido de ajuste volta ao review.
+   2. **Documento** (marcado): `sankhya:sankhya-doc-entrega`, informando arquivos, JAR e achados, deixando que ele faça as perguntas dele ao usuário e seguindo as respostas (com `Evidências:` declarado, informar que `docs/evidencias/` tem os registros e as imagens das fases); incluir os passos de `docs/deploy-passos-manuais.md` e os pontos do registro de decisões cujo destino é a entrega.
+   3. **Commit** (marcado): `sankhya:sankhya-commit`, com a mensagem mostrada em texto antes da pergunta. Instruir a **pular a pergunta de enviar a tag**.
+   4. **Entrega:** com `Base` diferente de `Entrega`, mostrar e pedir o "sim" para `git switch <entrega>` e `git merge --ff-only <base>` (sem merge commit, para a tag continuar apontando para o código do artefato). Se o `ff` não for possível, parar e perguntar.
+   5. **Push** (se houve commit), uma pergunta única: com tag, **Branch + tag** (recomendada) / Só a branch / Só a tag / Não agora; sem tag, Enviar a branch / Não agora. A **tag** vai no commit da base que gerou o artefato.
+   6. **Card** (marcado e existente): marcar os itens concluídos; item não marcado vira "(n/a)" via `kanban_editar_card`, **lendo o checklist antes**; perguntar se move o card, oferecendo só raias que o quadro tenha: **"Revisão"** (para o usuário revisar o entregue) ou, se o quadro tiver, a raia de homologação (por exemplo "Consultor validando"). Nunca mover para "Feito": a aceitação é do usuário.
+5. **Saída final:** tabela etapa | resultado | evidência (arquivos revisados, tasks, hash do commit, itens do card), **incluindo o que não foi feito**.
+
+## Addon
+Mesmas etapas, com estas diferenças:
+- **Sem caixa de JAR e sem artefato.** Deploy local e `gerarAddon` ficam com o usuário, fora da skill, e ela nunca os executa.
+- **Versão e geração.** A versão fica no `build.gradle` da raiz (`version = "x.y.z"`); a task `incrementVersion` o reescreve a cada `gerarAddon`, então a geração precisa entrar no commit e na tag. Antes do **Commit** do fechamento:
+  - Se a linha da versão está alterada e não commitada, o addon **já foi gerado**: informar a versão e seguir.
+  - Senão, perguntar "Você já gerou o addon desta entrega?" com **Já gerei** / **Vou gerar agora** / **Não vou gerar**. Em "Vou gerar agora", **pausar** até o usuário rodar o `gerarAddon`, fazer o deploy local e testar, e avisar; ao voltar, conferir a versão e seguir. Em "Não vou gerar", seguir sem tag.
+- **Pausa para deploy e teste** mesmo com o addon já gerado: só seguir quando o usuário avisar.
+- **Tag.** O `sankhya-commit` só oferece tag quando o `version.properties` muda. No Addon, se a versão do `build.gradle` está no commit, perguntar se cria a tag `v<versão>` manualmente.
+
+## Proteção complementar
+O hook `gate-review` do plugin bloqueia `git commit` e `git tag` em projeto que declara o Tipo quando há `.java` alterado sem review mais novo. Se aparecer, rodar o review da fase ou o Fechamento. Saída de emergência, para uma vez: criar o arquivo `.git/pular-review`.
