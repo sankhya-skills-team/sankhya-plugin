@@ -222,7 +222,10 @@ fix > feat > refactor > chore > docs > test > style
 
 ### Etapa 6 — Apresentar resultado
 
-Exibir a mensagem gerada em bloco de código para facilitar cópia:
+Exibir a mensagem gerada **completa (descrição e corpo) em texto no chat**, em bloco de
+código para facilitar cópia, **antes** de qualquer pergunta. Nunca depender do campo
+`preview` de uma pergunta (`AskUserQuestion`) para mostrar a mensagem: ele pode não
+aparecer e o usuário ficaria confirmando sem ver o texto.
 
 ```
 ✨feat(escopo): descrição curta
@@ -231,7 +234,7 @@ Exibir a mensagem gerada em bloco de código para facilitar cópia:
 - Detalhe 2
 ```
 
-Perguntar:
+Perguntar (repetindo a primeira linha da mensagem na pergunta):
 ```
 Confirmar commit com esta mensagem?
   1 - Sim
@@ -252,16 +255,30 @@ Confirmar commit com esta mensagem?
 
 - `3` → encerrar sem commit.
 
-### Etapa 7 — Tag (somente se `version.properties` estiver no diff commitado)
+### Etapa 7 — Tag (somente se a versão do projeto estiver no diff commitado)
 
-Verificar se `version.properties` está entre os arquivos do commit recém-criado
-(`git show --stat HEAD` ou o diff já obtido na Etapa 3). Se **não** estiver, encerrar
-— não perguntar sobre tag fora desse caso.
+A versão mora em um de dois lugares, conforme o tipo de projeto:
 
-Se estiver, extrair o valor da versão alterada (ex.: `OrdemDeServico=1.0.116`) e perguntar:
+- **Módulo Java:** `version.properties` entre os arquivos do commit recém-criado
+  (`git show --stat HEAD` ou o diff já obtido na Etapa 3). Valor: a linha alterada
+  (ex.: `OrdemDeServico=1.0.116`).
+- **Addon:** `build.gradle` entre os arquivos do commit **e** com a linha `version`
+  alterada. Conferir com `git show HEAD -U0 -- build.gradle` e procurar uma linha
+  adicionada do tipo `version = "1.2.3"` (aspas simples ou duplas). Valor: `1.2.3`.
+  Alteração em `build.gradle` sem mexer nessa linha (dependências, tasks) **não** conta.
+
+Se nenhuma das duas condições valer, encerrar — não perguntar sobre tag fora desse caso.
+
+**Chamado por outro fluxo.** Se quem chamou esta skill instruiu a não perguntar sobre
+tag (por exemplo a skill `sankhya-conduzir-desenvolvimento`, que decide tag e push em uma
+pergunta só no fim), **pular esta etapa inteira**: não perguntar, não criar tag e não
+enviar nada. Informar ao chamador, em uma linha, a versão detectada (ex.: "versão no
+commit: 1.2.3, arquivo `build.gradle`") ou "sem versão no commit", e encerrar.
+
+Se a etapa se aplica, perguntar:
 
 ```
-Esse commit alterou version.properties (nova versão: 1.0.116).
+Esse commit alterou a versão em <version.properties|build.gradle> (nova versão: 1.0.116).
 
 Tag Git é um rótulo fixo num commit — serve pra, se um dia precisar
 recuperar exatamente esse ponto do código (ex.: voltar pra um JAR
